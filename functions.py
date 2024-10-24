@@ -43,6 +43,7 @@ def stim_dur_val(tiff_dir, list_of_file_nums):
             dir_path = base_dir / matched_file
             frequency_path = dir_path / 'selected_freqs.npy'
             frequency = np.load(frequency_path, allow_pickle=True)
+            print(frequency)
             if not os.path.exists(frequency_path):
                 print(f"Frequency file not found")
                 exit(1)
@@ -246,15 +247,42 @@ def dist_vals (tiff_dir, list_of_file_nums):
             # np.save(expDir + '/' + dir + '/suite2p/plane0/ROI_numbers.npy', roi_numbers)
 
 #baseline
-def baseline_val(tiff_dir, list_of_file_nums ):
+def extract_baseline_duration(tiff_dir, list_of_file_nums):
+    stim_start_times_path = root_directory + tiff_name + '/stimTimes.npy'
+    tiff_baselines = []
+    if os.path.exists(stim_start_times_path):
+        stim_times = np.load(stim_start_times_path, allow_pickle=True)
+        tif_baseline_duration = int(stim_times[0][0])-1
+        tiff_baselines.append(tif_baseline_duration)
+    else:
+        print(f"no stimTimes.npy found for {file_path}")
+
+def baseline_val(root_directory,tiff_dir, list_of_file_nums ):
     '''
     :return: saves all_norm_traces, prints shape of all_norm_traces, output: F0.npy (baseline corrected fluorescence trace)
     '''
     base_dir = Path(tiff_dir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+    matching_tiff = []
+    file_nums_to_search = list_of_file_nums[0]
+
+    for file in os.listdir(root_directory):
+        #print(file)
+        if file.endswith('.tif') and 'MUnit_' in file:
+            start_index = file.find('MUnit_') + len('MUnit_')
+            end_index = file.rfind('.tif')
+
+            if start_index != -1 and end_index != -1 and start_index < end_index:
+                number_str = file[start_index:end_index]
+
+                if number_str.isdigit():
+                    file_number = int(number_str)
+                    if file_number in file_nums_to_search:
+                        matching_tiff.append(file)
 
     for numbers_to_merge in list_of_file_nums:
         suffix = '_'.join(map(str, numbers_to_merge))
+        matched_dir = None
         num_to_search = []
         for dir in filenames:
             num_to_search_split = dir.split('MUnit_')
@@ -262,28 +290,35 @@ def baseline_val(tiff_dir, list_of_file_nums ):
             if len(num_to_search_split) > 1:
                 file_suffix = num_to_search_split[1].rsplit('.', 1)[0]
                 if file_suffix == suffix:
-                    matched_file = dir
-                    print(matched_file)
+                    matched_dir = dir
+                    #print(matched_dir)
                     break
         else:
             continue
 
-        if matched_file:
+        file_dir = Path(base_dir/matched_dir)
+        baseline_durations = []
+        for num_id in file_nums_to_search:
+            stim_times_path = os.path.join(file_dir, f'stimTime_{num_id}.npy')
+            if os.path.exists(stim_times_path):
+                stim_times = np.load(stim_times_path, allow_pickle=True)
+                if stim_times.size > 0:
+                    baseline_duration = int(stim_times[0]) - 1
+                    baseline_durations.append(baseline_duration)
 
-            F_path = tiff_dir + matched_file + '/suite2p/plane0/F.npy'
-            iscell_path = tiff_dir + matched_file + '/suite2p/plane0/iscell.npy'
-            stim_start_times_path = tiff_dir + matched_file + '/stimTimes.npy'
+
+        if matched_dir:
+
+            F_path = tiff_dir + matched_dir + '/suite2p/plane0/F.npy'
+            iscell_path = tiff_dir + matched_dir + '/suite2p/plane0/iscell.npy'
+            stim_start_times_path = tiff_dir + matched_dir + '/stimTimes.npy'
 
             F = np.load(F_path, allow_pickle=True)
             iscell = np.load(iscell_path, allow_pickle=True)
             stim_start_times = np.load(stim_start_times_path, allow_pickle=True)
             #print(f"stim type: {type(stim_start_times)}")
 
-            # Define baseline duration
-            baseline_duration = int(stim_start_times[0][0])-1  # Duration in milliseconds   #je ne sais pas ce qui c'est passé ici
-            print(baseline_duration)
 
-            # create empty list to store normalized baseline_diffs
             all_norm_traces = []
             cellcount = 0
             # Iterate through all rois
@@ -291,13 +326,15 @@ def baseline_val(tiff_dir, list_of_file_nums ):
                 # Check iscell==1
                 if iscell_value == 1:
                     cellcount += 1
-                    baseline_value = np.mean(fluorescence_trace[:baseline_duration])
-                    #print(baseline_value)
-                    normalized_trace = (fluorescence_trace - baseline_value) / baseline_value
-                    #plt.plot(normalized_trace)
-                    #plt.show()
-                    all_norm_traces.append(normalized_trace)
+                    baseline_duration = baseline_durations[cell_index % len(baseline_durations)]
 
+                    if baseline_duration is not None:
+                        baseline_value = np.mean(fluorescence_trace[:baseline_duration])
+                        normalized_trace = (fluorescence_trace - baseline_value) / baseline_value
+                        all_norm_traces.append(normalized_trace)
+                        plt.figure()
+                        plt.plot(normalized_trace)
+                        plt.show()
             # convert the list of baseline_diffs to a npy array
             all_norm_traces = np.array(all_norm_traces)
 
@@ -309,7 +346,7 @@ def baseline_val(tiff_dir, list_of_file_nums ):
             #print(all_norm_traces)
 
 #activated_neurons
-def activated_neurons_val(tiff_dir, list_of_file_nums):
+def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold_value = 1):
     '''
     :param input_file_path: 'D:/2P/E/test/merged_GCaMP6f_23_09_25_3-6_pos_amp/'
     :param time_block: type: number, time block duration in frames, example: 1085
@@ -317,138 +354,144 @@ def activated_neurons_val(tiff_dir, list_of_file_nums):
     '''
     base_dir = Path(tiff_dir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+    file_nums_to_search = list_of_file_nums[0]
+    matching_tiff = []
+    for file in os.listdir(root_directory):
+    # print(file)
+        if file.endswith('.tif') and 'MUnit_' in file:
+            start_index = file.find('MUnit_') + len('MUnit_')
+            end_index = file.rfind('.tif')
+            if start_index != -1 and end_index != -1 and start_index < end_index:
+                number_str = file[start_index:end_index]
+                if number_str.isdigit():
+                    file_number = int(number_str)
+                    if file_number in file_nums_to_search:
+                        matching_tiff.append(file)
 
     for numbers_to_merge in list_of_file_nums:
         suffix = '_'.join(map(str, numbers_to_merge))
-        num_to_search = []
         for dir in filenames:
             num_to_search_split = dir.split('MUnit_')
             # print(num_to_search_split)
             if len(num_to_search_split) > 1:
                 file_suffix = num_to_search_split[1].rsplit('.', 1)[0]
                 if file_suffix == suffix:
-                    matched_file = dir
-                    print(matched_file)
+                    matched_dir = dir
+                    print(matched_dir)
                     break
         else:
             continue
 
-        if matched_file:
-            #for i, dir in enumerate(filenames):
-
+        file_dir = Path(base_dir / matched_dir)
+        baseline_durations = []
+        for num_id in file_nums_to_search:
+            stim_times_path = os.path.join(file_dir, f'stimTime_{num_id}.npy')
+            if os.path.exists(stim_times_path):
+                stim_times = np.load(stim_times_path, allow_pickle=True)
+                if stim_times.size > 0:
+                    baseline_duration = int(stim_times[0]) - 1
+                    baseline_durations.append(baseline_duration)
+        #print(baseline_durations)
+        if matched_dir:
             # Load the fluorescence traces and iscell array
-            F0_path = tiff_dir + matched_file + '/suite2p/plane0/F0.npy'
-            iscell_path = tiff_dir + matched_file + '/suite2p/plane0/iscell.npy'
-            ROI_numbers_path = tiff_dir + matched_file + '/suite2p/plane0/ROI_numbers.npy'
-            stim_start_times_path = tiff_dir + matched_file + '/stimTimes.npy'
-            frame_numbers_path = tiff_dir + matched_file + '/frameNum.npy'
+            F0_path = tiff_dir + matched_dir + '/suite2p/plane0/F0.npy'
+            iscell_path = tiff_dir + matched_dir + '/suite2p/plane0/iscell.npy'
+            ROI_numbers_path = tiff_dir + matched_dir + '/suite2p/plane0/ROI_numbers.npy'
+            stim_start_times_path = tiff_dir + matched_dir + '/stimTimes.npy'
+            frame_numbers_path = tiff_dir + matched_dir + '/frameNum.npy'
 
             F0 = np.load(F0_path, allow_pickle=True)
             iscell = np.load(iscell_path, allow_pickle=True)
             ROI_numbers = np.load(ROI_numbers_path, allow_pickle=True)
-            print(ROI_numbers)
+            #print(ROI_numbers)
             stim_start_times = np.load(stim_start_times_path, allow_pickle=True)
-            print(stim_start_times)
+            #print(stim_start_times)
             frame_numbers = np.load(frame_numbers_path, allow_pickle=True)
-            print(frame_numbers)
+            #print(frame_numbers)
+
+
             time_block = 1
             if len(frame_numbers) > 0:
                 time_block = int(frame_numbers[0]) #1085
                 #print(time_block)
-            if len(stim_start_times)  > 0:
-                #print(stim_start_times)
-                baseline_duration = int(stim_start_times[0][0])
-                #print(baseline_duration)
             # Calculate TIFF trigger start and end tuples
             num_tif_triggers = int(np.round(len(F0[0]) / time_block))
             #print(len(F0[0]) / time_block)
-            print(num_tif_triggers)
-            tif_triggers = []
+            #print(num_tif_triggers)
 
+            tif_triggers = []
             for i in range(num_tif_triggers):
                 start_time = i * time_block
                 end_time = start_time + time_block
                 tif_triggers.append((start_time, end_time))
                 #print(tif_triggers)
 
-                # Define baseline duration
-                baseline_duration = int(stim_start_times[i][0]) # Duration in milliseconds
-                print(baseline_duration)
-            '''
-            for batch in stim_start_times:
-                first_value = stim_start_times[batch]
-                baseline_duration = int(first_value)
-                #print(baseline_duration)
-            '''
 
-            baseline_durs=[]
+            ROI_numbers=[]
             # Create an empty list to store threshold values for each ROI and tuple
             threshold_list = []
             # Create an empty list to store results for each ROI and tuple
             results_list = []
             # Iterate through all ROIs
-            for i in range(len(F0)):
-                roi_thresholds = []
-                roi_results = []
-                # Iterate through all TIFF triggers
-                for tif_trigger in tif_triggers:
-                    # Extract start and end time stamps for the current tuple
-                    start_time, end_time = tif_trigger
-                    #print(start_time)
-                    #print(f"stimstarttime {i}type: {type(stim_start_times[i][0])} ")
-                    #print(f"start: {start_time}, end: {start_time + baseline_duration}, baseline: {baseline_duration}, f0: {F0.shape}")
-                    #start_time = start_time[0] if isinstance(start_time, list) else start_time
-                    #end_time = end_time[0] if isinstance(end_time, list) else end_time
-                    # Create lists to store threshold and results for the current ROI
-                    #print(f"start: {start_time}, end: {start_time + baseline_duration}, baseline: {baseline_duration}, f0: {F0.shape}")
-                    baseline_dur = F0[i,start_time:start_time + baseline_duration] #??  #je ne sais pas ce qui c'est passé ici
-                    #print(baseline_duration)
-                    #baseline_trace = F0[i,start_time:start_time + baseline_duration]
-                    #print(baseline_dur)
-                    # Calculate average for baseline
-                    baseline_avg = np.mean(baseline_dur)
-                    #print(baseline_avg)
-                    # Calculate standard deviation for the baseline trace
-                    baseline_std = np.std(baseline_dur)
-                    # Calculate threshold for the current tuple
-                    threshold = baseline_std * 1 + baseline_avg
-                    # Append threshold to the list for the current ROI
-                    roi_thresholds.append(threshold)
-                    # Check if fluorescence exceeds threshold for the current tuple
-                    stim_avg = np.mean(F0[i,(start_time + baseline_duration):(start_time + baseline_duration + 465)])
-                    #stim_trace = F0[i,(start_time + baseline_duration):(start_time + baseline_duration + 465)]
 
-                    #print(stim_avg)
-                    if stim_avg > threshold:
-                        exceed_threshold = 1
-                    else:
-                        exceed_threshold = 0
-                    # Append result (1 or 0) to the list for the current ROI
-                    roi_results.append(int(exceed_threshold))
+            for baseline_duration, (start_time, end_time) in zip(baseline_durations,tif_triggers):
+                        #start_time, end_time = tif_trigger
+                for i, (fluorescence_trace, (iscell_value, _)) in enumerate(zip(F0, iscell)):
+                    if iscell_value == 1:
+                        roi_thresholds = []
+                        roi_results = []
+                        #baseline_duration = baseline_durations[i % len(baseline_durations)]
+                        '''
+                        if baseline_duration is None:
+                            continue
+                        '''
+                        #print(F0)
+                        print(start_time, end_time)
+                        print(baseline_duration)
+                        baseline_dur = F0[i,start_time:start_time + baseline_duration]
+                        #print(len(baseline_dur))
+                        baseline_avg = np.mean(baseline_dur)
+                        baseline_std = np.std(baseline_dur)
+                        threshold = baseline_std * threshold_value + baseline_avg
+                        roi_thresholds.append(threshold)
+                        #print(roi_results)
+
+                        # Check if fluorescence exceeds threshold for the current tuple
+                        stim_avg = np.mean(F0[i,(start_time + baseline_duration):(start_time + baseline_duration + 465)])
+                        stim_avg = np.mean(F0[i, (start_time + baseline_duration):(start_time + baseline_duration + 465)])
+                        #stim_trace = F0[i,(start_time + baseline_duration):(start_time + baseline_duration + 465)]
+
+                        #print(stim_avg)
+                        if stim_avg > threshold:
+                            exceed_threshold = 1
+                        else:
+                            exceed_threshold = 0
+                        # Append result (1 or 0) to the list for the current ROI
+                        roi_results.append(int(exceed_threshold))
+                        #print(roi_results)
+                    # Append threshold values and results for the current ROI to the overall lists
+                    threshold_list.append(roi_thresholds)
+                    results_list.append(roi_results)
+                    ROI_numbers.append(i)
+                    #print(threshold_list)
                     #print(roi_results)
-                # Append threshold values and results for the current ROI to the overall lists
-                threshold_list.append(roi_thresholds)
-                results_list.append(roi_results)
-                #print(threshold_list)
-                print(roi_results)
 
-            # Convert the lists of threshold values and results to NumPy arrays---???not used
-            threshold_array = np.array(threshold_list)
-            results_array = np.array(results_list)
-            result_df = pd.DataFrame({
-                'ROI_number': ROI_numbers,
-                #'thresholds': threshold_list,
-                'activated_neurons': results_list
-            })
-            pd.set_option('display.max_rows', None)
-            '''
-            catSum = []
-            for j in range(3):
-                cat = []
-                for i in range(len(results_list)):
-                    cat.append(results_list[i][j])
-                catSum.append(sum(cat))
-            
+                # Convert the lists of threshold values and results to NumPy arrays---???not used
+                threshold_array = np.array(threshold_list)
+                results_array = np.array(results_list)
+                #print(len(ROI_numbers), len(results_list))
+                result_df = pd.DataFrame({
+                    'ROI_number': ROI_numbers,
+                    #'thresholds': threshold_list,
+                    'activated_neurons': results_list
+                })
+                pd.set_option('display.max_rows', None)
+                '''
+                catSum = []
+                for j in range(3):
+                    cat = []
+                    for i in range(len(results_list)):
+                        cat.append(results_list[i][j])
     
             print(f"Summary of activation results: {catSum}")
             '''
@@ -499,11 +542,12 @@ def timecourse_vals(tiff_dir, list_of_file_nums, num_trials):
             stim_duration = np.load(stim_duration_path, allow_pickle=True)
             roi_num = np.load(roi_number_path, allow_pickle=True)
             #num_trials = np.load(num_trials_path, allow_pickle=True)
-            stim_duration= [1.0, 1.0, 1.0]
+            #stim_duration= [1.0, 1.0, 1.0]
+            print(stim_duration)
             start_timepoints = []
             for i in stim_start:
                 start_timepoints.append(i)
-            print(stim_duration)
+            #print(stim_duration)
 
             time_block = []
             for b in block_frames:

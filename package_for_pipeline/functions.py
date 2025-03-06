@@ -1017,7 +1017,7 @@ def plot_stim_traces(expDir, frame_rate=31, num_repeats=6, num_stims_per_repeat=
             for file in base_dir.iterdir():
                 if file.name.startswith('merged'):
                     print(f"Checking directory: {file.name}")
-                    if file.name.endswith(suffix):
+                    if str(suffix) in file.name:
                         matching_dir = file.name
                         print(f"Found matching directory: {matching_dir}")
                         break

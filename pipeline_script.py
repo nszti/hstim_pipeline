@@ -23,7 +23,7 @@ list_of_file_nums = [
 ]
 gcamp = 's' #for GCaMP6s: 's'
 gcamp = 'f' #for GCaMP6s: 's'
-
+#:)
 #------VALUES TO CHANGE END------
 
 

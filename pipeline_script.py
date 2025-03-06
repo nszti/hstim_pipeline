@@ -12,7 +12,7 @@ import os
 
 root_directory = 'C:/Hyperstim/data_analysis/2023_07_05_in_vivo_test_GCaMP6f/' #
 tiff_directory = 'C:/Hyperstim/data_analysis/2023_07_05_in_vivo_test_GCaMP6f/merged_tiffs/'
-mesc_file_name = '2023_07_05_in_vivo_test_GCaMP6f'
+mesc_file_name = '2023_07_05_igin_vivo_test_GCaMP6f'
 mesc_DATA_file = 'mesc_data.npy'
 
 list_of_file_nums = [
@@ -22,6 +22,7 @@ list_of_file_nums = [
 
 ]
 gcamp = 's' #for GCaMP6s: 's'
+gcamp = 'f' #for GCaMP6s: 's'
 
 #------VALUES TO CHANGE END------
 

@@ -978,6 +978,88 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
 
             plt.show()
 #scratch_1
+def plot_stim_traces(expDir, frame_rate=31, num_repeats, num_stims_per_repeat):
+    '''
+    Plot calcium traces around stimulation timepoints in a grid
+
+    Parameters
+    ----------
+    expDir : str
+        Path to the experiment directory
+    frame_rate : int
+        Frame rate of the recording (default 31 Hz)
+    num_repeats : int
+        Number of times the stimulation sequence was repeated (default 6)
+    num_stims_per_repeat : int
+        Number of different stimulation amplitudes per repeat (default 5)
+    '''
+    base_dir = Path(expDir)
+    filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+
+    for dir in filenames:
+        # Load required data
+        F_path = expDir + '/' + dir + '/suite2p/plane0/F.npy'
+        stim_start_times_path = expDir + '/' + dir + '/stimTimes.npy'
+        F = np.load(F_path, allow_pickle=True)
+        stim_start_times = np.load(stim_start_times_path, allow_pickle=True)
+
+        # Calculate time windows (1s before, 3s after)
+        pre_frames = frame_rate  # 1 second before
+        post_frames = frame_rate * 3  # 3 seconds after
+        total_frames = pre_frames + post_frames
+
+        # Initialize array for all traces
+        all_traces = np.zeros((num_repeats, num_stims_per_repeat, F.shape[0], total_frames))
+
+        # Extract traces for each stimulation
+        for repeat in range(num_repeats):
+            for amp_idx in range(num_stims_per_repeat):
+                stim_idx = repeat * num_stims_per_repeat + amp_idx
+                if stim_idx < len(stim_start_times):
+                    start_frame = stim_start_times[stim_idx]
+                    # Extract pre and post stimulation frames
+                    pre_start = max(0, start_frame - pre_frames)
+                    post_end = min(F.shape[1], start_frame + post_frames)
+
+                    # Get the trace segment
+                    trace = F[:, pre_start:post_end]
+
+                    # Pad if necessary
+                    if trace.shape[1] < total_frames:
+                        pad_width = total_frames - trace.shape[1]
+                        if pre_start == 0:
+                            # Pad at the beginning
+                            trace = np.pad(trace, ((0, 0), (pad_width, 0)), mode='edge')
+                        else:
+                            # Pad at the end
+                            trace = np.pad(trace, ((0, 0), (0, pad_width)), mode='edge')
+
+                    all_traces[repeat, amp_idx] = trace
+
+        # Calculate mean traces across ROIs
+        mean_traces = np.mean(all_traces, axis=2)  # Average across ROIs
+
+        # Create time array for x-axis
+        time = np.arange(-1, 3, 1 / frame_rate)
+
+        # Create grid plot
+        fig, axes = plt.subplots(num_repeats, num_stims_per_repeat, figsize=(5 * num_stims_per_repeat, 4 * num_repeats))
+        fig.suptitle('Calcium Traces Around Stimulation', fontsize=16)
+
+        for repeat in range(num_repeats):
+            for amp_idx in range(num_stims_per_repeat):
+                ax = axes[repeat, amp_idx]
+                ax.plot(time, mean_traces[repeat, amp_idx])
+                ax.axvline(x=0, color='r', linestyle='--', alpha=0.5)  # Mark stimulation onset
+                ax.set_title(f'Repeat {repeat + 1}, Amp {amp_idx + 1}')
+                ax.set_xlabel('Time (s)')
+                ax.set_ylabel('ΔF/F')
+                ax.grid(True)
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(expDir, dir, 'stim_traces_grid.png'))
+        plt.close()
+
 def scratch_val(tiff_dir):
     '''
     :param expDir:

@@ -7,7 +7,6 @@ from mesc_loader import extract_useful_xml_params
 from general import ascii_to_str, find_frame_index_from_timestamp
 from package_for_pipeline import mesc_tiff_extract
 from package_for_pipeline import functions_og
-from package_for_pipeline import functions_current_steering
 #from package_for_pipeline import suite2p_neuropil
 import os
 
@@ -35,9 +34,7 @@ tiff_directory = 'c:/Hyperstim/data_analysis/AMouse-2025-03-05-invivo-GCaMP6f/me
 mesc_file_name = 'AMouse-2025-03-05-invivo-GCaMP6f-2'
 mesc_DATA_file = 'mesc_data.npy' #from mesc_tiff_extract
 list_of_file_nums = [
-  [11],
-  [12]
-
+  [10]
 ]
 gcamp = 'f' #for GCaMP6s: 's'
 stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
@@ -57,13 +54,12 @@ stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
 #------VALUES TO CHANGE END------
 #mesc_tiff_extract.analyse_mesc_file(Path(root_directory)/mesc_file_name, root_directory, print_all_attributes=True, plot_curves = True)
 #1.2.step: frequency_to_save, electrode_roi_to_save-->automatization pending
-mesc_data_handling.extract_stim_frame(root_directory, mesc_DATA_file, list_of_file_nums)
-mesc_data_handling.tiff_merge(mesc_file_name, list_of_file_nums, root_directory)
-suite2p_script.run_suite2p(os.path.join(root_directory,'merged_tiffs/'), gcamp)
-functions_current_steering.plot_stim_traces(tiff_directory, num_repeats=6, num_stims_per_repeat=5)
+#mesc_data_handling.extract_stim_frame(root_directory, mesc_DATA_file, list_of_file_nums)
+#mesc_data_handling.tiff_merge(mesc_file_name, list_of_file_nums, root_directory)
+#suite2p_script.run_suite2p(os.path.join(root_directory,'merged_tiffs/'), gcamp)
+#functions_current_steering.plot_stim_traces(tiff_directory, num_repeats=6, num_stims_per_repeat=5)
 
-functions.plot_stim_traces(tiff_directory, 6, 5)
-
+functions.plot_stim_traces(tiff_directory,31, 6, 5, list_of_file_nums)
 #--------------Suite2p manual sorting------------------
 '''
 functions.stim_dur_val(tiff_directory, list_of_file_nums)

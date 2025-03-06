@@ -977,8 +977,9 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
                      avgCAperTrial=avgCAperTrial)
 
             plt.show()
-#scratch_1
-def plot_stim_traces(expDir, frame_rate=31, num_repeats, num_stims_per_repeat):
+
+
+def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list_of_file_nums= None):
     '''
     Plot calcium traces around stimulation timepoints in a grid
 
@@ -998,8 +999,8 @@ def plot_stim_traces(expDir, frame_rate=31, num_repeats, num_stims_per_repeat):
 
     for dir in filenames:
         # Load required data
-        F_path = expDir + '/' + dir + '/suite2p/plane0/F.npy'
-        stim_start_times_path = expDir + '/' + dir + '/stimTimes.npy'
+        F_path = expDir + dir + '/suite2p/plane0/F.npy'
+        stim_start_times_path = expDir + dir + '/stimTimes.npy'
         F = np.load(F_path, allow_pickle=True)
         stim_start_times = np.load(stim_start_times_path, allow_pickle=True)
 
@@ -1017,8 +1018,10 @@ def plot_stim_traces(expDir, frame_rate=31, num_repeats, num_stims_per_repeat):
                 stim_idx = repeat * num_stims_per_repeat + amp_idx
                 if stim_idx < len(stim_start_times):
                     start_frame = stim_start_times[stim_idx]
+                    start_frame = int(stim_start_times[stim_idx])
                     # Extract pre and post stimulation frames
                     pre_start = max(0, start_frame - pre_frames)
+                    pre_start = int(pre_start)
                     post_end = min(F.shape[1], start_frame + post_frames)
 
                     # Get the trace segment
@@ -1059,6 +1062,8 @@ def plot_stim_traces(expDir, frame_rate=31, num_repeats, num_stims_per_repeat):
         plt.tight_layout()
         plt.savefig(os.path.join(expDir, dir, 'stim_traces_grid.png'))
         plt.close()
+
+#scratch_1
 
 def scratch_val(tiff_dir):
     '''

@@ -38,7 +38,7 @@ list_of_file_nums = [
   [12]
 
 ]
-gcamp = 's' #for GCaMP6s: 's'
+gcamp = 'f' #for GCaMP6s: 's'
 stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
 
 '''

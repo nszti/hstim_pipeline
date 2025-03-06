@@ -8,6 +8,7 @@ from suite2p import detection
 from suite2p.detection import denoise
 from suite2p.io import save
 
+
 #data_path = 'C:/Hyperstim/pipeline_pending/mesc_preprocess_1/merged_tiffs/'
 
 def search_merged_subfolders(data_path):
@@ -26,9 +27,10 @@ def run_suite2p(data_path, gcamp):
       data_path: outer folder containing 'merged' folders
       gcamp: for GCaMP6f: 'f', for GCaMP6s: 's'
 
-      Returns runs suite2p with predefined parameters, output: suite2p folder in each subfolder with extracted data
+      Returns
       -------
-
+      runs suite2p with predefined parameters, output: suite2p folder in each subfolder with extracted data
+      predefined set of ops parameters for GCaMP s & f
       '''
       ops = suite2p.default_ops()
 
@@ -40,12 +42,21 @@ def run_suite2p(data_path, gcamp):
                                                    # (or folder of folders with tiffs if look_one_level_down is True, or subfolders is not empty)
             'subfolders': [], # choose subfolders of 'data_path' to look in (optional)
             'reg_tif': False,
+            'neuropil_extract': True,
+            'neucoeff': 0.7,
+            'ratio_neuropil': 6,
+            'allow_overlap': False,
+            'inner_neuropil_radius': 2
+
           }
       print(db['data_path'])
       db_list = []
       merged_subfolders_list = search_merged_subfolders(db['data_path'])
+      print(merged_subfolders_list)
       for sublist in merged_subfolders_list:
+            print(sublist)
             for subfolder in sublist:
+                  print(subfolder)
                   if gcamp == 'f':
                         db_list.append({
                               'h5py': [],  # a single h5 file path

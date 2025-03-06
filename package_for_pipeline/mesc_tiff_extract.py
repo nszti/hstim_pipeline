@@ -3,19 +3,35 @@ import os.path
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from pathlib import Path
 from pprint import pprint
 from pathlib import Path
 from hdf5io.hdf5io import Hdf5io
 from cv2 import bitwise_not
-#from caiman_analysis import run_caiman_on_tiff
 from mesc_loader import extract_useful_xml_params
 from general import ascii_to_str, find_frame_index_from_timestamp
 
+#NB!: Check trigger channel in MESc, modify if needed!!!!
+def analyse_mesc_file(filepath, output_path,  plot_curves=False, print_all_attributes=False, stim_trig_channel="DI2"):
+    '''
 
-def analyse_mesc_file(filepath, output_path,  plot_curves=False, print_all_attributes=False, stim_trig_channel="DI3"):
+    Parameters
+    ----------
+    filepath: path to the MESc file
+    output_path: output path, usually the directory which contains the MESc file
+    plot_curves: wheather to plot curves in MUnit
+    print_all_attributes:unit attributes
+    stim_trig_channel: the channel from which the triggers have been initiated in MESc
+
+    Returns
+    -------
+    fileID.txt: saves the tiff file recording numbers/IDs from MESc
+    frameNo.txt: saves the frame number of each file
+    trigger.txt: saves the start of the stimulation's frame number
+    mesc_data.npy: contains all three datasets' dataframe into a .npy format
+    '''
     dir= Path(output_path)
     file_to_search = f"fileID.txt"
+    stim_start = []
     if file_to_search not in os.listdir(dir): #search for number of tiff files
         print(f"Extracting TIFF files")
 
@@ -77,13 +93,14 @@ def analyse_mesc_file(filepath, output_path,  plot_curves=False, print_all_attri
                             if stim_trig_channel in ascii_to_str(selected_unit[key]._v_attrs['Name']):
 
                                 y_data = selected_unit[key]['CurveDataYRawData'][()]
+                                print(y_data)
                                 stim_start_indices = []
                                 for i in range(1, y_data.shape[0]):
                                     if y_data[i] > y_data[i-1]:
                                         print(i)
                                         stim_start_indices.append(i)
-                                print("Stimulation start indices (ms):", stim_start_indices)
-
+                                        stim_start.append(i)
+                                print(f"Stimulation start indices (ms): {stim_start_indices}")
 
                 # ---Printing Unit attributes---
                 if print_all_attributes:
@@ -106,7 +123,7 @@ def analyse_mesc_file(filepath, output_path,  plot_curves=False, print_all_attri
                 # Load and invert image array (in all test files the recording was in Channnel_0 and there were no other channels)
                 image_seq = bitwise_not(selected_unit['Channel_0'][()])  # load & invert image array
                 image_seq.squeeze()
-                print(image_seq.shape, image_seq.dtype)
+                #print(image_seq.shape, image_seq.dtype)
 
                 frame_timestamps = np.arange(0, frame_time_ms * image_seq.shape[0], frame_time_ms)
 
@@ -124,7 +141,7 @@ def analyse_mesc_file(filepath, output_path,  plot_curves=False, print_all_attri
                         f2.write("\n")
                         f3.write(str(len(image_seq)))
                         f3.write("\n")
-                        print("Stimulation start 2p frame indices:", stim_start_frame_indices)
+                        print(f"Stimulation start 2p frame indices:{stim_start_frame_indices}")
 
                 except UnboundLocalError:
                    pass
@@ -145,20 +162,12 @@ def analyse_mesc_file(filepath, output_path,  plot_curves=False, print_all_attri
             f.close()
             f2.close()
             f3.close()
-            print(len(image_seq))
+            #print(len(image_seq))
 
             data = {'FileID' : files_ids, 'FrameNo': frame_nos, 'Trigger' : triggers}
             df = pd.DataFrame(data)
             output_dir_path = f'{output_path}merged_tiffs/mesc_data.npy'
-            np.save(output_dir_path, df.to_numpy()) #"mesc_data_" + file_name +".npy"
-    '''
-    else:
-        print(f"TIFFs already extracted, skipping step")
-        pass
-    '''
-'''
-if __name__ == '__main__':
-    folder = Path("C:/Hyperstim/pipeline_pending/mesc_preprocess/")
-    filename = "2023_09_25_in_vivo_test_GCAMP6f.mesc"
-    analyse_mesc_file(folder/filename, print_all_attributes=True, plot_curves = True)
-'''
+            np.save(output_dir_path, df.to_numpy())
+            #np.savetxt(output_path, output_dir_path, fmt='%12.8f %12.8f')
+    print(f"Stimulation start indices (ms): {stim_start}")
+

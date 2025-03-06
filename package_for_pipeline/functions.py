@@ -979,7 +979,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             plt.show()
 
 
-def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list_of_file_nums= None):
+def plot_stim_traces(expDir, frame_rate=31, num_repeats=6, num_stims_per_repeat=5, list_of_file_nums=None):
     '''
     Plot calcium traces around stimulation timepoints in a grid
 
@@ -993,14 +993,54 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         Number of times the stimulation sequence was repeated (default 6)
     num_stims_per_repeat : int
         Number of different stimulation amplitudes per repeat (default 5)
+    list_of_file_nums : list of lists
+        List of file numbers to analyze, e.g. [[11], [12]] for analyzing merged_11 and merged_12
     '''
     base_dir = Path(expDir)
-    filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+    print(f"Looking for directories in: {base_dir}")
 
-    for dir in filenames:
+    # If list_of_file_nums is provided, only analyze those specific directories
+    if list_of_file_nums is not None:
+        dirs_to_analyze = []
+        print(f"Looking for directories matching: {list_of_file_nums}")
+
+        # First, print all available directories
+        all_dirs = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+        print(f"Available directories: {all_dirs}")
+
+        for sublist in list_of_file_nums:
+            suffix = '_'.join(map(str, sublist))
+            print(f"\nLooking for suffix: {suffix}")
+            matching_dir = None
+
+            # Original directory matching logic
+            for file in base_dir.iterdir():
+                if file.name.startswith('merged'):
+                    print(f"Checking directory: {file.name}")
+                    if file.name.endswith(suffix):
+                        matching_dir = file.name
+                        print(f"Found matching directory: {matching_dir}")
+                        break
+
+            if matching_dir:
+                dirs_to_analyze.append(matching_dir)
+            else:
+                print(f"No matching directory found for suffix {suffix}")
+    else:
+        # If no list provided, analyze all merged directories
+        dirs_to_analyze = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+        print(f"Analyzing all directories: {dirs_to_analyze}")
+
+    print(f"\nDirectories to analyze: {dirs_to_analyze}")
+
+    for dir in dirs_to_analyze:
+        print(f"\nAnalyzing directory: {dir}")
         # Load required data
-        F_path = expDir + dir + '/suite2p/plane0/F.npy'
-        stim_start_times_path = expDir + dir + '/stimTimes.npy'
+        F_path = expDir + '/' + dir + '/suite2p/plane0/F.npy'
+        stim_start_times_path = expDir + '/' + dir + '/stimTimes.npy'
+        print(f"Loading data from: {F_path}")
+        print(f"Loading stim times from: {stim_start_times_path}")
+
         F = np.load(F_path, allow_pickle=True)
         stim_start_times = np.load(stim_start_times_path, allow_pickle=True)
 

@@ -1049,6 +1049,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
         # Storage for traces: Shape (ROIs, repeats, stimulations, frames)
         all_traces = np.zeros((num_repeats, num_stims_per_repeat, total_frames))
+        all_time_axes = np.zeros((num_repeats, num_stims_per_repeat, total_frames))
 
         for repeat in range(num_repeats):
             for stim_idx in range(num_stims_per_repeat):
@@ -1069,6 +1070,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
                 # Extract fluorescence trace for this ROI
                 trace_segment = F[F_index, pre_start:post_end]
+                actual_time = np.arange(pre_start, post_end) / frame_rate
 
                 '''
                 # Pad if needed
@@ -1084,23 +1086,21 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     trace_segment = np.zeros(total_frames)
 
                 all_traces[repeat, stim_idx] = trace_segment
+                all_time_axes[repeat, stim_idx] = actual_time
 
-        # Create time array for x-axis
-        time = np.linspace(-1, 3, total_frames)
-        actual_time = np.arange(pre_start, post_end) / frame_rate
-
+        #PLOTTING
         # Create grid plot
         fig, axes = plt.subplots(num_repeats, num_stims_per_repeat, figsize=(5 * num_stims_per_repeat, 4 * num_repeats))
         fig.suptitle('Calcium Traces Around Stimulation', fontsize=16)
 
         for repeat in range(num_repeats):
-            print("belepett")
             for stim_idx in range(num_stims_per_repeat):
                 ax = axes[repeat, stim_idx]
-                ax.plot(time, all_traces[repeat, stim_idx], label=f"Repeat {repeat}, Stim {stim_idx}")
-                ax.axvline(x=0, color='r', linestyle='--', alpha=0.5)  # Mark stimulation onset
+                ax.plot(all_time_axes[repeat, stim_idx], all_traces[repeat, stim_idx],
+                        label=f"Repeat {repeat}, Stim {stim_idx}")
+                ax.axvline(x=(start_stim / frame_rate), color='r', linestyle='--', alpha=0.5)  # Mark stimulation onset
                 ax.set_title(f'Repeat {repeat + 1}, Stim {stim_idx + 1}')
-                ax.set_xlabel('Time (s)')
+                ax.set_xlabel('Time (s)')  # X-axis now shows real recording time
                 ax.set_ylabel('ΔF/F')
                 ax.grid(True)
 

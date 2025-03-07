@@ -1039,6 +1039,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         if roi_idx  not in cell_indices:
             raise ValueError
 
+        F_index = np.where(cell_indices == roi_idx)[0][0]
         # Calculate time windows (1s before, 3s after)
         pre_frames = frame_rate  # 1 second before
         post_frames = frame_rate * 3  # 3 seconds after
@@ -1061,7 +1062,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 post_end = min(F.shape[1], actual_start + post_frames)
 
                 # Extract fluorescence trace for this ROI
-                trace_segment = F[roi_idx, pre_start:post_end]
+                trace_segment = F[F_index, pre_start:post_end]
 
                 '''
                 # Pad if needed

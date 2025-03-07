@@ -1099,10 +1099,14 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 ax.axvline(x=0, color='r', linestyle='--', alpha=0.5)  # Mark stimulation onset
                 ax.set_title(f'Repeat {repeat + 1}, Stim {stim_idx + 1}')
 
-                # Updated X-axis labels to reflect real recording time
-                actual_times = (start_stim + time * frame_rate) / frame_rate
-                ax.set_xticks(time)
-                ax.set_xticklabels([f"{t:.1f}" for t in actual_times])  # Format with 1 decimal place
+                # Set only three x-axis labels: pre, stim, post
+                x_ticks = [-1, 0, 3]  # -1s, 0s (stim onset), +3s
+                x_labels = [f"{(start_stim - pre_frames) / frame_rate:.1f}",
+                            f"{start_stim / frame_rate:.1f}",
+                            f"{(start_stim + post_frames) / frame_rate:.1f}"]
+
+                ax.set_xticks(x_ticks)
+                ax.set_xticklabels(x_labels)
 
                 ax.set_xlabel('Time (s)')
                 ax.set_ylabel('ΔF/F')

@@ -996,6 +996,8 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             suffix = '_'.join(map(str, sublist))
             print(f"\nLooking for suffix: {suffix}")
             matching_dir = None
+            merged_dir = f'merged_{suffix}'
+            merged_path = os.path.join(base_dir, merged_dir)
 
             # Original directory matching logic
             for file in base_dir.iterdir():
@@ -1023,8 +1025,6 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         F_path = expDir + dir + '/suite2p/plane0/F.npy'
         iscelll_path = expDir + dir + '/suite2p/plane0/iscell.npy'
         stim_start_times_path = expDir + dir + '/stimTimes.npy'
-        merged_path = expDir + dir
-        print(f"merged path: {merged_path}")
         print(f"Loading data from: {F_path}")
         print(f"Loading stim times from: {stim_start_times_path}")
 

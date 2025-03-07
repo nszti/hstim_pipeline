@@ -979,7 +979,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             plt.show()
 
 
-def plot_stim_traces(expDir, frame_rate=31, num_repeats=6, num_stims_per_repeat=5, list_of_file_nums=None):
+def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list_of_file_nums=None):
     '''
     Plot calcium traces around stimulation timepoints in a grid
 
@@ -1036,8 +1036,8 @@ def plot_stim_traces(expDir, frame_rate=31, num_repeats=6, num_stims_per_repeat=
     for dir in dirs_to_analyze:
         print(f"\nAnalyzing directory: {dir}")
         # Load required data
-        F_path = expDir + '/' + dir + '/suite2p/plane0/F.npy'
-        stim_start_times_path = expDir + '/' + dir + '/stimTimes.npy'
+        F_path = expDir + dir + '/suite2p/plane0/F.npy'
+        stim_start_times_path = expDir + dir + '/stimTimes.npy'
         print(f"Loading data from: {F_path}")
         print(f"Loading stim times from: {stim_start_times_path}")
 
@@ -1100,6 +1100,7 @@ def plot_stim_traces(expDir, frame_rate=31, num_repeats=6, num_stims_per_repeat=
                 ax.grid(True)
 
         plt.tight_layout()
+        #plt.show()
         plt.savefig(os.path.join(expDir, dir, 'stim_traces_grid.png'))
         plt.close()
 

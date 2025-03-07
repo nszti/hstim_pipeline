@@ -73,8 +73,8 @@ functions.plot_stim_traces(
   6,
   5,
   list_of_file_nums,
-  8000,
-  5000,
+  8,
+  5,
   159
 )
 '''

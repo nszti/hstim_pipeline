@@ -1044,6 +1044,8 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         pre_frames = frame_rate  # 1 second before
         post_frames = frame_rate * 3  # 3 seconds after
         total_frames = pre_frames + post_frames
+        start_btw_stim_frames = start_btw_stim * frame_rate
+        trial_delay_frames = trial_delay * frame_rate
 
         # Storage for traces: Shape (ROIs, repeats, stimulations, frames)
         all_traces = np.zeros((num_repeats, num_stims_per_repeat, total_frames))
@@ -1054,10 +1056,11 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 if stim_idx == 0 and repeat == 0:
                     start_stim = int(stim_start_times[0])  # First stimulation from stim_start_times
                 elif repeat == 0:
-                    start_stim = int(stim_start_times[0]) + stim_idx * start_btw_stim * frame_rate
+                    print(repeat, stim_idx)
+                    start_stim = int(stim_start_times[0]) + stim_idx * start_btw_stim_frames
                 else:
-                    start_stim = int(stim_start_times[0]) + (
-                        stim_idx) * start_btw_stim * frame_rate + repeat * trial_delay
+                    print(repeat, stim_idx)
+                    start_stim = int(stim_start_times[0]) + (stim_idx) * start_btw_stim_frames + repeat * trial_delay_frames
                 print(f"ROI {roi_idx}, Repeat {repeat}, Stim {stim_idx}: Start = {start_stim}")
 
                 # Define time window (1 sec before, 3 sec after)
@@ -1094,7 +1097,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             print("belepett")
             for stim_idx in range(num_stims_per_repeat):
                 ax = axes[repeat, stim_idx]
-                ax.plot(actual_time, all_traces[repeat, stim_idx], label=f"Repeat {repeat}, Stim {stim_idx}")
+                ax.plot(time, all_traces[repeat, stim_idx], label=f"Repeat {repeat}, Stim {stim_idx}")
                 ax.axvline(x=0, color='r', linestyle='--', alpha=0.5)  # Mark stimulation onset
                 ax.set_title(f'Repeat {repeat + 1}, Stim {stim_idx + 1}')
                 ax.set_xlabel('Time (s)')

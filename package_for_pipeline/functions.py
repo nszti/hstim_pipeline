@@ -1082,6 +1082,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
         # Create time array for x-axis
         time = np.linspace(-1, 3, total_frames)
+        actual_time = np.arange(pre_start, post_end) / frame_rate
 
         # Create grid plot
         fig, axes = plt.subplots(num_repeats, num_stims_per_repeat, figsize=(5 * num_stims_per_repeat, 4 * num_repeats))
@@ -1091,7 +1092,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             print("belepett")
             for stim_idx in range(num_stims_per_repeat):
                 ax = axes[repeat, stim_idx]
-                ax.plot(time, all_traces[repeat, stim_idx], label=f"Repeat {repeat}, Stim {stim_idx}")
+                ax.plot(actual_time, all_traces[repeat, stim_idx], label=f"Repeat {repeat}, Stim {stim_idx}")
                 ax.axvline(x=0, color='r', linestyle='--', alpha=0.5)  # Mark stimulation onset
                 ax.set_title(f'Repeat {repeat + 1}, Stim {stim_idx + 1}')
                 ax.set_xlabel('Time (s)')

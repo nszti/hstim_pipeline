@@ -61,7 +61,17 @@ stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
 #suite2p_script.run_suite2p(os.path.join(root_directory,'merged_tiffs/'), gcamp)
 #functions_current_steering.plot_stim_traces(tiff_directory, num_repeats=6, num_stims_per_repeat=5)
 
-functions.plot_stim_traces(tiff_directory,31, 6, 5, list_of_file_nums)
+functions.plot_stim_traces(
+  tiff_directory,
+  31,
+  6,
+  5,
+  list_of_file_nums,
+  8000,
+  5000,
+  0,
+  None
+)
 #--------------Suite2p manual sorting------------------
 '''
 functions.stim_dur_val(tiff_directory, list_of_file_nums)

@@ -979,23 +979,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             plt.show()
 
 
-def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list_of_file_nums=None):
-    '''
-    Plot calcium traces around stimulation timepoints in a grid
-
-    Parameters
-    ----------
-    expDir : str
-        Path to the experiment directory
-    frame_rate : int
-        Frame rate of the recording (default 31 Hz)
-    num_repeats : int
-        Number of times the stimulation sequence was repeated (default 6)
-    num_stims_per_repeat : int
-        Number of different stimulation amplitudes per repeat (default 5)
-    list_of_file_nums : list of lists
-        List of file numbers to analyze, e.g. [[11], [12]] for analyzing merged_11 and merged_12
-    '''
+def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list_of_file_nums=None, roi_idx, save_path=None ):
     base_dir = Path(expDir)
     print(f"Looking for directories in: {base_dir}")
 
@@ -1049,68 +1033,65 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         post_frames = frame_rate * 3  # 3 seconds after
         total_frames = pre_frames + post_frames
 
-        num_rois = F.shape[0]  # Total number of ROIs
+        # Extract the ROI indexes for cells
+        cell_indices = np.where(iscell[:, 0] == 1)[0]  # Get indices of valid ROIs
+        num_cells = len(cell_indices)
+        original_roi_idx = cell_indices[roi_idx]
+        print(f"Processing ROI {roi_idx} (Original Index in F: {original_roi_idx})")
 
         # Storage for traces: Shape (ROIs, repeats, stimulations, frames)
-        all_traces = np.zeros((num_rois, num_repeats, num_stims_per_repeat, total_frames))
+        all_traces = np.zeros((num_repeats, num_stims_per_repeat, total_frames))
 
-        for roi_idx in range(num_rois):  # Outermost loop for each ROI
-            print(f"Processing ROI {roi_idx + 1}/{num_rois}")
+        for repeat in range(num_repeats):
+            for stim_idx in range(num_stims_per_repeat):
+                if repeat == 0 and stim_idx == 0:
+                    actual_start = int(stim_start_times[0])  # First stimulation from stim_start_times
+                else:
+                    actual_start = int(stim_start_times[0]) + (stim_idx * start_btw_stim) + (repeat * trial_delay)
+                print(f"ROI {roi_idx} (Orig {original_roi_idx}), Repeat {repeat}, Stim {stim_idx}: Start = {actual_start}")
 
-            for repeat in range(num_repeats):  # Outer loop: 6 full cycles
-                for stim_idx in range(num_stims_per_repeat):  # Inner loop: 5 stimulations per cycle
+                # Define time window (1 sec before, 3 sec after)
+                pre_start = max(0, actual_start - pre_frames)
+                post_end = min(F.shape[1], actual_start + post_frames)
 
-                    if repeat == 0 and stim_idx == 0:
-                        # First stimulation uses directly from stim_start_times
-                        actual_start = int(stim_start_times[0])
+                # Extract fluorescence trace for this ROI
+                trace_segment = F[original_roi_idx, pre_start:post_end]
+
+                # Pad if needed
+                if trace_segment.shape[0] < total_frames:
+                    pad_width = total_frames - trace_segment.shape[0]
+                    if pre_start == 0:
+                        trace_segment = np.pad(trace_segment, (pad_width, 0), mode='edge')
                     else:
-                        # Calculate actual start using start_btw_stim and trial_delay
-                        actual_start = int(stim_start_times[0]) + (stim_idx * start_btw_stim) + (repeat * trial_delay)
+                        trace_segment = np.pad(trace_segment, (0, pad_width), mode='edge')
 
-                    print(f"ROI {roi_idx}, Repeat {repeat}, Stim {stim_idx}: Actual Start = {actual_start}")
+                # Store trace for this ROI, repeat, and stimulation index
+                all_traces[repeat, stim_idx] = trace_segment
 
-                    # Define time window (1 sec before, 3 sec after)
-                    pre_start = max(0, actual_start - pre_frames)
-                    post_end = min(F.shape[1], actual_start + post_frames)
-
-                    # Extract fluorescence trace for this ROI
-                    trace_segment = F[roi_idx, pre_start:post_end]
-
-                    # Pad if needed
-                    if trace_segment.shape[0] < total_frames:
-                        pad_width = total_frames - trace_segment.shape[0]
-                        if pre_start == 0:
-                            trace_segment = np.pad(trace_segment, (pad_width, 0), mode='edge')
-                        else:
-                            trace_segment = np.pad(trace_segment, (0, pad_width), mode='edge')
-
-                    # Store trace for this ROI, repeat, and stimulation index
-                    all_traces[roi_idx, repeat, stim_idx] = trace_segment
-
-        # Calculate mean traces across ROIs
-        mean_traces = np.mean(all_traces, axis=2)  # Average across ROIs
 
         # Create time array for x-axis
-        time = np.arange(-1, 3, 1 / frame_rate)
+        time = np.linspace(-1, 3, total_frames)
 
         # Create grid plot
         fig, axes = plt.subplots(num_repeats, num_stims_per_repeat, figsize=(5 * num_stims_per_repeat, 4 * num_repeats))
         fig.suptitle('Calcium Traces Around Stimulation', fontsize=16)
 
         for repeat in range(num_repeats):
-            for amp_idx in range(num_stims_per_repeat):
-                ax = axes[repeat, amp_idx]
-                ax.plot(time, mean_traces[repeat, amp_idx])
+            for stim_idx in range(num_stims_per_repeat):
+                ax = axes[repeat, stim_idx]
+                ax.plot(time, all_traces[repeat, stim_idx], label=f"Repeat {repeat}, Stim {stim_idx}")
                 ax.axvline(x=0, color='r', linestyle='--', alpha=0.5)  # Mark stimulation onset
-                ax.set_title(f'Repeat {repeat + 1}, Amp {amp_idx + 1}')
+                ax.set_title(f'Repeat {repeat + 1}, Stim {stim_idx + 1}')
                 ax.set_xlabel('Time (s)')
                 ax.set_ylabel('ΔF/F')
                 ax.grid(True)
 
         plt.tight_layout()
-        #plt.show()
-        plt.savefig(os.path.join(expDir, dir, 'stim_traces_grid.png'))
-        plt.close()
+        if save_path:
+            plt.savefig(os.path.join(save_path, f'roi_{roi_idx}_stim_traces.png'))
+            print(f"Plot saved as {save_path}/roi_{roi_idx}_stim_traces.png")
+
+        plt.show()
 
 #scratch_1
 

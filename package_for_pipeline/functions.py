@@ -1092,6 +1092,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         print(min_trace_value, max_trace_value)
 
         #PLOTTING
+#----plot1
         time = np.linspace(-1, 3, total_frames)
         # Create grid plot
         fig, axes = plt.subplots(num_repeats, num_stims_per_repeat, figsize=(5 * num_stims_per_repeat, 4 * num_repeats))
@@ -1125,6 +1126,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         print("saved fig")
         plt.close()
 
+#--------plot 2
         # Create figure of overlapped traces with one subplot per repeat
         amplitude_values = [10, 20, 30, 15, 25]  # Adjust if necessary
         amplitude_colors = {10: 'blue', 20: 'orange', 30: 'green', 15: 'red', 25: 'purple'}
@@ -1165,6 +1167,53 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
         plt.tight_layout()
         plt.savefig(os.path.join(expDir, dir, 'overlapping_stim_traces.png'))
+        plt.show()
+
+# --------plot 3
+        #overlap trials by amplitude
+        amplitude_values = [10, 20, 30, 15, 25]  # Adjust as needed
+        amplitude_colors = {10: 'blue', 20: 'orange', 30: 'green', 15: 'red', 25: 'purple'}
+
+        # Create figure with one subplot per amplitude
+        fig, axes = plt.subplots(1, len(amplitude_values), figsize=(4 * len(amplitude_values), 4), sharey=True)
+        fig.suptitle(f'Overlapping Trials for Each Amplitude - ROI {roi_idx}', fontsize=16)
+
+        # Define stimulation period for shading (e.g., 1s to 2s after onset)
+        stim_start_sec = 1  # Relative to onset (adjust if needed)
+        stim_end_sec = 2
+
+        for stim_idx, amplitude in enumerate(amplitude_values):
+            ax = axes[stim_idx] if len(amplitude_values) > 1 else axes  # Handle case when only 1 amplitude
+            color = amplitude_colors.get(amplitude, 'black')  # Assign color based on amplitude
+
+            for repeat in range(num_repeats):
+                # Plot each trial for this amplitude
+                ax.plot(time, all_traces[repeat, stim_idx], color=color, alpha=0.5, label=f"Trial {repeat + 1}")
+
+            # Add a bold average trace for this amplitude
+            avg_trace = np.mean(all_traces[:, stim_idx, :], axis=0)
+            ax.plot(time, avg_trace, color=color, linewidth=2, label="Avg Response")
+
+            # Add shaded region to indicate stimulation period
+            ax.axvspan(stim_start_sec, stim_end_sec, color='gray', alpha=0.3)
+
+            # Formatting
+            ax.set_xlabel('Time (s)')
+            if stim_idx == 0:
+                ax.set_ylabel('Mean ΔF/F₀')
+            ax.set_title(f'{amplitude} μA')
+
+            ax.set_ylim(min_trace_value, max_trace_value)
+
+            # Remove duplicate legend entries
+            handles, labels = ax.get_legend_handles_labels()
+            unique_legend = dict(zip(labels, handles))  # Remove duplicates
+            ax.legend(unique_legend.values(), unique_legend.keys(), loc='upper left', fontsize=8)
+
+            ax.grid(True)
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(expDir, dir, 'amplitude_overlapping_subplots.png'))
         plt.show()
 
 #scratch_1

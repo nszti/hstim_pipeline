@@ -979,7 +979,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             plt.show()
 
 
-def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list_of_file_nums=None, start_btw_stim=None, trial_delay=None, roi_idx=None, save_path=None ):
+def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list_of_file_nums=None, start_btw_stim=None, trial_delay=None, roi_idx=None ):
     base_dir = Path(expDir)
     merged_path = expDir
     print(f"Looking for directories in: {base_dir}")
@@ -1075,6 +1075,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 '''
                 # Store trace for this ROI, repeat, and stimulation index
                 all_traces[repeat, stim_idx] = trace_segment
+                print(repeat, stim_idx, trace_segment)
 
 
         # Create time array for x-axis
@@ -1096,8 +1097,8 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 ax.grid(True)
 
         plt.tight_layout()
-
-        plt.savefig(os.path.join(expDir, dir, 'stim_traces_grid.png'))
+        savepath = os.path.join(expDir, dir, 'stim_traces_grid.png')
+        plt.savefig(savepath)
         plt.close()
 
 #scratch_1

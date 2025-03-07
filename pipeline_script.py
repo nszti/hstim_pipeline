@@ -74,17 +74,19 @@ functions.plot_stim_traces(
   5,
   list_of_file_nums,
   8,
-  5,
-  159
+  5.17, #5.165
+  0
 )
+
+
 '''
 functions.activated_neurons_val(root_directory, tiff_directory, list_of_file_nums)
 functions.timecourse_vals(tiff_directory, list_of_file_nums, 5)
 functions.data_analysis_values('amp', tiff_directory, list_of_file_nums)
+'''
 
 
-
-
+'''
 functions.stim_dur_val(tiff_directory, list_of_file_nums)
 functions.electROI_val(tiff_directory, list_of_file_nums)
 functions.dist_vals(tiff_directory, list_of_file_nums)

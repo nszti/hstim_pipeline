@@ -979,7 +979,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             plt.show()
 
 
-def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list_of_file_nums=None, start_btw_stim=None, trial_delay=None, roi_idx=None ):
+def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list_of_file_nums=None, start_btw_stim=None, trial_delay=float, roi_idx=None ):
     base_dir = Path(expDir)
     merged_path = expDir
     print(f"Looking for directories in: {base_dir}")
@@ -1047,20 +1047,22 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         start_btw_stim_frames = start_btw_stim * frame_rate
         trial_delay_frames = trial_delay * frame_rate
 
+
         # Storage for traces: Shape (ROIs, repeats, stimulations, frames)
         all_traces = np.zeros((num_repeats, num_stims_per_repeat, total_frames))
 
         for repeat in range(num_repeats):
             for stim_idx in range(num_stims_per_repeat):
+
                 # stimulation start time
                 if stim_idx == 0 and repeat == 0:
                     start_stim = int(stim_start_times[0])  # First stimulation from stim_start_times
                 elif repeat == 0:
                     print(repeat, stim_idx)
-                    start_stim = int(stim_start_times[0]) + stim_idx * start_btw_stim_frames
+                    start_stim = int(stim_start_times[0] + stim_idx * start_btw_stim_frames)
                 else:
                     print(repeat, stim_idx)
-                    start_stim = int(stim_start_times[0]) + (stim_idx) * start_btw_stim_frames + repeat * trial_delay_frames
+                    start_stim = int(stim_start_times[0] + (stim_idx * start_btw_stim_frames) + (repeat * (((num_stims_per_repeat-1) * start_btw_stim_frames)+ trial_delay_frames)))
                 print(f"ROI {roi_idx}, Repeat {repeat}, Stim {stim_idx}: Start = {start_stim}")
 
                 # Define time window (1 sec before, 3 sec after)
@@ -1113,7 +1115,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 ax.grid(True)
 
         plt.tight_layout()
-        savepath = os.path.join(expDir, dir, 'stim_traces_grid.png')
+        savepath = os.path.join(expDir, dir, 'stim_traces_grid.svg')
         plt.savefig(savepath)
         print("saved fig")
         plt.close()

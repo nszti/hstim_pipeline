@@ -981,6 +981,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
 
 def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list_of_file_nums=None, start_btw_stim=None, trial_delay=None, roi_idx=None, save_path=None ):
     base_dir = Path(expDir)
+    merged_path = expDir
     print(f"Looking for directories in: {base_dir}")
 
     # If list_of_file_nums is provided, only analyze those specific directories
@@ -996,8 +997,6 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             suffix = '_'.join(map(str, sublist))
             print(f"\nLooking for suffix: {suffix}")
             matching_dir = None
-            merged_dir = f'merged_{suffix}'
-            merged_path = os.path.join(base_dir, merged_dir)
 
             # Original directory matching logic
             for file in base_dir.iterdir():
@@ -1022,7 +1021,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
     for dir in dirs_to_analyze:
         print(f"\nAnalyzing directory: {dir}")
         # Load required data
-        F_path = expDir + dir + '/suite2p/plane0/F.npy'
+        F_path = expDir + dir + '/suite2p/plane0/F0.npy'
         iscelll_path = expDir + dir + '/suite2p/plane0/iscell.npy'
         stim_start_times_path = expDir + dir + '/stimTimes.npy'
         print(f"Loading data from: {F_path}")
@@ -1040,8 +1039,6 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         if roi_idx  not in cell_indices:
             raise ValueError
 
-        norm_traces = baseline_val(expDir, merged_path, list_of_file_nums)
-
         # Calculate time windows (1s before, 3s after)
         pre_frames = frame_rate  # 1 second before
         post_frames = frame_rate * 3  # 3 seconds after
@@ -1057,14 +1054,14 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 else:
                     actual_start = int(stim_start_times[0]) + (stim_idx * start_btw_stim) + (repeat * trial_delay)
                     print("else")
-                print(f"ROI {roi_idx} (Orig {original_roi_idx}), Repeat {repeat}, Stim {stim_idx}: Start = {actual_start}")
+                print(f"ROI {roi_idx} (Orig {roi_idx}), Repeat {repeat}, Stim {stim_idx}: Start = {actual_start}")
 
                 # Define time window (1 sec before, 3 sec after)
                 pre_start = max(0, actual_start - pre_frames)
-                post_end = min(norm_traces.shape[1], actual_start + post_frames)
+                post_end = min(F.shape[1], actual_start + post_frames)
 
                 # Extract fluorescence trace for this ROI
-                trace_segment = norm_traces[roi_idx, pre_start:post_end]
+                trace_segment = F[roi_idx, pre_start:post_end]
 
                 '''
                 # Pad if needed
@@ -1087,6 +1084,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         fig.suptitle('Calcium Traces Around Stimulation', fontsize=16)
 
         for repeat in range(num_repeats):
+            print("belepett")
             for stim_idx in range(num_stims_per_repeat):
                 ax = axes[repeat, stim_idx]
                 ax.plot(time, all_traces[repeat, stim_idx], label=f"Repeat {repeat}, Stim {stim_idx}")

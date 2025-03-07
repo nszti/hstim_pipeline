@@ -979,7 +979,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             plt.show()
 
 
-def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list_of_file_nums=None, roi_idx, save_path=None ):
+def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list_of_file_nums=None, start_btw_stim=None, trial_delay=None, roi_idx=None, save_path=None ):
     base_dir = Path(expDir)
     print(f"Looking for directories in: {base_dir}")
 
@@ -1021,23 +1021,31 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         print(f"\nAnalyzing directory: {dir}")
         # Load required data
         F_path = expDir + dir + '/suite2p/plane0/F.npy'
+        iscelll_path = expDir + dir + '/suite2p/plane0/iscell.npy'
         stim_start_times_path = expDir + dir + '/stimTimes.npy'
+        merged_path = expDir + dir
+        print(f"merged path: {merged_path}")
         print(f"Loading data from: {F_path}")
         print(f"Loading stim times from: {stim_start_times_path}")
 
         F = np.load(F_path, allow_pickle=True)
+        iscell = np.load(iscelll_path, allow_pickle=True)
         stim_start_times = np.load(stim_start_times_path, allow_pickle=True)
+
+        # Extract the ROI indexes for cells
+        cell_indices = np.where(iscell[:, 0] == 1)[0]  # Get indices of valid ROIs
+        print(cell_indices)
+        num_cells = len(cell_indices)
+        print(num_cells)
+        if roi_idx  not in cell_indices:
+            raise ValueError
+
+        norm_traces = baseline_val(expDir, merged_path, list_of_file_nums)
 
         # Calculate time windows (1s before, 3s after)
         pre_frames = frame_rate  # 1 second before
         post_frames = frame_rate * 3  # 3 seconds after
         total_frames = pre_frames + post_frames
-
-        # Extract the ROI indexes for cells
-        cell_indices = np.where(iscell[:, 0] == 1)[0]  # Get indices of valid ROIs
-        num_cells = len(cell_indices)
-        original_roi_idx = cell_indices[roi_idx]
-        print(f"Processing ROI {roi_idx} (Original Index in F: {original_roi_idx})")
 
         # Storage for traces: Shape (ROIs, repeats, stimulations, frames)
         all_traces = np.zeros((num_repeats, num_stims_per_repeat, total_frames))
@@ -1048,15 +1056,17 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     actual_start = int(stim_start_times[0])  # First stimulation from stim_start_times
                 else:
                     actual_start = int(stim_start_times[0]) + (stim_idx * start_btw_stim) + (repeat * trial_delay)
+                    print("else")
                 print(f"ROI {roi_idx} (Orig {original_roi_idx}), Repeat {repeat}, Stim {stim_idx}: Start = {actual_start}")
 
                 # Define time window (1 sec before, 3 sec after)
                 pre_start = max(0, actual_start - pre_frames)
-                post_end = min(F.shape[1], actual_start + post_frames)
+                post_end = min(norm_traces.shape[1], actual_start + post_frames)
 
                 # Extract fluorescence trace for this ROI
-                trace_segment = F[original_roi_idx, pre_start:post_end]
+                trace_segment = norm_traces[roi_idx, pre_start:post_end]
 
+                '''
                 # Pad if needed
                 if trace_segment.shape[0] < total_frames:
                     pad_width = total_frames - trace_segment.shape[0]
@@ -1064,7 +1074,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                         trace_segment = np.pad(trace_segment, (pad_width, 0), mode='edge')
                     else:
                         trace_segment = np.pad(trace_segment, (0, pad_width), mode='edge')
-
+                '''
                 # Store trace for this ROI, repeat, and stimulation index
                 all_traces[repeat, stim_idx] = trace_segment
 
@@ -1087,11 +1097,9 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 ax.grid(True)
 
         plt.tight_layout()
-        if save_path:
-            plt.savefig(os.path.join(save_path, f'roi_{roi_idx}_stim_traces.png'))
-            print(f"Plot saved as {save_path}/roi_{roi_idx}_stim_traces.png")
 
-        plt.show()
+        plt.savefig(os.path.join(expDir, dir, 'stim_traces_grid.png'))
+        plt.close()
 
 #scratch_1
 

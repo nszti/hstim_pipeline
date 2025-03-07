@@ -1089,6 +1089,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
         min_trace_value = np.min(all_traces)
         max_trace_value = np.max(all_traces)
+        print(min_trace_value, max_trace_value)
 
         #PLOTTING
         time = np.linspace(-1, 3, total_frames)

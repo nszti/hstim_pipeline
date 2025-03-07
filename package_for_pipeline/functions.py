@@ -1126,24 +1126,27 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         plt.close()
 
         # Create figure of overlapped traces with one subplot per repeat
+        amplitude_values = [10, 20, 30, 15, 25]  # Adjust if necessary
+        amplitude_colors = {10: 'blue', 20: 'orange', 30: 'green', 15: 'red', 25: 'purple'}
+
+        # Create figure with one subplot per repeat
         fig, axes = plt.subplots(1, num_repeats, figsize=(4 * num_repeats, 4), sharey=True)
         fig.suptitle(f'Overlapping Stimulations for ROI {roi_idx}', fontsize=16)
 
         # Define stimulation period for shading (e.g., 1s to 2s after onset)
         stim_start_sec = 1  # Relative to onset (adjust if needed)
         stim_end_sec = 2
-        stim_duration = stim_end_sec - stim_start_sec
 
         for repeat in range(num_repeats):
             ax = axes[repeat] if num_repeats > 1 else axes  # Handle case when only 1 repeat
-            for stim_idx in range(num_stims_per_repeat):
-                # Assign color based on stim_idx
-                color = colors[stim_idx % len(colors)]
+            for stim_idx, amplitude in enumerate(amplitude_values):
+                # Assign color based on predefined mapping
+                color = amplitude_colors.get(amplitude, 'black')  # Default to black if missing
 
                 # Plot trace with defined color
-                ax.plot(time, all_traces[repeat, stim_idx], color=color, label=f"{(stim_idx + 1) * 10} μA")
+                ax.plot(time, all_traces[repeat, stim_idx], color=color, label=f"{amplitude} μA")
 
-                # Add shaded region to indicate stimulation period
+            # Add shaded region to indicate stimulation period
             ax.axvspan(stim_start_sec, stim_end_sec, color='gray', alpha=0.3)
 
             # Formatting
@@ -1152,7 +1155,12 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 ax.set_ylabel('Mean ΔF/F₀')
             ax.set_title(f'Trial {repeat + 1}')
             ax.set_ylim(min_trace_value, max_trace_value)
-            ax.legend(loc='upper left', fontsize=8)
+
+            # Remove duplicate legend entries
+            handles, labels = ax.get_legend_handles_labels()
+            unique_legend = dict(zip(labels, handles))  # Remove duplicates
+            ax.legend(unique_legend.values(), unique_legend.keys(), loc='upper left', fontsize=8)
+
             ax.grid(True)
 
         plt.tight_layout()

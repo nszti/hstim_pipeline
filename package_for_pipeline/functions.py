@@ -1087,6 +1087,9 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
                 all_traces[repeat, stim_idx] = trace_segment
 
+        min_trace_value = np.min(all_traces)
+        max_trace_value = np.max(all_traces)
+
         #PLOTTING
         time = np.linspace(-1, 3, total_frames)
         # Create grid plot
@@ -1112,6 +1115,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
                 ax.set_xlabel('Time (s)')
                 ax.set_ylabel('ΔF/F')
+                ax.set_ylim(min_trace_value, max_trace_value)
                 ax.grid(True)
 
         plt.tight_layout()

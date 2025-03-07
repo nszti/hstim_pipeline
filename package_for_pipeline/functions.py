@@ -1125,6 +1125,25 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         print("saved fig")
         plt.close()
 
+        # Create overlay plot (All stimulations overlaid per repeat)
+        fig, ax = plt.subplots(figsize=(8, 6))
+        fig.suptitle(f'Overlapping Stimulations for ROI {roi_idx}', fontsize=16)
+
+        for stim_idx in range(num_stims_per_repeat):
+            for repeat in range(num_repeats):
+                ax.plot(time, all_traces[repeat, stim_idx], alpha=0.5,
+                        label=f"Repeat {repeat + 1}, Stim {stim_idx + 1}")
+
+        ax.axvline(x=0, color='r', linestyle='--', alpha=0.5)
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('ΔF/F')
+        ax.grid(True)
+        ax.legend(loc='upper right', fontsize=8)
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(expDir, dir, 'overlapping_stim_traces.png'))
+        plt.close()
+
 #scratch_1
 
 def scratch_val(tiff_dir):

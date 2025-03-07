@@ -1050,16 +1050,17 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
         for repeat in range(num_repeats):
             for stim_idx in range(num_stims_per_repeat):
-                if repeat == 0 and stim_idx == 0:
-                    actual_start = int(stim_start_times[0])  # First stimulation from stim_start_times
-                else:
-                    actual_start = int(stim_start_times[0]) + (stim_idx * start_btw_stim) + (repeat * trial_delay)
-                    print("else")
-                print(f"ROI {roi_idx} (Orig {roi_idx}), Repeat {repeat}, Stim {stim_idx}: Start = {actual_start}")
+                # stimulation start time
+                start_stim = int(stim_start_times[0]) + stim_idx * frame_rate
+
+                # If it's the last stim in the sequence, apply repeat delay
+                if stim_idx == num_stims_per_repeat - 1:
+                    start_stim += 5 * frame_rate
+                print(f"ROI {roi_idx}, Repeat {repeat}, Stim {stim_idx}: Start = {start_stim}")
 
                 # Define time window (1 sec before, 3 sec after)
-                pre_start = max(0, actual_start - pre_frames)
-                post_end = min(F.shape[1], actual_start + post_frames)
+                pre_start = max(0, start_stim  - pre_frames)
+                post_end = min(F.shape[1], start_stim  + post_frames)
 
                 # Extract fluorescence trace for this ROI
                 trace_segment = F[F_index, pre_start:post_end]
@@ -1074,9 +1075,10 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                         trace_segment = np.pad(trace_segment, (0, pad_width), mode='edge')
                 '''
                 # Store trace for this ROI, repeat, and stimulation index
-                all_traces[repeat, stim_idx] = trace_segment
-                print(repeat, stim_idx, trace_segment)
+                if trace_segment.shape[0] == 0:
+                    trace_segment = np.zeros(total_frames)
 
+                all_traces[repeat, stim_idx] = trace_segment
 
         # Create time array for x-axis
         time = np.linspace(-1, 3, total_frames)
@@ -1099,6 +1101,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         plt.tight_layout()
         savepath = os.path.join(expDir, dir, 'stim_traces_grid.png')
         plt.savefig(savepath)
+        print("saved fig")
         plt.close()
 
 #scratch_1

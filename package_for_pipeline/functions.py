@@ -1055,29 +1055,38 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         # Extract traces for each stimulation
         for repeat in range(num_repeats):
             for amp_idx in range(num_stims_per_repeat):
+                # Calculate the index in stim_start_times for this repeat and amplitude
                 stim_idx = repeat * num_stims_per_repeat + amp_idx
                 if stim_idx < len(stim_start_times):
-                    start_frame = stim_start_times[stim_idx]
+                    # Get the base start time for this stimulation
                     start_frame = int(stim_start_times[stim_idx])
-                    # Extract pre and post stimulation frames
-                    pre_start = max(0, start_frame - pre_frames)
-                    pre_start = int(pre_start)
-                    post_end = min(F.shape[1], start_frame + post_frames)
 
-                    # Get the trace segment
-                    trace = F[:, pre_start:post_end]
+                    # Calculate the actual start frame for this stimulation
+                    if repeat == 0:
+                        # First stimulation in the sequence
+                        actual_start = start_frame
+                    else:
+                        # For subsequent stimulations, add the appropriate delay
+                        actual_start = start_frame + (repeat * 8000000)  # 8 seconds between repeats
+
+                    # Extract pre and post stimulation frames
+                    pre_start = max(0, actual_start - pre_frames)
+                    post_end = min(F.shape[1], actual_start + post_frames)
+
+                    # Get the trace segment for all ROIs
+                    trace_segment = F[:, pre_start:post_end]
 
                     # Pad if necessary
-                    if trace.shape[1] < total_frames:
-                        pad_width = total_frames - trace.shape[1]
+                    if trace_segment.shape[1] < total_frames:
+                        pad_width = total_frames - trace_segment.shape[1]
                         if pre_start == 0:
                             # Pad at the beginning
-                            trace = np.pad(trace, ((0, 0), (pad_width, 0)), mode='edge')
+                            trace_segment = np.pad(trace_segment, ((0, 0), (pad_width, 0)), mode='edge')
                         else:
                             # Pad at the end
-                            trace = np.pad(trace, ((0, 0), (0, pad_width)), mode='edge')
+                            trace_segment = np.pad(trace_segment, ((0, 0), (0, pad_width)), mode='edge')
 
-                    all_traces[repeat, amp_idx] = trace
+                    all_traces[repeat, amp_idx] = trace_segment
 
         # Calculate mean traces across ROIs
         mean_traces = np.mean(all_traces, axis=2)  # Average across ROIs

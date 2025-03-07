@@ -757,7 +757,7 @@ def plot_stim_traces(expDir, frame_rate=31, num_repeats=6, num_stims_per_repeat=
             for file in base_dir.iterdir():
                 if file.name.startswith('merged'):
                     print(f"Checking directory: {file.name}")
-                    if file.name.endswith(suffix):
+                    if str(suffix) in file.name:
                         matching_dir = file.name
                         print(f"Found matching directory: {matching_dir}")
                         break
@@ -784,7 +784,133 @@ def plot_stim_traces(expDir, frame_rate=31, num_repeats=6, num_stims_per_repeat=
         F = np.load(F_path, allow_pickle=True)
         stim_start_times = np.load(stim_start_times_path, allow_pickle=True)
         
-        # Rest of the function remains the same...
+        # Calculate time windows (1s before, 3s after)
+        pre_frames = frame_rate  # 1 second before
+        post_frames = frame_rate * 3  # 3 seconds after
+        total_frames = pre_frames + post_frames
+        
+        # Initialize array for all traces
+        all_traces = np.zeros((num_repeats, num_stims_per_repeat, F.shape[0], total_frames))
+        
+        # Extract traces for each stimulation
+        for repeat in range(num_repeats):
+            for amp_idx in range(num_stims_per_repeat):
+                # Calculate the index in stim_start_times for this repeat and amplitude
+                stim_idx = repeat * num_stims_per_repeat + amp_idx
+                if stim_idx < len(stim_start_times):
+                    # Get the base start time for this stimulation
+                    start_frame = int(stim_start_times[stim_idx])
+                    
+                    # Calculate the actual start frame for this stimulation
+                    if repeat == 0:
+                        # First stimulation in the sequence
+                        actual_start = start_frame
+                    else:
+                        # For subsequent stimulations, add the appropriate delay
+                        actual_start = start_frame + (repeat * 8000000)  # 8 seconds between repeats
+                    
+                    # Extract pre and post stimulation frames
+                    pre_start = max(0, actual_start - pre_frames)
+                    post_end = min(F.shape[1], actual_start + post_frames)
+                    
+                    # Get the trace segment for all ROIs
+                    trace_segment = F[:, pre_start:post_end]
+                    
+                    # Pad if necessary
+                    if trace_segment.shape[1] < total_frames:
+                        pad_width = total_frames - trace_segment.shape[1]
+                        if pre_start == 0:
+                            # Pad at the beginning
+                            trace_segment = np.pad(trace_segment, ((0, 0), (pad_width, 0)), mode='edge')
+                        else:
+                            # Pad at the end
+                            trace_segment = np.pad(trace_segment, ((0, 0), (0, pad_width)), mode='edge')
+                    
+                    all_traces[repeat, amp_idx] = trace_segment
+        
+        # Calculate mean traces across ROIs
+        mean_traces = np.mean(all_traces, axis=2)  # Average across ROIs
+        
+        # Create time array for x-axis
+        time = np.arange(-1, 3, 1/frame_rate)
+        
+        # Create grid plot
+        fig, axes = plt.subplots(num_repeats, num_stims_per_repeat, figsize=(20, 16))
+        fig.suptitle(f'Calcium Traces Around Stimulation - {dir}', fontsize=16)
+        
+        # Plot individual traces
+        for repeat in range(num_repeats):
+            for amp_idx in range(num_stims_per_repeat):
+                ax = axes[repeat, amp_idx]
+                trace = mean_traces[repeat, amp_idx]
+                ax.plot(time, trace)
+                ax.axvline(x=0, color='r', linestyle='--', alpha=0.5)  # Mark stimulation onset
+                ax.set_title(f'Repeat {repeat+1}, Amp {amp_idx+1}')
+                ax.set_xlabel('Time (s)')
+                ax.set_ylabel('ΔF/F')
+                ax.grid(True)
+        
+        plt.tight_layout()
+        save_path = os.path.join(expDir, dir, 'stim_traces_grid.png')
+        plt.savefig(save_path)
+        print(f"Saved figure to: {save_path}")
+        plt.close()
+        
+        # Create summary plots
+        fig2, axes2 = plt.subplots(2, 2, figsize=(15, 15))
+        fig2.suptitle(f'Summary Plots - {dir}', fontsize=16)
+        
+        # Plot 1: Average across repeats for each amplitude
+        avg_by_amp = np.mean(mean_traces, axis=0)
+        ax = axes2[0, 0]
+        for amp_idx in range(num_stims_per_repeat):
+            ax.plot(time, avg_by_amp[amp_idx], label=f'Amp {amp_idx+1}')
+        ax.axvline(x=0, color='r', linestyle='--', alpha=0.5)
+        ax.set_title('Average Response by Amplitude')
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('ΔF/F')
+        ax.legend()
+        ax.grid(True)
+        
+        # Plot 2: Average across amplitudes for each repeat
+        avg_by_repeat = np.mean(mean_traces, axis=1)
+        ax = axes2[0, 1]
+        for repeat in range(num_repeats):
+            ax.plot(time, avg_by_repeat[repeat], label=f'Repeat {repeat+1}')
+        ax.axvline(x=0, color='r', linestyle='--', alpha=0.5)
+        ax.set_title('Average Response by Repeat')
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('ΔF/F')
+        ax.legend()
+        ax.grid(True)
+        
+        # Plot 3: Overall average response
+        ax = axes2[1, 0]
+        overall_avg = np.mean(mean_traces, axis=(0, 1))
+        ax.plot(time, overall_avg)
+        ax.axvline(x=0, color='r', linestyle='--', alpha=0.5)
+        ax.set_title('Overall Average Response')
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('ΔF/F')
+        ax.grid(True)
+        
+        # Plot 4: Response variability
+        ax = axes2[1, 1]
+        std_trace = np.std(mean_traces, axis=(0, 1))
+        ax.fill_between(time, overall_avg - std_trace, overall_avg + std_trace, alpha=0.3)
+        ax.plot(time, overall_avg, label='Mean')
+        ax.axvline(x=0, color='r', linestyle='--', alpha=0.5)
+        ax.set_title('Response Variability')
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('ΔF/F')
+        ax.legend()
+        ax.grid(True)
+        
+        plt.tight_layout()
+        save_path2 = os.path.join(expDir, dir, 'stim_traces_summary.png')
+        plt.savefig(save_path2)
+        print(f"Saved summary figure to: {save_path2}")
+        plt.close()
 
 
 

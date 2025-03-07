@@ -1050,12 +1050,12 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
         for repeat in range(num_repeats):
             for stim_idx in range(num_stims_per_repeat):
-                if stim_idx == 0 and repeat == 0:
-                    start_stim = int(stim_start_times[0])  # First stimulation from stim_start_times
-                elif repeat == 0:
-                    start_stim = int(stim_start_times[0]) + stim_idx * frame_rate * start_btw_stim
-                else:
-                    start_stim = int(stim_start_times[0]) + (stim_idx - 1) * start_btw_stim * frame_rate + repeat * trial_delay
+                # stimulation start time
+                start_stim = int(stim_start_times[0]) + stim_idx * frame_rate
+
+                # If it's the last stim in the sequence, apply repeat delay
+                if stim_idx == num_stims_per_repeat - 1:
+                    start_stim += 5 * frame_rate
                 print(f"ROI {roi_idx}, Repeat {repeat}, Stim {stim_idx}: Start = {start_stim}")
 
                 # Define time window (1 sec before, 3 sec after)
@@ -1088,7 +1088,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         fig, axes = plt.subplots(num_repeats, num_stims_per_repeat, figsize=(5 * num_stims_per_repeat, 4 * num_repeats))
         fig.suptitle('Calcium Traces Around Stimulation', fontsize=16)
 
-        for repeat in range(num_repeats):)
+        for repeat in range(num_repeats):
             print("belepett")
             for stim_idx in range(num_stims_per_repeat):
                 ax = axes[repeat, stim_idx]

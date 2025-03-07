@@ -805,13 +805,16 @@ def plot_stim_traces(expDir, frame_rate=31, num_repeats=6, num_stims_per_repeat=
                     if repeat == 0:
                         # First stimulation in the sequence
                         actual_start = start_frame
+                        print(f"First stimulation (Repeat {repeat}, Amp {amp_idx}): Start frame = {start_frame}")
                     else:
                         # For subsequent stimulations, calculate based on the first stimulation
                         first_stim_time = int(stim_start_times[amp_idx])  # Get the first stimulation time for this amplitude
                         start_btw_stim = 8000000  # 8 seconds between repeats
                         actual_start = first_stim_time + (start_btw_stim * repeat)
-                    
-                    print(f"Repeat {repeat}, Amp {amp_idx}: Start frame = {start_frame}, Actual start = {actual_start}")
+                        print(f"Subsequent stimulation (Repeat {repeat}, Amp {amp_idx}):")
+                        print(f"  First stim time: {first_stim_time}")
+                        print(f"  Delay between repeats: {start_btw_stim}")
+                        print(f"  Actual start: {actual_start}")
                     
                     # Extract pre and post stimulation frames
                     pre_start = max(0, actual_start - pre_frames)

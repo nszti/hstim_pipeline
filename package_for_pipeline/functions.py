@@ -1052,46 +1052,35 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         # Initialize array for all traces
         all_traces = np.zeros((num_repeats, num_stims_per_repeat, F.shape[0], total_frames))
 
+###
         # Extract traces for each stimulation
-        for repeat in range(num_repeats):
-            for amp_idx in range(num_stims_per_repeat):
-                # Calculate the index in stim_start_times for this repeat and amplitude
-                stim_idx = repeat * num_stims_per_repeat + amp_idx
-                if stim_idx < len(stim_start_times):
-                    # Get the base start time for this stimulation
-                    start_frame = int(stim_start_times[stim_idx])
+        for repeat in range(num_repeats):  # Outer loop: 6 full cycles
+            for stim_idx in range(num_stims_per_repeat):  # Inner loop: 5 stimulations per cycle
 
-                    # Calculate the actual start frame for this stimulation
-                    if repeat == 0:
-                        # First stimulation in the sequence
-                        actual_start = start_frame
+                # Get base start time
+                if repeat == 0 and stim_idx == 0:
+                    actual_start = int(stim_start_times[0])  # First stimulation in the first cycle
+                else:
+                    actual_start = int(stim_start_times[0]) + (stim_idx * start_btw_stim) + (repeat * trial_delay)
+
+                print(f"Repeat {repeat}, Stim {stim_idx}: Actual Start = {actual_start}")
+
+                # Define time window
+                pre_start = max(0, actual_start - pre_frames)
+                post_end = min(F.shape[1], actual_start + post_frames)
+
+                # Extract fluorescence trace
+                trace_segment = F[:, pre_start:post_end]
+
+                # Pad if needed
+                if trace_segment.shape[1] < total_frames:
+                    pad_width = total_frames - trace_segment.shape[1]
+                    if pre_start == 0:
+                        trace_segment = np.pad(trace_segment, ((0, 0), (pad_width, 0)), mode='edge')
                     else:
-                        # For subsequent stimulations, calculate based on the first stimulation
-                        first_stim_time = int(
-                            stim_start_times[amp_idx])  # Get the first stimulation time for this amplitude
-                        start_btw_stim = 8000000  # 8 seconds between repeats
-                        actual_start = first_stim_time + (start_btw_stim * repeat)
+                        trace_segment = np.pad(trace_segment, ((0, 0), (0, pad_width)), mode='edge')
 
-                    print(f"Repeat {repeat}, Amp {amp_idx}: Start frame = {start_frame}, Actual start = {actual_start}")
-
-                    # Extract pre and post stimulation frames
-                    pre_start = max(0, actual_start - pre_frames)
-                    post_end = min(F.shape[1], actual_start + post_frames)
-
-                    # Get the trace segment for all ROIs
-                    trace_segment = F[:, pre_start:post_end]
-
-                    # Pad if necessary
-                    if trace_segment.shape[1] < total_frames:
-                        pad_width = total_frames - trace_segment.shape[1]
-                        if pre_start == 0:
-                            # Pad at the beginning
-                            trace_segment = np.pad(trace_segment, ((0, 0), (pad_width, 0)), mode='edge')
-                        else:
-                            # Pad at the end
-                            trace_segment = np.pad(trace_segment, ((0, 0), (0, pad_width)), mode='edge')
-
-                    all_traces[repeat, amp_idx] = trace_segment
+                all_traces[repeat, stim_idx] = trace_segment
 
         # Calculate mean traces across ROIs
         mean_traces = np.mean(all_traces, axis=2)  # Average across ROIs

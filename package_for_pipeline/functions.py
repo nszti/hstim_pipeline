@@ -1125,24 +1125,39 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         print("saved fig")
         plt.close()
 
-        # Create overlay plot (All stimulations overlaid per repeat)
-        fig, ax = plt.subplots(figsize=(8, 6))
+        # Create figure of overlapped traces with one subplot per repeat
+        fig, axes = plt.subplots(1, num_repeats, figsize=(4 * num_repeats, 4), sharey=True)
         fig.suptitle(f'Overlapping Stimulations for ROI {roi_idx}', fontsize=16)
 
-        for stim_idx in range(num_stims_per_repeat):
-            for repeat in range(num_repeats):
-                ax.plot(time, all_traces[repeat, stim_idx], alpha=0.5,
-                        label=f"Repeat {repeat + 1}, Stim {stim_idx + 1}")
+        # Define stimulation period for shading (e.g., 1s to 2s after onset)
+        stim_start_sec = 1  # Relative to onset (adjust if needed)
+        stim_end_sec = 2
+        stim_duration = stim_end_sec - stim_start_sec
 
-        ax.axvline(x=0, color='r', linestyle='--', alpha=0.5)
-        ax.set_xlabel('Time (s)')
-        ax.set_ylabel('ΔF/F')
-        ax.grid(True)
-        ax.legend(loc='upper right', fontsize=8)
+        for repeat in range(num_repeats):
+            ax = axes[repeat] if num_repeats > 1 else axes  # Handle case when only 1 repeat
+            for stim_idx in range(num_stims_per_repeat):
+                # Assign color based on stim_idx
+                color = colors[stim_idx % len(colors)]
+
+                # Plot trace with defined color
+                ax.plot(time, all_traces[repeat, stim_idx], color=color, label=f"{(stim_idx + 1) * 10} μA")
+
+                # Add shaded region to indicate stimulation period
+            ax.axvspan(stim_start_sec, stim_end_sec, color='gray', alpha=0.3)
+
+            # Formatting
+            ax.set_xlabel('Time (s)')
+            if repeat == 0:
+                ax.set_ylabel('Mean ΔF/F₀')
+            ax.set_title(f'Trial {repeat + 1}')
+            ax.set_ylim(min_trace_value, max_trace_value)
+            ax.legend(loc='upper left', fontsize=8)
+            ax.grid(True)
 
         plt.tight_layout()
         plt.savefig(os.path.join(expDir, dir, 'overlapping_stim_traces.png'))
-        plt.close()
+        plt.show()
 
 #scratch_1
 

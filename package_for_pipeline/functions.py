@@ -1194,7 +1194,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 ax.plot(time, all_traces[repeat, stim_idx], color=color, alpha=0.5, label=f"Trial {stim_idx + 1}")
 
             # Add a bold average trace for this amplitude
-            avg_trace = np.mean(all_traces[repeat, :, :], axis=0)
+            avg_trace = np.mean(all_traces[:, stim_idx, :], axis=0)
             ax.plot(time, avg_trace, color='black', linewidth=2, label="Avg Response")
 
             # Add shaded region to indicate stimulation period

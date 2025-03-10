@@ -1204,7 +1204,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             ax.set_xlabel('Time (s)')
             if repeat == 0:
                 ax.set_ylabel('Mean ΔF/F₀')
-            ax.set_title(f'{trial} μA')
+            ax.set_title(f'{amplitude_values} μA')
 
             ax.set_ylim(min_trace_value, max_trace_value)
 

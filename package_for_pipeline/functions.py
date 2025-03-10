@@ -410,7 +410,7 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
             frame_numbers = np.load(frame_numbers_path, allow_pickle=True)
             #print(frame_numbers)
 
-
+            '''
             time_block = 1
             if len(frame_numbers) > 0:
                 time_block = int(frame_numbers[0]) #1085
@@ -419,8 +419,50 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
             num_tif_triggers = int(np.round(len(F0[0]) / time_block))
             print(len(F0[0]) / time_block)
             print(num_tif_triggers)
+            '''
+            num_repeats = 6
+            num_stims_per_repeat = 5
+            frame_rate = 31
+            pulse_duration = 200 #[ms]
+            pulse_dur_frame = pulse_duration * 0.001 * frame_rate
+            tif_triggers_start = []
+            start_stim = stim_start_times[0][0]
+            for i in range(num_stims_per_repeat):
+                start_time = i *  pulse_dur_frame
+                tif_triggers_start.append(start_time)
+            repeat_end_time = []
+            for repeat in range(num_repeats):
+                if num_repeats == 0:
+                    end_time = start_stim + num_stims_per_repeat * pulse_dur_frame
+                    repeat_end_time.append(end_time)
+                else:
+                    end_time = start_stim + num_stims_per_repeat * pulse_dur_frame * (repeat + 1)
+                    repeat_end_time.append(end_time)
 
-            tif_triggers = []
+            ROI_numbers = []
+            threshold_list = []
+            results_list = []
+
+            for i in range(len(F0)):
+                roi_thresholds = []
+                roi_results = []
+                for baseline_duration, start_time, end_time in zip(baseline_durations, tif_triggers_start, repeat_end_time):
+                    baseline_dur = F0[i, start_time:start_time + baseline_duration]
+                    baseline_avg = np.mean(baseline_dur)
+                    baseline_std = np.std(baseline_dur)
+                    threshold = baseline_std * threshold_value + baseline_avg
+                    stim_avg = np.mean(F0[i, (start_time + baseline_duration):(start_time + baseline_duration + 465)])
+                    if stim_avg > threshold:
+                        exceed_threshold = 1
+                    else:
+                        exceed_threshold = 0
+                        # Append result (1 or 0) to the list for the current ROI
+                    roi_results.append(int(exceed_threshold))
+                threshold_list.append(roi_thresholds)
+                results_list.append(roi_results)
+                ROI_numbers.append(i)
+
+            '''
             for i in range(num_tif_triggers):
                 start_time = i * time_block
                 #print(start_time)
@@ -479,7 +521,7 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
                 'activated_neurons': results_list
             })
             pd.set_option('display.max_rows', None)
-
+            '''
 
         '''
                 catSum = []

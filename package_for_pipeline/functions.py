@@ -1031,6 +1031,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         iscell = np.load(iscelll_path, allow_pickle=True)
         stim_start_times = np.load(stim_start_times_path, allow_pickle=True)
 
+#--------CALCULATIONS--------
         # Extract the ROI indexes for cells
         cell_indices = np.where(iscell[:, 0] == 1)[0]  # Get indices of valid ROIs
         print(cell_indices)
@@ -1091,7 +1092,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         max_trace_value = np.max(all_traces)
         print(min_trace_value, max_trace_value)
 
-        #PLOTTING
+#------------PLOTTING------------
 #----plot1
         time = np.linspace(-1, 3, total_frames)
         # Create grid plot
@@ -1107,14 +1108,13 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 ax.set_title(f'Repeat {repeat + 1}, Stim {stim_idx + 1}')
 
                 # Set only three x-axis labels: pre, stim, post
-                x_ticks = [-1, 0, 3]  # -1s, 0s (stim onset), +3s
-                x_labels = [f"{(start_stim - pre_frames) / frame_rate:.1f}",
-                            f"{start_stim / frame_rate:.1f}",
-                            f"{(start_stim + post_frames) / frame_rate:.1f}"]
+                #x_ticks = [-1, 0, 3]  # -1s, 0s (stim onset), +3s
+                #x_labels = [f"{(start_stim - pre_frames) / frame_rate:.1f}", f"{start_stim / frame_rate:.1f}", f"{(start_stim + post_frames) / frame_rate:.1f}"]
+                #x_labels = [-1, 0, 1]
+                #ax.set_xticks(x_ticks)
+                #ax.set_xticklabels(x_labels)
 
-                ax.set_xticks(x_ticks)
-                ax.set_xticklabels(x_labels)
-
+                ax.set_xlim([-1, 3)
                 ax.set_xlabel('Time (s)')
                 ax.set_ylabel('ΔF/F')
                 ax.set_ylim(min_trace_value, max_trace_value)
@@ -1201,7 +1201,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             ax.axvspan(stim_start_sec, stim_end_sec, color='gray', alpha=0.3)
 
             # Formatting
-            #ax.set_xlabel('Time (s)')
+            ax.set_xlabel('Time (s)')
 
             if stim_idx == 0:
                 ax.set_ylabel('Mean ΔF/F₀')

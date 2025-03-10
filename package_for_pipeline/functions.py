@@ -1204,6 +1204,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             ax.set_xlabel('Time (s)')
             if stim_idx == 0:
                 ax.set_ylabel('Mean ΔF/F₀')
+            ax.set_ylabel('Mean ΔF/F₀')
 
             ax.set_title(f'{amplitude} μA')
             '''
@@ -1222,9 +1223,9 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             ax.grid(True)
 
         # Add a single legend outside the subplots
-        handles = [plt.Line2D([0], [0], color=color, lw=2) for color in trial_colors.values()]
-        labels = [f"Trial {trial}" for trial in trial_colors.keys()]
-        fig.legend(handles, labels, loc='upper left', fontsize=8, title="Trials")
+        legend_handles = [plt.Line2D([0], [0], color=color, lw=2, label=f"Trial {trial}") for trial, color in trial_colors.items()]
+        legend_handles.append(plt.Line2D([0], [0], color='black', lw=2, linestyle='dashed', label="Avg Response"))  # Add Avg Response
+        fig.legend(handles=legend_handles, loc='upper right', fontsize=8, title="Legend", bbox_to_anchor=(1.05, 1))
 
         plt.tight_layout()
         plt.savefig(os.path.join(expDir, dir, 'amplitude_overlapping_subplots.png'))

@@ -1172,7 +1172,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         plt.show()
 
 # --------plot 3
-        '''
+
         #overlap trials by amplitude
         trial_values = [1,2,4,4,5,6]  # Adjust as needed
         trial_colors = {1: 'blue', 2: 'orange', 3: 'green', 4: 'red', 5: 'purple', 6: 'brown'}
@@ -1190,10 +1190,11 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             color = trial_colors.get(trial, 'black')  # Assign color based on amplitude
             for stim_idx in range(num_stims_per_repeat):
                 # Plot each trial for this amplitude
+                color = trial_colors.get(stim_idx + 1, 'black')  # Assign color based on trial
                 ax.plot(time, all_traces[repeat, stim_idx], color=color, alpha=0.5, label=f"Trial {stim_idx + 1}")
 
             # Add a bold average trace for this amplitude
-            avg_trace = np.mean(all_traces[:, stim_idx, :], axis=0)
+            avg_trace = np.mean(all_traces[repeat, :, :], axis=0)
             ax.plot(time, avg_trace, color='black', linewidth=2, label="Avg Response")
 
             # Add shaded region to indicate stimulation period
@@ -1201,7 +1202,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
             # Formatting
             ax.set_xlabel('Time (s)')
-            if stim_idx == 0:
+            if repeat == 0:
                 ax.set_ylabel('Mean ΔF/F₀')
             ax.set_title(f'{trial} μA')
 
@@ -1217,7 +1218,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         plt.tight_layout()
         plt.savefig(os.path.join(expDir, dir, 'amplitude_overlapping_subplots.png'))
         plt.show()
-        '''
+
 #scratch_1
 
 def scratch_val(tiff_dir):

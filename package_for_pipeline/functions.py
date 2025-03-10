@@ -1185,12 +1185,12 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         # Define stimulation period for shading (e.g., 1s to 2s after onset)
         stim_start_sec = 1  # Relative to onset (adjust if needed)
         stim_end_sec = 2
-        for repeat, trial in enumerate(trial_values):
-            ax = axes[repeat] if len(trial_values) > 1 else axes  # Handle case when only 1 amplitude
+        for stim_idx, amplitude in enumerate(amplitude_values):
+            ax = axes[stim_idx] if len(amplitude_values) > 1 else axes  # Handle case when only 1 amplitude
             #color = trial_colors.get(trial, 'black')  # Assign color based on amplitude
-            for stim_idx in range(num_stims_per_repeat):
+            for repeat, trial in enumerate(trial_values):
                 # Plot each trial for this amplitude
-                color = trial_colors.get(stim_idx + 1, 'black')  # Assign color based on trial
+                color = trial_colors.get(trial + 1, 'black')  # Assign color based on trial
                 ax.plot(time, all_traces[repeat, stim_idx], color=color, alpha=0.5, label=f"Trial {stim_idx + 1}")
 
             # Add a bold average trace for this amplitude
@@ -1202,12 +1202,15 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
             # Formatting
             ax.set_xlabel('Time (s)')
-            if repeat == 0:
+            if stim_idx == 0:
                 ax.set_ylabel('Mean ΔF/F₀')
+
+            ax.set_title(f'{amplitude} μA')
+            '''
             if repeat < len(amplitude_values):
                 ax.set_title(f'amplitude_values[repeat] μA')
                 ax.set_ylabel('Mean ΔF/F₀')
-            #ax.set_title(f'{amplitude_values[repeat]} μA')
+            '''
 
             ax.set_ylim(min_trace_value, max_trace_value)
 

@@ -1159,12 +1159,12 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 ax.set_ylabel('Mean ΔF/F₀')
             ax.set_title(f'Trial {repeat + 1}')
             ax.set_ylim(min_trace_value, max_trace_value)
-
+            '''
             # Remove duplicate legend entries
             handles, labels = ax.get_legend_handles_labels()
             unique_legend = dict(zip(labels, handles))  # Remove duplicates
             ax.legend(unique_legend.values(), unique_legend.keys(), loc='upper left', fontsize=8)
-
+            '''
             ax.grid(True)
 
 

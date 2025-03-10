@@ -1168,7 +1168,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             ax.grid(True)
 
         # Add a single legend outside the subplots
-        legend_handles = [plt.Line2D([0], [0], color=color, lw=1, label=f"{amplitude} μA ") for amplitude_values, color in amplitude_colors.items()]
+        legend_handles = [plt.Line2D([0], [0], color=color, lw=2, label=f"{amplitude[repeat]} μA ") for amplitude_values, color in amplitude_colors.items()]
         legend_handles.append(plt.Line2D([0], [0], color='black', lw=2, linestyle='dashed', label="Avg Response"))  # Add Avg Response
         fig.legend(handles=legend_handles, loc='upper right', fontsize=8, title="Legend", bbox_to_anchor=(0.95, 1))
 

@@ -66,7 +66,11 @@ functions.electROI_val(tiff_directory, list_of_file_nums)
 functions.dist_vals(tiff_directory, list_of_file_nums)
 functions.stim_dur_val(tiff_directory, list_of_file_nums)
 functions.baseline_val(root_directory, tiff_directory, list_of_file_nums)
+'''
 functions.activated_neurons_val(root_directory, tiff_directory, list_of_file_nums, 1)
+#functions.timecourse_vals(tiff_directory, list_of_file_nums, 5)
+#functions.data_analysis_values('amp', tiff_directory, list_of_file_nums)
+
 '''
 
 
@@ -83,10 +87,6 @@ functions.plot_stim_traces(
 
 
 '''
-functions.timecourse_vals(tiff_directory, list_of_file_nums, 5)
-functions.data_analysis_values('amp', tiff_directory, list_of_file_nums)
-'''
-
 
 '''
 functions.stim_dur_val(tiff_directory, list_of_file_nums)

@@ -347,7 +347,7 @@ def baseline_val(root_directory,tiff_dir, list_of_file_nums ):
             #print(all_norm_traces)
 
 #activated_neurons
-def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold_value = 1):
+def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold_value):
     '''
     :param input_file_path: 'D:/2P/E/test/merged_GCaMP6f_23_09_25_3-6_pos_amp/'
     :param time_block: type: number, time block duration in frames, example: 1085
@@ -391,6 +391,7 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
                 stim_times = np.load(stim_times_path, allow_pickle=True)
                 if stim_times.size > 0:
                     baseline_duration = int(stim_times[0]) - 1
+                    print(baseline_duration)
                     baseline_durations.append(baseline_duration)
         if matched_dir:
             # Load the fluorescence traces and iscell array
@@ -413,11 +414,11 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
             time_block = 1
             if len(frame_numbers) > 0:
                 time_block = int(frame_numbers[0]) #1085
-                #print(time_block)
+                print(time_block)
             # Calculate TIFF trigger start and end tuples
             num_tif_triggers = int(np.round(len(F0[0]) / time_block))
-            #print(len(F0[0]) / time_block)
-            #print(num_tif_triggers)
+            print(len(F0[0]) / time_block)
+            print(num_tif_triggers)
 
             tif_triggers = []
             for i in range(num_tif_triggers):
@@ -434,6 +435,7 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
             results_list = []
             # Iterate through all ROIs
             #print(len(F0))
+            print(len(baseline_durations))
             for i in range(len(F0)):
                 print(i)
                 roi_thresholds = []
@@ -532,11 +534,12 @@ def timecourse_vals(tiff_dir, list_of_file_nums, num_trials):
             F = np.load(F_path, allow_pickle=True)
             stim_start = np.load(stim_start_times_path, allow_pickle=True)
             block_frames = np.load(block_frames_path, allow_pickle=True)
+            print(block_frames)
             stim_duration = np.load(stim_duration_path, allow_pickle=True)
             roi_num = np.load(roi_number_path, allow_pickle=True)
             #num_trials = np.load(num_trials_path, allow_pickle=True)
             stim_duration = [1.0, 1.0, 1.0, 1.0, 1.0] #amp
-            stim_duration = [4.0,2.0,1.0]
+            #stim_duration = [4.0,2.0,1.0]
             #print(stim_duration)
             start_timepoints = []
             for i in stim_start:
@@ -551,7 +554,7 @@ def timecourse_vals(tiff_dir, list_of_file_nums, num_trials):
                 stimulation_duration.append(s)
 
             num_blocks = len(time_block)
-            resting_period = 2
+            resting_period = 3
             rest_dur_f = resting_period * frame_rate
             stim_dur_f = []
             end_f = []
@@ -699,6 +702,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             distanceFromElectrode = distances[:, 2]
             # print(distanceFromElectrode)
             stimResults = container["stimResults"]
+            print(container)
             restResults = container["restResults"]
             stimAvgs = container["stimAvgs"]
             restAvgs = container["restAvgs"]
@@ -725,9 +729,10 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             ROI_No = stimResults.shape[0]
             block_No = stimResults.shape[1]
             trial_No = stimResults.shape[2]
+            print(ROI_No, block_No, trial_No)
 
             if stim_type == 'amp':
-                legend = ['10', '20', '30', '40']
+                legend = ['10', '20', '30', '15', '25']
             elif stim_type == 'freq':
                 legend = ['50', '100', '200']
             elif stim_type == 'pulse_dur':
@@ -1171,7 +1176,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         # Add a single legend outside the subplots
         legend_handles = [plt.Line2D([0], [0], color=amplitude_colors[amplitude], lw=2, label=f"{amplitude} μA") for amplitude in amplitude_values]
         legend_handles.append(plt.Line2D([0], [0], color='black', lw=2, linestyle='dashed', label="Avg Response"))  # Add Avg Response
-        fig.legend(handles=legend_handles, loc='upper right', fontsize=8, title="Legend", bbox_to_anchor=(0.95, 1))
+        fig.legend(handles=legend_handles, loc='upper right', fontsize=8, title="Legend", bbox_to_anchor=(0.98, 1))
 
         plt.tight_layout()
         plt.savefig(os.path.join(expDir, dir, 'overlapping_stim_traces.png'))

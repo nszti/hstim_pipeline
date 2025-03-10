@@ -1148,7 +1148,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 ax.plot(time, all_traces[repeat, stim_idx], color=color, label=f"{amplitude} μA")
 
             avg_trace = np.mean(all_traces[:, stim_idx, :], axis=0)
-            ax.plot(time, avg_trace, color='black', linewidth=2, label="Avg Response")
+            ax.plot(time, avg_trace, color='black', linewidth=1, label="Avg Response")
 
             # Add shaded region to indicate stimulation period
             #ax.axvspan(stim_start_sec, stim_end_sec, color='gray', alpha=0.3)
@@ -1168,7 +1168,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             ax.grid(True)
 
         # Add a single legend outside the subplots
-        legend_handles = [plt.Line2D([0], [0], color=color, lw=2, label=f"{amplitude} μA ") for amplitude_values, color in amplitude_colors.items()]
+        legend_handles = [plt.Line2D([0], [0], color=color, lw=1, label=f"{amplitude} μA ") for amplitude_values, color in amplitude_colors.items()]
         legend_handles.append(plt.Line2D([0], [0], color='black', lw=2, linestyle='dashed', label="Avg Response"))  # Add Avg Response
         fig.legend(handles=legend_handles, loc='upper right', fontsize=8, title="Legend", bbox_to_anchor=(0.95, 1))
 
@@ -1229,7 +1229,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             ax.grid(True)
 
         # Add a single legend outside the subplots
-        legend_handles = [plt.Line2D([0], [0], color=color, lw=2, label=f"Trial {trial}") for trial, color in trial_colors.items()]
+        legend_handles = [plt.Line2D([0], [0], color=color, lw=1, label=f"Trial {trial}") for trial, color in trial_colors.items()]
         legend_handles.append(plt.Line2D([0], [0], color='black', lw=2, linestyle='dashed', label="Avg Response"))  # Add Avg Response
         fig.legend(handles=legend_handles, loc='upper left', fontsize=8, title="Legend", bbox_to_anchor=(0.95, 1))
 

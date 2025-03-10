@@ -1114,7 +1114,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 #ax.set_xticks(x_ticks)
                 #ax.set_xticklabels(x_labels)
 
-                ax.set_xlim([-1, 3)
+                ax.set_xlim(-1, 3)
                 ax.set_xlabel('Time (s)')
                 ax.set_ylabel('ΔF/F')
                 ax.set_ylim(min_trace_value, max_trace_value)
@@ -1127,7 +1127,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
 #--------plot 2
         # Create figure of overlapped traces with one subplot per repeat
-        amplitude_values = [10, 20, 30, 15, 25]  # Adjust if necessary
+        amplitude_values = sorted([10, 20, 30, 15, 25])  # Adjust if necessary
         amplitude_colors = {10: 'blue', 20: 'orange', 30: 'green', 15: 'red', 25: 'purple'}
 
         # Create figure with one subplot per repeat
@@ -1151,7 +1151,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             ax.plot(time, avg_trace, color='black', linewidth=2, label="Avg Response")
 
             # Add shaded region to indicate stimulation period
-            ax.axvspan(stim_start_sec, stim_end_sec, color='gray', alpha=0.3)
+            #ax.axvspan(stim_start_sec, stim_end_sec, color='gray', alpha=0.3)
 
             # Formatting
             ax.set_xlabel('Time (s)')
@@ -1176,7 +1176,6 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         #overlap trials by amplitude
         trial_values = [1,2,4,4,5,6]  # Adjust as needed
         trial_colors = {1: 'blue', 2: 'orange', 3: 'green', 4: 'red', 5: 'purple', 6: 'brown'}
-        amplitude_values = [10, 20, 30, 15, 25]
 
         # Create figure with one subplot per amplitude
         fig, axes = plt.subplots(1, len(amplitude_values), figsize=(4 * len(amplitude_values), 4), sharey=True)
@@ -1198,7 +1197,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             ax.plot(time, avg_trace, color='black', linewidth=2, label="Avg Response")
 
             # Add shaded region to indicate stimulation period
-            ax.axvspan(stim_start_sec, stim_end_sec, color='gray', alpha=0.3)
+           # ax.axvspan(stim_start_sec, stim_end_sec, color='gray', alpha=0.3)
 
             # Formatting
             ax.set_xlabel('Time (s)')

@@ -1179,7 +1179,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         amplitude_values = [10, 20, 30, 15, 25]
 
         # Create figure with one subplot per amplitude
-        fig, axes = plt.subplots(1, len(trial_values), figsize=(4 * len(trial_values), 4), sharey=True)
+        fig, axes = plt.subplots(1, len(amplitude_values), figsize=(4 * len(amplitude_values), 4), sharey=True)
         fig.suptitle(f'Overlapping Trials for Each Amplitude - ROI {roi_idx}', fontsize=16)
 
         # Define stimulation period for shading (e.g., 1s to 2s after onset)
@@ -1187,7 +1187,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         stim_end_sec = 2
         for repeat, trial in enumerate(trial_values):
             ax = axes[repeat] if len(trial_values) > 1 else axes  # Handle case when only 1 amplitude
-            color = trial_colors.get(trial, 'black')  # Assign color based on amplitude
+            #color = trial_colors.get(trial, 'black')  # Assign color based on amplitude
             for stim_idx in range(num_stims_per_repeat):
                 # Plot each trial for this amplitude
                 color = trial_colors.get(stim_idx + 1, 'black')  # Assign color based on trial
@@ -1206,6 +1206,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 ax.set_ylabel('Mean ΔF/F₀')
             if repeat < len(amplitude_values):
                 ax.set_title(f'amplitude_values[repeat] μA')
+                ax.set_ylabel('Mean ΔF/F₀')
             #ax.set_title(f'{amplitude_values[repeat]} μA')
 
             ax.set_ylim(min_trace_value, max_trace_value)

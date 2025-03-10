@@ -1221,6 +1221,11 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
             ax.grid(True)
 
+        # Add a single legend outside the subplots
+        handles = [plt.Line2D([0], [0], color=color, lw=2) for color in trial_colors.values()]
+        labels = [f"Trial {trial}" for trial in trial_colors.keys()]
+        fig.legend(handles, labels, loc='upper right', fontsize=8, title="Trials")
+
         plt.tight_layout()
         plt.savefig(os.path.join(expDir, dir, 'amplitude_overlapping_subplots.png'))
         plt.show()

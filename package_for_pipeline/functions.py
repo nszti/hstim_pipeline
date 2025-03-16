@@ -420,11 +420,6 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
             print(len(F0[0]) / time_block)
             print(num_tif_triggers)
             '''
-            num_repeats = 6
-            num_stims_per_repeat = 5
-            frame_rate = 31
-            pulse_duration = 200 #[ms]
-            pulse_dur_frame = pulse_duration * 0.001 * frame_rate
             tif_triggers_start = []
             start_stim = stim_start_times[0][0]
             for i in range(num_stims_per_repeat):
@@ -443,6 +438,7 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
             threshold_list = []
             results_list = []
 
+            #calculate threshold values and results for each ROI
             for i in range(len(F0)):
                 roi_thresholds = []
                 roi_results = []
@@ -1026,7 +1022,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             plt.show()
 
 
-def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list_of_file_nums=None, start_btw_stim=None, trial_delay=float, roi_idx=None ):
+def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list_of_file_nums=None, start_btw_stim=None, trial_delay=float, roi_idx=None, threshold_value = 3 ):
     base_dir = Path(expDir)
     merged_path = expDir
     print(f"Looking for directories in: {base_dir}")
@@ -1081,9 +1077,8 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 #--------CALCULATIONS--------
         # Extract the ROI indexes for cells
         cell_indices = np.where(iscell[:, 0] == 1)[0]  # Get indices of valid ROIs
-        print(cell_indices)
+        print(f" rois of cells: {cell_indices}")
         num_cells = len(cell_indices)
-        print(num_cells)
         if roi_idx  not in cell_indices:
             raise ValueError
 
@@ -1098,20 +1093,22 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
         # Storage for traces: Shape (ROIs, repeats, stimulations, frames)
         all_traces = np.zeros((num_repeats, num_stims_per_repeat, total_frames))
-
+        start_timepoints = []
         for repeat in range(num_repeats):
             for stim_idx in range(num_stims_per_repeat):
 
                 # stimulation start time
                 if stim_idx == 0 and repeat == 0:
                     start_stim = int(stim_start_times[0])  # First stimulation from stim_start_times
+                    start_timepoints.append(start_stim)
                 elif repeat == 0:
-                    print(repeat, stim_idx)
                     start_stim = int(stim_start_times[0] + stim_idx * start_btw_stim_frames)
+                    start_timepoints.append(start_stim)
                 else:
-                    print(repeat, stim_idx)
                     start_stim = int(stim_start_times[0] + (stim_idx * start_btw_stim_frames) + (repeat * (((num_stims_per_repeat-1) * start_btw_stim_frames)+ trial_delay_frames)))
+                    start_timepoints.append(start_stim)
                 print(f"ROI {roi_idx}, Repeat {repeat}, Stim {stim_idx}: Start = {start_stim}")
+
 
                 # Define time window (1 sec before, 3 sec after)
                 pre_start = max(0, start_stim  - pre_frames)
@@ -1138,7 +1135,53 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         min_trace_value = np.min(all_traces)
         max_trace_value = np.max(all_traces)
         print(min_trace_value, max_trace_value)
+        print(start_timepoints)
+        np.save(expDir + dir + '/start_timepoints.npy', start_timepoints)
 
+        #---CALUCALTE ACTIVATED NEURONS PER REPEAT---
+        baseline_duration = int(stim_start_times[0]) - 1
+        threshold_list = []
+        results_list = []
+        ROI_numbers = []
+
+        for i in cell_indices:
+            if i >= F.shape[0]:
+                print(f"Skipping ROI {i} as it is out of bounds for the array F with size {F.shape[0]}")
+                continue
+                roi_thresholds = []
+                roi_results = []
+                baseline_dur = F[i, :baseline_duration]
+                baseline_avg = np.mean(baseline_dur)
+                baseline_std = np.std(baseline_dur)
+                threshold = baseline_std * threshold_value + baseline_avg
+
+                for repeat in range(num_repeats):
+                    for stim_idx in range(num_stims_per_repeat):
+                        start_time = start_timepoints[repeat * num_stims_per_repeat + stim_idx]
+                        end_time = start_timepoints[repeat * num_stims_per_repeat + stim_idx + 1] if stim_idx < num_stims_per_repeat - 1 else F.shape[1]
+                        stim_avg = np.mean(F[i, start_time:end_time])
+                        exceed_threshold = 1 if stim_avg > threshold else 0
+                        roi_results.append(exceed_threshold)
+
+                threshold_list.append(threshold)
+                results_list.append(roi_results)
+                ROI_numbers.append(i)
+            '''
+            if results_list:
+                results_matrix = np.array(results_list)
+                if results_matrix.ndim == 1:
+                    results_matrix = results_matrix.reshape(-1, 1)
+                active_rois = np.where(results_matrix.sum(axis=1) > 0)[0]
+            else:
+                active_rois = np.array([])
+            '''
+            results_matrix = np.array(results_list)
+            active_rois = np.where(results_matrix.sum(axis=1) > 0)[0]
+            active_med_x = [stat[roi]['med'][1] for roi in active_rois]
+            avg_active_med_x = np.mean(active_med_x)
+
+        print(f"Average x value of active ROIs: {avg_active_med_x}")
+        np.save(os.path.join(expDir, dir, 'avg_active_med_x.npy'), avg_active_med_x)
 #------------PLOTTING------------
 #----plot1
         time = np.linspace(-1, 3, total_frames)
@@ -1286,7 +1329,6 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         plt.show()
 
 #scratch_1
-
 def scratch_val(tiff_dir):
     '''
     :param expDir:

@@ -1,6 +1,7 @@
 from pathlib import Path
 import numpy as np
 from package_for_pipeline import functions
+
 from package_for_pipeline import mesc_data_handling
 from package_for_pipeline import suite2p_script
 from mesc_loader import extract_useful_xml_params
@@ -8,6 +9,7 @@ from general import ascii_to_str, find_frame_index_from_timestamp
 from package_for_pipeline import mesc_tiff_extract
 from package_for_pipeline import functions_og
 #from package_for_pipeline import suite2p_neuropil
+
 import os
 
 #------STEPS IN PIPELINE------
@@ -29,8 +31,10 @@ you can look back the og mesc file & check the registered binary file in suite2p
 #------STEPS IN PIPELINE END------
 
 #------VALUES TO CHANGE------
-root_directory = 'c:/Hyperstim/data_analysis/AMouse-2025-03-05-invivo-GCaMP6f/' #
-tiff_directory = 'c:/Hyperstim/data_analysis/AMouse-2025-03-05-invivo-GCaMP6f/merged_tiffs/'
+#root_directory = 'c:/Hyperstim/data_analysis/AMouse-2025-03-05-invivo-GCaMP6f/' #
+root_directory = 'd:/2P/Experiments/AMouse-2025-03-05-invivo-GCaMP6f/'
+#tiff_directory = 'c:/Hyperstim/data_analysis/AMouse-2025-03-05-invivo-GCaMP6f/merged_tiffs/'
+tiff_directory= 'd:/2P/Experiments/AMouse-2025-03-05-invivo-GCaMP6f/merged_tiffs/'
 mesc_file_name = 'AMouse-2025-03-05-invivo-GCaMP6f-2'
 mesc_DATA_file = 'mesc_data.npy' #from mesc_tiff_extract
 list_of_file_nums = [
@@ -65,13 +69,14 @@ functions.stim_dur_val(tiff_directory, list_of_file_nums)
 functions.electROI_val(tiff_directory, list_of_file_nums)
 functions.dist_vals(tiff_directory, list_of_file_nums)
 functions.stim_dur_val(tiff_directory, list_of_file_nums)
-functions.baseline_val(root_directory, tiff_directory, list_of_file_nums)
+
 '''
-functions.activated_neurons_val(root_directory, tiff_directory, list_of_file_nums, 1)
+#functions.baseline_val(root_directory, tiff_directory, list_of_file_nums)
+#functions.activated_neurons_val(root_directory, tiff_directory, list_of_file_nums, 1)
 #functions.timecourse_vals(tiff_directory, list_of_file_nums, 5)
 #functions.data_analysis_values('amp', tiff_directory, list_of_file_nums)
 
-'''
+
 
 
 functions.plot_stim_traces(
@@ -86,7 +91,7 @@ functions.plot_stim_traces(
 )
 
 
-'''
+
 
 '''
 functions.stim_dur_val(tiff_directory, list_of_file_nums)

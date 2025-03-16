@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pprint import pprint
 from pathlib import Path
-from hdf5io.hdf5io import Hdf5io
+from package_for_pipeline.hdf5io.hdf5io import Hdf5io
 from cv2 import bitwise_not
 #from caiman_analysis import run_caiman_on_tiff
 from mesc_loader import extract_useful_xml_params

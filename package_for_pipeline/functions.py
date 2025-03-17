@@ -1106,8 +1106,15 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         results_list = []
         ROI_numbers = []
 
-        start_time = start_timepoints[0]  # Start of first stimulation
-        end_time = start_timepoints[-1]  # End of last stimulation
+        start_times = []
+        end_times = []
+        for repeat in range(num_stims_per_repeat):
+            start_time = start_timepoints[repeat * num_stims_per_repeat]
+            end_time = start_time + start_timepoints[num_stims_per_repeat-1]
+            end_time = start_timepoints[(repeat + 1) * num_stims_per_repeat - 1]  # Last stimulation in repeat
+            start_times.append(start_time)
+            end_times.append(end_time)
+
         #for i, roi_idx in enumerate(cell_indices):
         #for i in cell_indices:
         for i in range(len(cell_indices)):

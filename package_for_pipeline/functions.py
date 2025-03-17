@@ -391,7 +391,7 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
                 stim_times = np.load(stim_times_path, allow_pickle=True)
                 if stim_times.size > 0:
                     baseline_duration = int(stim_times[0]) - 1
-                    #print(baseline_duration)
+                    print(baseline_duration)
                     baseline_durations.append(baseline_duration)
         if matched_dir:
             # Load the fluorescence traces and iscell array
@@ -984,7 +984,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             plt.show()
 
 
-def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list_of_file_nums=None, start_btw_stim=None, trial_delay=float, roi_idx=None,stim_dur=200 threshold_value = 3 ):
+def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list_of_file_nums=None, start_btw_stim=None, trial_delay=float, roi_idx=None,stim_dur=200, threshold_value = 3 ):
     base_dir = Path(expDir)
     merged_path = expDir
     print(f"Looking for directories in: {base_dir}")
@@ -1069,7 +1069,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 else:
                     start_stim = int(stim_start_times[0] + (stim_idx * start_btw_stim_frames) + (repeat * (((num_stims_per_repeat-1) * start_btw_stim_frames)+ trial_delay_frames)))
                     start_timepoints.append(start_stim)
-                print(f"ROI {roi_idx}, Repeat {repeat}, Stim {stim_idx}: Start = {start_stim}")
+                #print(f"ROI {roi_idx}, Repeat {repeat}, Stim {stim_idx}: Start = {start_stim}")
 
 
                 # Define time window (1 sec before, 3 sec after)
@@ -1096,7 +1096,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
         min_trace_value = np.min(all_traces)
         max_trace_value = np.max(all_traces)
-        print(min_trace_value, max_trace_value)
+        #print(min_trace_value, max_trace_value)
         print(start_timepoints)
         np.save(expDir + dir + '/start_timepoints.npy', start_timepoints)
 
@@ -1105,6 +1105,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         activated_roi_count = 0
         all_roi_results = []
         baseline_duration = int(stim_start_times[0]) - 1
+        print(baseline_duration)
         threshold_list = []
         results_list = []
         ROI_numbers = []
@@ -1130,23 +1131,27 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             F_index = np.where(cell_indices == roi_idx)[0][0]
 
             baseline_dur = F[F_index, :baseline_duration]
+            #print(baseline_dur)
             baseline_avg = np.mean(baseline_dur)
             baseline_std = np.std(baseline_dur)
             threshold = baseline_std * threshold_value + baseline_avg
             threshold_list.append(threshold)
             print(f"ROI {roi_idx} | Baseline Mean: {baseline_avg:.2f}, Baseline Std: {baseline_std:.2f}, Threshold: {threshold:.2f}")
 
-            stim_holder = np.zeros((num_repeats, num_stims_per_repeat, stim_duration_frames))
+            stim_holder = np.zeros((num_repeats, num_stims_per_repeat, stimulation_duration_frames))
 
             for repeat in range(num_repeats):
                 for stim_idx in range(num_stims_per_repeat):
-                    start_time = start_timepoints[repeat * num_stims_per_repeat* stim_idx]
-                    end_time = start_time + stimulation_duration_frames
+                    start_time = start_timepoints[repeat * num_stims_per_repeat]
+                    stim_end_time = start_time + stimulation_duration_frames
+                    #print(start_time, stim_end_time)
+                    #Holder for stimulation periods
+                    stim_holder[repeat, stim_idx, :] = F[F_index, start_time:stim_end_time]
+                    print(stim_holder[repeat, stim_idx, :], F[F_index, start_time:stim_end_time])
 
-                    stim_holder[repeat, stim_idx, :] = F[F_index, start_time:end_time]
-
-            stim_avg_mtx = np.mean(stim_holder, axis=(0)
-            activation_mtx = np.mean(stim_avg_matrix, axis=1) > threshold
+            stim_avg_mtx = np.mean(stim_holder, axis=0)
+            #print(stim_avg_mtx)
+            activation_mtx = np.mean(stim_avg_mtx, axis=1) > threshold
             roi_results.append(activation_mtx)
 
             if np.any(activation_mtx == True):
@@ -1154,23 +1159,22 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             print(f"ROI {roi_idx} | Active: \n {activation_mtx}")
         final_activation_result = np.array(roi_results)
 
-print(f"\nTotal Activated ROIs: {activated_roi_count} out of {len(cell_indices)}")
-print(f"Final Activation Results (Each row = ROI, Each column = Stimulation Type):\n{final_activation_result}")
+        print(f"\nTotal Activated ROIs: {activated_roi_count} out of {len(cell_indices)}")
 
 #np.save(os.path.join(expDir, dir, 'activation_matrix.npy'), final_activation_results)
 #np.save(os.path.join(expDir, dir, 'activated_roi_count.npy'), activated_roi_count)
 
-'''
-# ROIs that were active at least once
-#active_rois = np.where(results_matrix.sum(axis=1) > 0)[0]
-active_rois = np.where(results_matrix > 0)[0]
-#Extracting x coordinates of active ROIs
-active_med_x = [stat[cell_indices[roi]]['med'][1] for roi in active_rois]  # Extract x-values
-avg_active_med_x = np.mean(active_med_x) if active_med_x else None  # Compute mean
-
-print(f"Average x-coordinate of active ROIs: {avg_active_med_x}")
-np.save(os.path.join(expDir, dir, 'avg_active_med_x.npy'), avg_active_med_x)
-'''
+        '''
+        # ROIs that were active at least once
+        #active_rois = np.where(results_matrix.sum(axis=1) > 0)[0]
+        active_rois = np.where(results_matrix > 0)[0]
+        #Extracting x coordinates of active ROIs
+        active_med_x = [stat[cell_indices[roi]]['med'][1] for roi in active_rois]  # Extract x-values
+        avg_active_med_x = np.mean(active_med_x) if active_med_x else None  # Compute mean
+        
+        print(f"Average x-coordinate of active ROIs: {avg_active_med_x}")
+        np.save(os.path.join(expDir, dir, 'avg_active_med_x.npy'), avg_active_med_x)
+        '''
 #------------PLOTTING------------
 #----plot1
         time = np.linspace(-1, 3, total_frames)

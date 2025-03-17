@@ -1110,7 +1110,11 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         end_times = []
         for repeat in range(num_stims_per_repeat):
             start_time = start_timepoints[repeat * num_stims_per_repeat]
-            end_time = (start_timepoints[(repeat + 1) * num_stims_per_repeat - 1] if repeat < num_repeats - 1 else F.shape[1]) # Last stimulation in repeat
+            # Ensure last repeat has a proper end time
+            if repeat == num_repeats - 1:
+                end_time = F.shape[1]  # Last repeat should go until the end of recording
+            else:
+                end_time = start_timepoints[(repeat + 1) * num_stims_per_repeat]  # First stim of next repeat
             start_times.append(start_time)
             end_times.append(end_time)
 

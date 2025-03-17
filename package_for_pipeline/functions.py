@@ -1110,11 +1110,9 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         #for i in cell_indices:
         for i in range(len(cell_indices)):
             roi_idx = cell_indices[i]  # Map to correct F index
-            print(roi_idx)
             roi_thresholds = []
             roi_results = []
             F_index = np.where(cell_indices == roi_idx)[0][0]
-            print(F_index)
 
             baseline_dur = F[F_index, :baseline_duration]
             baseline_avg = np.mean(baseline_dur)
@@ -1129,7 +1127,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     start_time = start_timepoints[repeat * num_stims_per_repeat + stim_idx]
                     end_time = (start_timepoints[repeat * num_stims_per_repeat + stim_idx + 1] if stim_idx < num_stims_per_repeat - 1 else F.shape[1])  # Last stim goes to end of recording
                     # Calculate mean fluorescence during activation period
-                    stim_avg = np.mean(F[roi_idx, start_time:end_time])
+                    stim_avg = np.mean(F[F_index, start_time:end_time])
                     # Determine if the trace exceeded the threshold
                     exceed_threshold = 1 if stim_avg > threshold else 0
                     roi_results.append(exceed_threshold)  # Append binary activation result

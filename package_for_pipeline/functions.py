@@ -1110,8 +1110,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         end_times = []
         for repeat in range(num_stims_per_repeat):
             start_time = start_timepoints[repeat * num_stims_per_repeat]
-            end_time = start_time + start_timepoints[num_stims_per_repeat-1]
-            end_time = start_timepoints[(repeat + 1) * num_stims_per_repeat - 1]  # Last stimulation in repeat
+            end_time = (start_timepoints[(repeat + 1) * num_stims_per_repeat - 1] if repeat < num_repeats - 1 else F.shape[1]) # Last stimulation in repeat
             start_times.append(start_time)
             end_times.append(end_time)
 
@@ -1129,10 +1128,10 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             threshold = baseline_std * threshold_value + baseline_avg
             threshold_list.append(threshold)
             print(f"ROI {roi_idx} | Baseline Mean: {baseline_avg:.2f}, Baseline Std: {baseline_std:.2f}, Threshold: {threshold:.2f}")
-
-            stim_avg = np.mean(F[F_index, start_time:end_time])  # Compute single avg for whole stim period
-            exceed_threshold = 1 if stim_avg > threshold else 0
-            results_list.append(exceed_threshold)  # Store result (1 if active, 0 if not)
+            for start_time, end_time in zip(start_times, end_times):
+                stim_avg = np.mean(F[F_index, start_time:end_time])  # Compute single avg for whole stim period
+                exceed_threshold = 1 if stim_avg > threshold else 0
+                results_list.append(exceed_threshold)  # Store result (1 if active, 0 if not)
             #print result
             print(f"ROI {roi_idx} | Stim Avg: {stim_avg:.2f}, Threshold: {threshold:.2f}, Active: {exceed_threshold}")
             ROI_numbers.append(roi_idx)

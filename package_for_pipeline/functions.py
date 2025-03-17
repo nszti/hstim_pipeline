@@ -984,7 +984,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             plt.show()
 
 
-def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list_of_file_nums=None, start_btw_stim=None, trial_delay=float, roi_idx=None,stim_dur=200, threshold_value = 3 ):
+def plot_stim_traces(expDir, frame_rate, num_repeats=int, num_stims_per_repeat=int, list_of_file_nums=None, start_btw_stim=None, trial_delay=float, roi_idx=None,stim_dur=200, threshold_value = 3 ):
     base_dir = Path(expDir)
     merged_path = expDir
     print(f"Looking for directories in: {base_dir}")
@@ -1125,7 +1125,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
         #for i, roi_idx in enumerate(cell_indices):
         #for i in cell_indices:
-        activation_matrix = np.zeros((len(cell_indices), num_repeats, num_stims), dtype=int)
+        activation_matrix = np.full((len(cell_indices), num_repeats, num_stims_per_repeat),0)
         for i in range(len(cell_indices)):
             roi_idx = cell_indices[i]  # Map to correct F index
             roi_thresholds = []

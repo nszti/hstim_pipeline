@@ -1125,6 +1125,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
         #for i, roi_idx in enumerate(cell_indices):
         #for i in cell_indices:
+        activation_matrix = np.zeros((len(cell_indices), num_repeats, num_stims), dtype=int)
         for i in range(len(cell_indices)):
             roi_idx = cell_indices[i]  # Map to correct F index
             roi_thresholds = []
@@ -1146,25 +1147,16 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     start_time = start_timepoints[repeat * num_stims_per_repeat]
                     stim_end_time = start_time + stimulation_duration_frames
                     #print(start_time, stim_end_time)
+                    stim_avg_value = np.mean(F[F_index, start_time:stim_end_time])
 
-                    extracted_trace = F[F_index, start_time:stim_end_time]
-                    if extracted_trace.shape[0] < stimulation_duration_frames:
-                        pad_length = stimulation_duration_frames - extracted_trace.shape[0]
-                        extracted_trace = np.pad(extracted_trace, (0, pad_length), mode='edge')
-
-                    # Store in dictionary
-                    stim_holder_dict[roi_idx][stim_idx].append(extracted_trace)
-
-            for stim_idx in range(num_stims):
-                stim_holder_dict[roi_idx][stim_idx] = np.array(stim_holder_dict[roi_idx][stim_idx])
+                    activation_matrix[i, repeat, stim_idx] = 1 if stim_avg_value > threshold else 0
 
         #calculate average of each stimulation
         stim_avg_dict = {}
         for roi_idx in stim_holder_dict:
             stim_avg_dict[roi_idx] = {}
-            for stim_idx in range(num_stims):
+            for stim_idx in range(num_stims_per_repeat):
                 stim_avg_dict[roi_idx][stim_idx] = np.mean(stim_holder_dict[roi_idx][stim_idx], axis=0)
-            stim_avg_mtx = np.mean(stim_holder, axis=0)
 
         #filling activation matrix
         activation_mtx = np.zeros(len(cell_indices), num_stims_per_repeat)

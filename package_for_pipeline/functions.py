@@ -1101,7 +1101,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         np.save(expDir + dir + '/start_timepoints.npy', start_timepoints)
 
         #---CALUCALTE ACTIVATED NEURONS PER REPEAT---
-        stimulation_duration_frames = int(stim_dur/1000 * frame_rate)
+        stimulation_duration_frames = int(stim_dur/(1000 / frame_rate))
         activated_roi_count = 0
         all_roi_results = []
         baseline_duration = int(stim_start_times[0]) - 1
@@ -1109,6 +1109,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         threshold_list = []
         results_list = []
         ROI_numbers = []
+        stim_holder_dict = {}
 
         start_times = []
         end_times = []
@@ -1138,27 +1139,45 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             threshold_list.append(threshold)
             print(f"ROI {roi_idx} | Baseline Mean: {baseline_avg:.2f}, Baseline Std: {baseline_std:.2f}, Threshold: {threshold:.2f}")
 
-            stim_holder = np.zeros((num_repeats, num_stims_per_repeat, stimulation_duration_frames))
+            stim_holder_dict[roi_idx] = {stim: [] for stim in range(num_stims_per_repeat)}
 
             for repeat in range(num_repeats):
                 for stim_idx in range(num_stims_per_repeat):
                     start_time = start_timepoints[repeat * num_stims_per_repeat]
                     stim_end_time = start_time + stimulation_duration_frames
                     #print(start_time, stim_end_time)
-                    #Holder for stimulation periods
-                    stim_holder[repeat, stim_idx, :] = F[F_index, start_time:stim_end_time]
-                    print(stim_holder[repeat, stim_idx, :], F[F_index, start_time:stim_end_time])
 
+                    extracted_trace = F[F_index, start_time:stim_end_time]
+                    if extracted_trace.shape[0] < stimulation_duration_frames:
+                        pad_length = stimulation_duration_frames - extracted_trace.shape[0]
+                        extracted_trace = np.pad(extracted_trace, (0, pad_length), mode='edge')
+
+                    # Store in dictionary
+                    stim_holder_dict[roi_idx][stim_idx].append(extracted_trace)
+
+            for stim_idx in range(num_stims):
+                stim_holder_dict[roi_idx][stim_idx] = np.array(stim_holder_dict[roi_idx][stim_idx])
+
+        #calculate average of each stimulation
+        stim_avg_dict = {}
+        for roi_idx in stim_holder_dict:
+            stim_avg_dict[roi_idx] = {}
+            for stim_idx in range(num_stims):
+                stim_avg_dict[roi_idx][stim_idx] = np.mean(stim_holder_dict[roi_idx][stim_idx], axis=0)
             stim_avg_mtx = np.mean(stim_holder, axis=0)
-            #print(stim_avg_mtx)
-            activation_mtx = np.mean(stim_avg_mtx, axis=1) > threshold
-            roi_results.append(activation_mtx)
 
-            if np.any(activation_mtx == True):
-                activated_roi_count += 1
-            print(f"ROI {roi_idx} | Active: \n {activation_mtx}")
-        final_activation_result = np.array(roi_results)
+        #filling activation matrix
+        activation_mtx = np.zeros(len(cell_indices), num_stims_per_repeat)
 
+        for i, roi_idx in enumerate(cell_indices):
+            for stim_idx in range(num_stims_per_repeat):
+                stim_avg_val = np.mean(stim_avg_dict[roi_idx][stim_idx])
+                activation_mtx[i, stim_idx] = 1 if stim_avg_val > threshold_list[i] else 0
+
+
+        if np.any(activation_mtx == True):
+            activated_roi_count += 1
+        print(f"ROI {roi_idx} | Active: \n {activation_mtx}")
         print(f"\nTotal Activated ROIs: {activated_roi_count} out of {len(cell_indices)}")
 
 #np.save(os.path.join(expDir, dir, 'activation_matrix.npy'), final_activation_results)

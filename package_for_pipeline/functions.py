@@ -1106,6 +1106,8 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         results_list = []
         ROI_numbers = []
 
+        start_time = start_timepoints[0]  # Start of first stimulation
+        end_time = start_timepoints[-1]  # End of last stimulation
         #for i, roi_idx in enumerate(cell_indices):
         #for i in cell_indices:
         for i in range(len(cell_indices)):
@@ -1118,36 +1120,19 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             baseline_avg = np.mean(baseline_dur)
             baseline_std = np.std(baseline_dur)
             threshold = baseline_std * threshold_value + baseline_avg
+            threshold_list.append(threshold)
             print(f"ROI {roi_idx} | Baseline Mean: {baseline_avg:.2f}, Baseline Std: {baseline_std:.2f}, Threshold: {threshold:.2f}")
 
-            for repeat in range(num_repeats):
-                '''
-                repeat_results = [] # Store results for this repeat
-                for stim_idx in range(num_stims_per_repeat):
-                    # Define activation period (between start times)
-                    start_time = start_timepoints[repeat * num_stims_per_repeat + stim_idx]
-                    end_time = (start_timepoints[repeat * num_stims_per_repeat + stim_idx + 1] if stim_idx < num_stims_per_repeat - 1 else F.shape[1])  # Last stim goes to end of recording
-                    # Calculate mean fluorescence during activation period
-                    stim_avg = np.mean(F[F_index, start_time:end_time])
-                    # Determine if the trace exceeded the threshold
-                    exceed_threshold = 1 if stim_avg > threshold else 0
-                    roi_results.append(exceed_threshold)  # Append binary activation result
-                    repeat_results.append(exceed_threshold)
-                    #Debug fluorescent values
-                    print(f"ROI {roi_idx}, Repeat {repeat}, Stim {stim_idx} | Stim Avg: {stim_avg:.2f}, Threshold: {threshold:.2f}, Active: {exceed_threshold}")
-                roi_results.append(repeat_results)  # Append results for this repeat
-                '''
-                start_time = start_timepoints[repeat * num_stims_per_repeat]  # Start of first stimulus in repeat
-                end_time = (start_timepoints[(repeat + 1) * num_stims_per_repeat] if repeat < num_repeats - 1 else F.shape[1])  # End of last stim in last repeat
-                stim_avg = np.mean(F[F_index, start_time:end_time])
-                exceed_threshold = 1 if stim_avg > threshold else 0
-                roi_results.append(exceed_threshold)
-            threshold_list.append(threshold)
-            results_list.append(roi_results)
+            stim_avg = np.mean(F[F_index, start_time:end_time])  # Compute single avg for whole stim period
+            exceed_threshold = 1 if stim_avg > threshold else 0
+            results_list.append(exceed_threshold)  # Store result (1 if active, 0 if not)
+            #print result
+            print(f"ROI {roi_idx} | Stim Avg: {stim_avg:.2f}, Threshold: {threshold:.2f}, Active: {exceed_threshold}")
             ROI_numbers.append(roi_idx)
 
         #Resutls matrix
         results_matrix = np.array(results_list)
+        print(results_matrix)
         '''
         # Print activation matrix per repeat
         for repeat in range(num_repeats):
@@ -1155,9 +1140,10 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             print(results_matrix[:, repeat])  # Print activation per ROI
         '''
         # ROIs that were active at least once
-        active_rois = np.where(results_matrix.sum(axis=1) > 0)[0]
+        #active_rois = np.where(results_matrix.sum(axis=1) > 0)[0]
+        active_rois = np.where(results_matrix > 0)[0]
         #Extracting x coordinates of active ROIs
-        active_med_x = [stat[roi]['med'][1] for roi in active_rois]  # Extract x-values
+        active_med_x = [stat[cell_indices[roi]]['med'][1] for roi in active_rois]  # Extract x-values
         avg_active_med_x = np.mean(active_med_x) if active_med_x else None  # Compute mean
 
         print(f"Average x-coordinate of active ROIs: {avg_active_med_x}")

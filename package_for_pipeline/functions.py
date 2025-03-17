@@ -1121,6 +1121,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             print(f"ROI {roi_idx} | Baseline Mean: {baseline_avg:.2f}, Baseline Std: {baseline_std:.2f}, Threshold: {threshold:.2f}")
 
             for repeat in range(num_repeats):
+                '''
                 repeat_results = [] # Store results for this repeat
                 for stim_idx in range(num_stims_per_repeat):
                     # Define activation period (between start times)
@@ -1135,17 +1136,24 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     #Debug fluorescent values
                     print(f"ROI {roi_idx}, Repeat {repeat}, Stim {stim_idx} | Stim Avg: {stim_avg:.2f}, Threshold: {threshold:.2f}, Active: {exceed_threshold}")
                 roi_results.append(repeat_results)  # Append results for this repeat
-
+                '''
+                start_time = start_timepoints[repeat * num_stims_per_repeat]  # Start of first stimulus in repeat
+                end_time = (start_timepoints[(repeat + 1) * num_stims_per_repeat] if repeat < num_repeats - 1 else F.shape[1])  # End of last stim in last repeat
+                stim_avg = np.mean(F[F_index, start_time:end_time])
+                exceed_threshold = 1 if stim_avg > threshold else 0
+                roi_results.append(exceed_threshold)
             threshold_list.append(threshold)
             results_list.append(roi_results)
             ROI_numbers.append(roi_idx)
 
         #Resutls matrix
         results_matrix = np.array(results_list)
+        '''
         # Print activation matrix per repeat
         for repeat in range(num_repeats):
             print(f"\nActivation Matrix for Repeat {repeat + 1}:")
             print(results_matrix[:, repeat])  # Print activation per ROI
+        '''
         # ROIs that were active at least once
         active_rois = np.where(results_matrix.sum(axis=1) > 0)[0]
         #Extracting x coordinates of active ROIs

@@ -31,10 +31,10 @@ you can look back the og mesc file & check the registered binary file in suite2p
 #------STEPS IN PIPELINE END------
 
 #------VALUES TO CHANGE------
-#root_directory = 'c:/Hyperstim/data_analysis/AMouse-2025-03-05-invivo-GCaMP6f/' #
-root_directory = 'd:/2P/Experiments/AMouse-2025-03-05-invivo-GCaMP6f/'
-#tiff_directory = 'c:/Hyperstim/data_analysis/AMouse-2025-03-05-invivo-GCaMP6f/merged_tiffs/'
-tiff_directory= 'd:/2P/Experiments/AMouse-2025-03-05-invivo-GCaMP6f/merged_tiffs/'
+root_directory = 'c:/Hyperstim/data_analysis/AMouse-2025-03-05-invivo-GCaMP6f/' #
+#root_directory = 'd:/2P/Experiments/AMouse-2025-03-05-invivo-GCaMP6f/'
+tiff_directory = 'c:/Hyperstim/data_analysis/AMouse-2025-03-05-invivo-GCaMP6f/merged_tiffs/'
+#tiff_directory= 'd:/2P/Experiments/AMouse-2025-03-05-invivo-GCaMP6f/merged_tiffs/'
 mesc_file_name = 'AMouse-2025-03-05-invivo-GCaMP6f-2'
 mesc_DATA_file = 'mesc_data.npy' #from mesc_tiff_extract
 list_of_file_nums = [
@@ -72,7 +72,7 @@ functions.stim_dur_val(tiff_directory, list_of_file_nums)
 
 '''
 #functions.baseline_val(root_directory, tiff_directory, list_of_file_nums)
-#functions.activated_neurons_val(root_directory, tiff_directory, list_of_file_nums, 1)
+functions.activated_neurons_val(root_directory, tiff_directory, list_of_file_nums, 1)
 #functions.timecourse_vals(tiff_directory, list_of_file_nums, 5)
 #functions.data_analysis_values('amp', tiff_directory, list_of_file_nums)
 

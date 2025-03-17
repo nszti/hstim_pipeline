@@ -378,7 +378,7 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
                 file_suffix = num_to_search_split[1].rsplit('.', 1)[0]
                 if file_suffix == suffix:
                     matched_dir = dir
-                    print(matched_dir)
+                    #print(matched_dir)
                     break
         else:
             continue
@@ -391,7 +391,7 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
                 stim_times = np.load(stim_times_path, allow_pickle=True)
                 if stim_times.size > 0:
                     baseline_duration = int(stim_times[0]) - 1
-                    print(baseline_duration)
+                    #print(baseline_duration)
                     baseline_durations.append(baseline_duration)
         if matched_dir:
             # Load the fluorescence traces and iscell array
@@ -409,8 +409,9 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
             #print(stim_start_times)
             frame_numbers = np.load(frame_numbers_path, allow_pickle=True)
             #print(frame_numbers)
+            #print(stim_start_times[0][0])
 
-            '''
+
             time_block = 1
             if len(frame_numbers) > 0:
                 time_block = int(frame_numbers[0]) #1085
@@ -419,46 +420,7 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
             num_tif_triggers = int(np.round(len(F0[0]) / time_block))
             print(len(F0[0]) / time_block)
             print(num_tif_triggers)
-            '''
-            tif_triggers_start = []
-            start_stim = stim_start_times[0][0]
-            for i in range(num_stims_per_repeat):
-                start_time = i *  pulse_dur_frame
-                tif_triggers_start.append(start_time)
-            repeat_end_time = []
-            for repeat in range(num_repeats):
-                if num_repeats == 0:
-                    end_time = start_stim + num_stims_per_repeat * pulse_dur_frame
-                    repeat_end_time.append(end_time)
-                else:
-                    end_time = start_stim + num_stims_per_repeat * pulse_dur_frame * (repeat + 1)
-                    repeat_end_time.append(end_time)
 
-            ROI_numbers = []
-            threshold_list = []
-            results_list = []
-
-            #calculate threshold values and results for each ROI
-            for i in range(len(F0)):
-                roi_thresholds = []
-                roi_results = []
-                for baseline_duration, start_time, end_time in zip(baseline_durations, tif_triggers_start, repeat_end_time):
-                    baseline_dur = F0[i, start_time:start_time + baseline_duration]
-                    baseline_avg = np.mean(baseline_dur)
-                    baseline_std = np.std(baseline_dur)
-                    threshold = baseline_std * threshold_value + baseline_avg
-                    stim_avg = np.mean(F0[i, (start_time + baseline_duration):(start_time + baseline_duration + 465)])
-                    if stim_avg > threshold:
-                        exceed_threshold = 1
-                    else:
-                        exceed_threshold = 0
-                        # Append result (1 or 0) to the list for the current ROI
-                    roi_results.append(int(exceed_threshold))
-                threshold_list.append(roi_thresholds)
-                results_list.append(roi_results)
-                ROI_numbers.append(i)
-
-            '''
             for i in range(num_tif_triggers):
                 start_time = i * time_block
                 #print(start_time)
@@ -517,7 +479,7 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
                 'activated_neurons': results_list
             })
             pd.set_option('display.max_rows', None)
-            '''
+
 
         '''
                 catSum = []
@@ -1176,6 +1138,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 active_rois = np.array([])
             '''
             results_matrix = np.array(results_list)
+            print(results_matrix)
             active_rois = np.where(results_matrix.sum(axis=1) > 0)[0]
             active_med_x = [stat[roi]['med'][1] for roi in active_rois]
             avg_active_med_x = np.mean(active_med_x)

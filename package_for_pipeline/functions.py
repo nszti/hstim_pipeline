@@ -1106,10 +1106,14 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
         results_list = []
         ROI_numbers = []
 
-        for i, roi_idx in enumerate(cell_indices):
+        #for i, roi_idx in enumerate(cell_indices):
         #for i in cell_indices:
+        for i in range(len(cell_indices)):
+            roi_idx = cell_indices[i]  # Map to correct F index
+            print(roi_idx)
             roi_thresholds = []
             roi_results = []
+
             baseline_dur = F[roi_idx, :baseline_duration]
             baseline_avg = np.mean(baseline_dur)
             baseline_std = np.std(baseline_dur)

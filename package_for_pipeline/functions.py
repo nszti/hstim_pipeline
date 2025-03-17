@@ -1113,8 +1113,10 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             print(roi_idx)
             roi_thresholds = []
             roi_results = []
+            F_index = np.where(cell_indices == roi_idx)[0][0]
+            print(F_index)
 
-            baseline_dur = F[roi_idx, :baseline_duration]
+            baseline_dur = F[F_index, :baseline_duration]
             baseline_avg = np.mean(baseline_dur)
             baseline_std = np.std(baseline_dur)
             threshold = baseline_std * threshold_value + baseline_avg

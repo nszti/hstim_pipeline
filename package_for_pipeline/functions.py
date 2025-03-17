@@ -420,7 +420,7 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
             num_tif_triggers = int(np.round(len(F0[0]) / time_block))
             print(len(F0[0]) / time_block)
             print(num_tif_triggers)
-
+            tif_triggers = []
             for i in range(num_tif_triggers):
                 start_time = i * time_block
                 #print(start_time)

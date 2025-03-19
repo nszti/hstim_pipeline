@@ -984,7 +984,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             plt.show()
 
 
-def plot_stim_traces(expDir, frame_rate, num_repeats=int, num_stims_per_repeat=int, list_of_file_nums=None, start_btw_stim=None, trial_delay=float, roi_idx=None,stim_dur=200, threshold_value = 3 ):
+def plot_stim_traces(expDir, frame_rate, num_repeats=int, num_stims_per_repeat=int, list_of_file_nums=None, start_btw_stim=None, trial_delay=float, roi_idx=None,stim_dur=200, threshold_value = 3):
     base_dir = Path(expDir)
     merged_path = expDir
     print(f"Looking for directories in: {base_dir}")
@@ -1131,8 +1131,11 @@ def plot_stim_traces(expDir, frame_rate, num_repeats=int, num_stims_per_repeat=i
 
         #activation_mtx = np.zeros((num_cells, num_stims_per_repeat))
         #stim_holder_dict = {roi: {stim: [] for stim in range(num_stims_per_repeat)} for roi in cell_indices}
+        roi_idxs = []
         for repeat in range(num_repeats):
+            print("belepett")
             for roi_idx in cell_indices:
+                roi_idxs.append(roi_idx)
                 F_index_act = np.where(cell_indices == roi_idx)[0][0]
                 baseline_data = F[F_index_act, :max(1, int(stim_start_times[0]) - 1)]
                 baseline_avg = np.mean(baseline_data) if baseline_data.size > 0 else 0
@@ -1145,7 +1148,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats=int, num_stims_per_repeat=i
                 baseline_std = np.std(F[F_index_act, :int(stim_start_times[0]) - 1])
                 threshold = baseline_std * threshold_value + baseline_avg'''
 
-                for stim_idx in range(num_stims_per_repeat):
+                for stim_idx in range(30):
                     start_time = start_timepoints[stim_idx]
                     stim_end_time = start_time + stimulation_duration_frames
                     stim_segment = F[F_index_act, start_time:stim_end_time]
@@ -1163,9 +1166,11 @@ def plot_stim_traces(expDir, frame_rate, num_repeats=int, num_stims_per_repeat=i
                     else:
                         roi_activation.append(0)
                 activation_results.append(roi_activation)
-            column_names = ["ROI", "Repeat"] + [f"Stim {i+1}" for i in range(num_stims_per_repeat)]
-            activation_df = pd.DataFrame(activation_results, columns = column_names)
-            csv_path = os.path.join(expDir + dir + 'activation_results.csv')
+            column_names = ["ROI"] + [f"Stim {i+1}" for i in range(num_stims_per_repeat)]
+            all_info = list(zip(roi_idxs, activation_results))
+            activation_df = pd.DataFrame(all_info)
+
+            csv_path = os.path.join(expDir + dir + '/activation_results.csv')
             activation_df.to_csv(csv_path, index = False)
             print(f"results saved to {csv_path}")
 
@@ -1245,7 +1250,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats=int, num_stims_per_repeat=i
         fig.suptitle('Calcium Traces Around Stimulation', fontsize=16)
 
         for repeat in range(num_repeats):
-            print("belepett")
+
             for stim_idx in range(num_stims_per_repeat):
                 ax = axes[repeat, stim_idx]
                 ax.plot(time, all_traces[repeat, stim_idx], label=f"Repeat {repeat}, Stim {stim_idx}")

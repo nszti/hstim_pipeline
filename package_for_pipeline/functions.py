@@ -1105,144 +1105,42 @@ def plot_stim_traces(expDir, frame_rate, num_repeats=int, num_stims_per_repeat=i
         np.save(expDir + dir + '/start_timepoints.npy', start_timepoints)
 
         #---CALUCALTE ACTIVATED NEURONS PER REPEAT---
-        activated_roi_count = 0
-        activation_results = []
         baseline_duration = int(stim_start_times[0]) - 1
-        print(baseline_duration)
-        threshold_list = []
-        results_list = []
-        ROI_numbers = []
-        stim_holder_dict = {}
 
-        start_times = []
-        end_times = []
-        '''for repeat in range(num_stims_per_repeat):
-            start_time = start_timepoints[repeat * num_stims_per_repeat]
-            # Ensure last repeat has a proper end time
-            if repeat == num_repeats - 1:
-                end_time = F.shape[1]  # Last repeat should go until the end of recording
-            else:
-                end_time = start_timepoints[(repeat + 1) * num_stims_per_repeat]  # First stim of next repeat
-            start_times.append(start_time)
-            end_times.append(end_time)'''
+        activation_results = {}
 
-        #for i, roi_idx in enumerate(cell_indices):
-        #for i in cell_indices:
+        for roi_idx in cell_indices:
+            F_index_act = np.where(cell_indices == roi_idx)[0][0]
+            baseline_data = F[F_index_act, :max(1, int(stim_start_times[0]) - 1)]
+            baseline_avg = np.mean(baseline_data) if baseline_data.size > 0 else 0
+            baseline_std = np.std(baseline_data) if baseline_data.size > 0 else 0
+            threshold = baseline_std * threshold_value + baseline_avg
 
-        #activation_mtx = np.zeros((num_cells, num_stims_per_repeat))
-        #stim_holder_dict = {roi: {stim: [] for stim in range(num_stims_per_repeat)} for roi in cell_indices}
-        roi_idxs = []
-        for repeat in range(num_repeats):
-            print("belepett")
-            for roi_idx in cell_indices:
-                roi_idxs.append(roi_idx)
-                F_index_act = np.where(cell_indices == roi_idx)[0][0]
-                baseline_data = F[F_index_act, :max(1, int(stim_start_times[0]) - 1)]
-                baseline_avg = np.mean(baseline_data) if baseline_data.size > 0 else 0
-                baseline_std = np.std(baseline_data) if baseline_data.size > 0 else 0
-                threshold = baseline_std * threshold_value + baseline_avg
-
-                roi_activation = [roi_idx + 1] #repeat number
-
-                '''baseline_avg = np.mean(F[F_index_act, :int(stim_start_times[0]) - 1])
-                baseline_std = np.std(F[F_index_act, :int(stim_start_times[0]) - 1])
-                threshold = baseline_std * threshold_value + baseline_avg'''
-
-                for stim_idx in range(30):
-                    start_time = start_timepoints[stim_idx]
+            roi_activation = []
+            repeat_num = 0
+            for repeat in range(num_repeats):
+                repeat_activation = []
+                repeat_num += 1
+                for stim_idx in range(num_stims_per_repeat):
+                    stim_idx_global = repeat * num_stims_per_repeat + stim_idx
+                    start_time = start_timepoints[stim_idx_global]
                     stim_end_time = start_time + stimulation_duration_frames
                     stim_segment = F[F_index_act, start_time:stim_end_time]
                     avg_stim_resp = np.mean(stim_segment)
-                    #stim_holder_dict[roi_idx][stim_idx].append(np.mean(stim_segment))
+                    repeat_activation.append(1 if avg_stim_resp > threshold else 0)
+                roi_activation.append(repeat_activation)
 
-                    '''for roi_idx in stim_holder_dict:
-                        for stim_idx in range(num_stims_per_repeat):
-                            stim_avg_val = np.mean(stim_holder_dict[roi_idx][stim_idx])
-                            activation_mtx[roi_idx, stim_idx] = 1 if stim_avg_val > threshold_list[roi_idx] else 0
-                            activation_mtx[np.where(cell_indices == roi_idx)[0][0], stim_idx] = 1 if stim_avg_val > threshold_list[roi_idx] else 0
-                    '''
-                    if avg_stim_resp > threshold:
-                        roi_activation.append(1)
-                    else:
-                        roi_activation.append(0)
-                activation_results.append(roi_activation)
-            column_names = ["ROI"] + [f"Stim {i+1}" for i in range(num_stims_per_repeat)]
-            all_info = list(zip(roi_idxs, activation_results))
-            activation_df = pd.DataFrame(all_info)
+            activation_results[roi_idx] = roi_activation
 
-            csv_path = os.path.join(expDir + dir + '/activation_results.csv')
-            activation_df.to_csv(csv_path, index = False)
-            print(f"results saved to {csv_path}")
+        column_names = [f"Repeat {i + 1}" for i in range(num_repeats)]
+        activation_df = pd.DataFrame.from_dict(activation_results, orient='index', columns=column_names)
+        activation_df.insert(0, "ROI", activation_df.index)
 
-        '''#activated_rois = np.sum(np.any(activation_mtx == 1, axis=1))
-        print(f"Total Activated ROIs: {activated_rois} out of {num_cells}")
+        csv_path = os.path.join(expDir, dir, 'activation_results.csv')
+        activation_df.to_csv(csv_path, index=False)
+        print(f"Results saved to {csv_path}")
 
-        active_x_values = [stat[roi]['med'][0] for roi in cell_indices if np.any(activation_mtx[np.where(cell_indices == roi)[0][0]])]
-        avg_x_value = np.mean(active_x_values) if active_x_values else None
-
-        #with open(os.path.join(expDir, dir, 'avg_active_x_values.txt'), 'w') as f:
-        #    f.write(str(avg_x_value))
-         print(f"Average X-Coordinate of Activated ROIs: {avg_x_value}")'''
-        '''for i in range(len(cell_indices)):
-            roi_idx = cell_indices[i]  # Map to correct F index
-            roi_thresholds = []
-            roi_results = []
-            F_index = np.where(cell_indices == roi_idx)[0][0]
-            baseline_dur = F[F_index, :baseline_duration]
-            #print(baseline_dur)
-            baseline_avg = np.mean(baseline_dur)
-            baseline_std = np.std(baseline_dur)
-            threshold = baseline_std * threshold_value + baseline_avg
-            threshold_list.append(threshold)
-            print(f"ROI {roi_idx} | Baseline Mean: {baseline_avg:.2f}, Baseline Std: {baseline_std:.2f}, Threshold: {threshold:.2f}")
-
-            stim_holder_dict[roi_idx] = {stim: [] for stim in range(num_stims_per_repeat)}
-
-            for repeat in range(num_repeats):
-                for stim_idx in range(num_stims_per_repeat):
-                    start_time = start_timepoints[repeat * num_stims_per_repeat]
-                    stim_end_time = start_time + stimulation_duration_frames
-                    #print(start_time, stim_end_time)
-                    stim_avg_value = np.mean(F[F_index, start_time:stim_end_time])
-
-                    activation_matrix[i, repeat, stim_idx] = 1 if stim_avg_value > threshold else 0
-        
-        #calculate average of each stimulation
-        stim_avg_dict = {}
-        for roi_idx in stim_holder_dict:
-            stim_avg_dict[roi_idx] = {}
-            for stim_idx in range(num_stims_per_repeat):
-                stim_avg_dict[roi_idx][stim_idx] = np.mean(stim_holder_dict[roi_idx][stim_idx], axis=0)
-
-        #filling activation matrix
-        activation_mtx = np.zeros(len(cell_indices), num_stims_per_repeat)
-
-        for i, roi_idx in enumerate(cell_indices):
-            for stim_idx in range(num_stims_per_repeat):
-                stim_avg_val = np.mean(stim_avg_dict[roi_idx][stim_idx])
-                activation_mtx[i, stim_idx] = 1 if stim_avg_val > threshold_list[i] else 0
-
-
-        if np.any(activation_mtx == True):
-            activated_roi_count += 1
-        print(f"ROI {roi_idx} | Active: \n {activation_mtx}")
-        print(f"\nTotal Activated ROIs: {activated_roi_count} out of {len(cell_indices)}")
-
-#np.save(os.path.join(expDir, dir, 'activation_matrix.npy'), final_activation_results)
-#np.save(os.path.join(expDir, dir, 'activated_roi_count.npy'), activated_roi_count)
-        '''
-        '''
-        # ROIs that were active at least once
-        #active_rois = np.where(results_matrix.sum(axis=1) > 0)[0]
-        active_rois = np.where(results_matrix > 0)[0]
-        #Extracting x coordinates of active ROIs
-        active_med_x = [stat[cell_indices[roi]]['med'][1] for roi in active_rois]  # Extract x-values
-        avg_active_med_x = np.mean(active_med_x) if active_med_x else None  # Compute mean
-        
-        print(f"Average x-coordinate of active ROIs: {avg_active_med_x}")
-        np.save(os.path.join(expDir, dir, 'avg_active_med_x.npy'), avg_active_med_x)
-        '''
-#------------PLOTTING------------
+        #------------PLOTTING------------
 #----plot1
         time = np.linspace(-1, 3, total_frames)
         # Create grid plot

@@ -1037,13 +1037,14 @@ def plot_stim_traces(expDir, frame_rate, num_repeats=int, num_stims_per_repeat=i
         iscell = np.load(iscelll_path, allow_pickle=True)
         stim_start_times = np.load(stim_start_times_path, allow_pickle=True)
         stat = np.load(stat_path, allow_pickle=True)
+        #print(stat)
 
 #--------CALCULATIONS--------
         # Extract the ROI indexes for cells
         cell_indices = np.where(iscell[:, 0] == 1)[0]  # Get indices of valid ROIs
         num_cells = len(cell_indices)
         stimulation_duration_frames = int((stim_dur / 1000) * frame_rate)
-        print(f" rois of cells: {cell_indices}")
+        #print(f" rois of cells: {cell_indices}")
         num_cells = len(cell_indices)
         if roi_idx  not in cell_indices:
             raise ValueError
@@ -1100,48 +1101,77 @@ def plot_stim_traces(expDir, frame_rate, num_repeats=int, num_stims_per_repeat=i
 
         min_trace_value = np.min(all_traces)
         max_trace_value = np.max(all_traces)
-        #print(min_trace_value, max_trace_value)
-        print(start_timepoints)
+        #print(start_timepoints)
         np.save(expDir + dir + '/start_timepoints.npy', start_timepoints)
 
         #---CALUCALTE ACTIVATED NEURONS PER REPEAT---
         baseline_duration = int(stim_start_times[0]) - 1
 
-        activation_results = {}
-
+        activation_results = {roi_idx: [] for roi_idx in cell_indices}
+        activation_count = 0
         for roi_idx in cell_indices:
             F_index_act = np.where(cell_indices == roi_idx)[0][0]
             baseline_data = F[F_index_act, :max(1, int(stim_start_times[0]) - 1)]
             baseline_avg = np.mean(baseline_data) if baseline_data.size > 0 else 0
             baseline_std = np.std(baseline_data) if baseline_data.size > 0 else 0
             threshold = baseline_std * threshold_value + baseline_avg
-
             roi_activation = []
-            repeat_num = 0
+            activated_rois = []
             for repeat in range(num_repeats):
                 repeat_activation = []
-                repeat_num += 1
                 for stim_idx in range(num_stims_per_repeat):
                     stim_idx_global = repeat * num_stims_per_repeat + stim_idx
                     start_time = start_timepoints[stim_idx_global]
                     stim_end_time = start_time + stimulation_duration_frames
                     stim_segment = F[F_index_act, start_time:stim_end_time]
                     avg_stim_resp = np.mean(stim_segment)
-                    repeat_activation.append(1 if avg_stim_resp > threshold else 0)
+                    activation = 1 if avg_stim_resp > threshold else 0
+                    repeat_activation.append(activation)
                 roi_activation.append(repeat_activation)
-
             activation_results[roi_idx] = roi_activation
+            if activation == 1:
+                activated_rois.append(roi_idx)
+                activation_count += 1
 
+        print(f"Number of activated neurons: {activation_count} out of {num_cells} cells")
         column_names = [f"Repeat {i + 1}" for i in range(num_repeats)]
         activation_df = pd.DataFrame.from_dict(activation_results, orient='index', columns=column_names)
         activation_df.insert(0, "ROI", activation_df.index)
-
         csv_path = os.path.join(expDir, dir, 'activation_results.csv')
         activation_df.to_csv(csv_path, index=False)
         print(f"Results saved to {csv_path}")
 
+        #print(activation_results)
+        x_coords_per_repeat = [[] for _ in range(num_repeats)]
+        # first_3_rois = list(activation_results.keys())[:3]
+        for repeat in range(num_repeats):
+            x_coords = []
+            for roi_idx in activation_results.keys():
+            #for roi_idx in first_3_rois:
+                act = activation_results[roi_idx]
+                if any(act[repeat]):
+                    if 'med' in stat[roi_idx]:
+                        x_coords.append(stat[roi_idx]['med'][1])
+            if x_coords:
+                avg_x = np.mean(x_coords)
+            else:
+                avg_x = np.nan
+            x_coords_per_repeat[repeat] = avg_x
+
+        # Avg x_coords for each repeat
+        data = []
+        for repeat, avg_x in enumerate(x_coords_per_repeat):
+            print(f"Repeat {repeat + 1} x coordinates: {avg_x}")
+            data.append({'Repeat': repeat + 1, 'Avg_X_Coordinate': avg_x})
+
+        df = pd.DataFrame(data)
+        csv_path = os.path.join(expDir, dir, 'avg_x_per_repeat.csv')
+        df.to_csv(csv_path, index=False)
+        print(f"Values saved to {csv_path}")
+
         #------------PLOTTING------------
 #----plot1
+        '''
         time = np.linspace(-1, 3, total_frames)
         # Create grid plot
         fig, axes = plt.subplots(num_repeats, num_stims_per_repeat, figsize=(5 * num_stims_per_repeat, 4 * num_repeats))
@@ -1207,12 +1237,6 @@ def plot_stim_traces(expDir, frame_rate, num_repeats=int, num_stims_per_repeat=i
                 ax.set_ylabel('Mean ΔF/F₀')
             ax.set_title(f'Trial {repeat + 1}')
             ax.set_ylim(min_trace_value, max_trace_value)
-            '''
-            # Remove duplicate legend entries
-            handles, labels = ax.get_legend_handles_labels()
-            unique_legend = dict(zip(labels, handles))  # Remove duplicates
-            ax.legend(unique_legend.values(), unique_legend.keys(), loc='upper left', fontsize=8)
-            '''
             ax.grid(True)
 
 
@@ -1262,11 +1286,6 @@ def plot_stim_traces(expDir, frame_rate, num_repeats=int, num_stims_per_repeat=i
             #ax.set_ylabel('Mean ΔF/F₀')
 
             ax.set_title(f'{amplitude} μA')
-            '''
-            if repeat < len(amplitude_values):
-                ax.set_title(f'amplitude_values[repeat] μA')
-                ax.set_ylabel('Mean ΔF/F₀')
-            '''
 
             ax.set_ylim(min_trace_value, max_trace_value)
 
@@ -1284,7 +1303,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats=int, num_stims_per_repeat=i
 
         plt.tight_layout()
         plt.savefig(os.path.join(expDir, dir, 'amplitude_overlapping_subplots.png'))
-        plt.show()
+        plt.show()'''
 
 #scratch_1
 def scratch_val(tiff_dir):

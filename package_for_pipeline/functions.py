@@ -1160,9 +1160,17 @@ def plot_stim_traces(expDir, frame_rate, num_repeats=int, num_stims_per_repeat=i
 
         # Avg x_coords for each repeat
         data = []
+        data_x = []
         for repeat, avg_x in enumerate(x_coords_per_repeat):
             print(f"Repeat {repeat + 1} x coordinates: {avg_x}")
             data.append({'Repeat': repeat + 1, 'Avg_X_Coordinate': avg_x})
+            data_x.append(avg_x)
+
+        ovreall_avg_x = np.mean(data_x)
+        x_std = np.std(data_x)
+        print(ovreall_avg_x, x_std)
+        data.append({'Repeat': 'Overall_Avg', 'Avg_X_Coordinate': ovreall_avg_x})
+        data.append({'Repeat': 'Std_Dev', 'Avg_X_Coordinate': x_std})
 
         df = pd.DataFrame(data)
         csv_path = os.path.join(expDir, dir, 'avg_x_per_repeat.csv')

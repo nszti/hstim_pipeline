@@ -329,7 +329,7 @@ def baseline_val(root_directory,tiff_dir, list_of_file_nums ):
                 # Check iscell==1
                 if iscell_value == 1:
                     cellcount += 1
-                    baseline_duration = baseline_durations[cell_index % len(baseline_durations)]
+                    #baseline_duration = baseline_durations[cell_index % len(baseline_durations)]
                     baseline_duration = int(stim_start_times[0]) - 1
                     if baseline_duration is not None:
                         baseline_value = np.mean(fluorescence_trace[:baseline_duration])
@@ -704,7 +704,6 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             distanceFromElectrode = distances[:, 2]
             # print(distanceFromElectrode)
             stimResults = container["stimResults"]
-            print(container)
             restResults = container["restResults"]
             stimAvgs = container["stimAvgs"]
             restAvgs = container["restAvgs"]
@@ -721,6 +720,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
                     electrode_ROI_index = i
             distanceFromElectrode = np.delete(distanceFromElectrode, electrode_ROI_index, axis=0)
             stimResults = np.delete(stimResults, electrode_ROI_index, axis=0)
+            #print(stimResults)
             restResults = np.delete(restResults, electrode_ROI_index, axis=0)
             stimAvgs = np.delete(stimAvgs, electrode_ROI_index, axis=0)
             restAvgs = np.delete(restAvgs, electrode_ROI_index, axis=0)
@@ -731,7 +731,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             ROI_No = stimResults.shape[0]
             block_No = stimResults.shape[1]
             trial_No = stimResults.shape[2]
-            print(ROI_No, block_No, trial_No)
+            #print(ROI_No, block_No, trial_No)
 
             if stim_type == 'amp':
                 legend = ['10', '20', '30', '15', '25']
@@ -769,6 +769,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
 
             # plot the number and fraction of neurons activated (or silent) during a block
             fig, axs = plt.subplots(2, 2, figsize = (12,8))
+            #print(legend, activeNeuronsPerBlock)
             axs[0, 0].plot(legend, activeNeuronsPerBlock, marker="o")
             axs[0, 0].set_xlabel('Stimulation current(uA)')
             axs[0, 0].set_ylabel('Number of active neurons')
@@ -986,545 +987,526 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             plt.show()
 
 
-def plot_stim_traces(expDir, frame_rate, num_repeats=int, num_stims_per_repeat=int, list_of_file_nums=None, start_btw_stim=None, trial_delay=float, roi_idx=None,stim_dur=200, threshold_value = 3):
+def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list_of_file_nums, start_btw_stim, trial_delay, roi_idx,stim_dur=200, threshold_value = 3):
     base_dir = Path(expDir)
-    merged_path = expDir
-    print(f"Looking for directories in: {base_dir}")
+    filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
 
-    # If list_of_file_nums is provided, only analyze those specific directories
-    if list_of_file_nums is not None:
-        dirs_to_analyze = []
-        print(f"Looking for directories matching: {list_of_file_nums}")
+    for numbers_to_merge in list_of_file_nums:
+        suffix = '_'.join(map(str, numbers_to_merge))
+        num_to_search = []
+        for dir in filenames:
+            num_to_search_split = dir.split('MUnit_')
+            # print(num_to_search_split)
+            if len(num_to_search_split) > 1:
+                file_suffix = num_to_search_split[1].rsplit('.', 1)[0]
+                if file_suffix == suffix:
+                    matched_file = dir
+                    print(matched_file)
+                    # print(matched_file)
+                    break
+        else:
+            continue
 
-        # First, print all available directories
-        all_dirs = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
-        print(f"Available directories: {all_dirs}")
+        if matched_file:
+            print(f"\nAnalyzing directory: {dir}")
+            # Load required data
+            F_path = expDir + dir + '/suite2p/plane0/F0.npy'
+            iscelll_path = expDir + dir + '/suite2p/plane0/iscell.npy'
+            stim_start_times_path = expDir + dir + '/stimTimes.npy'
+            stat_path = expDir + dir + '/suite2p/plane0/stat.npy'
+            ops_path = expDir + dir + '/suite2p/plane0/ops.npy'
+            print(f"Loading data from: {F_path}")
+            print(f"Loading stim times from: {stim_start_times_path}")
 
-        for sublist in list_of_file_nums:
-            suffix = '_'.join(map(str, sublist))
-            print(f"\nLooking for suffix: {suffix}")
-            matching_dir = None
+            F = np.load(F_path, allow_pickle=True)
+            iscell = np.load(iscelll_path, allow_pickle=True)
+            stim_start_times = np.load(stim_start_times_path, allow_pickle=True)
+            stat = np.load(stat_path, allow_pickle=True)
+            ops = np.load(ops_path, allow_pickle=True).item()
+            #print(stat)
 
-            # Original directory matching logic
-            for file in base_dir.iterdir():
-                if file.name.startswith('merged'):
-                    print(f"Checking directory: {file.name}")
-                    if str(suffix) in file.name:
-                        matching_dir = file.name
-                        print(f"Found matching directory: {matching_dir}")
-                        break
+    #--------CALCULATIONS--------
+            # Extract the ROI indexes for cells
+            cell_indices = np.where(iscell[:, 0] == 1)[0]  # Get indices of valid ROIs
+            num_cells = len(cell_indices)
+            stimulation_duration_frames = int((stim_dur / 1000) * frame_rate)
+            #print(f" rois of cells: {cell_indices}")
+            num_cells = len(cell_indices)
+            if roi_idx  not in cell_indices:
+                raise ValueError
 
-            if matching_dir:
-                dirs_to_analyze.append(matching_dir)
-            else:
-                print(f"No matching directory found for suffix {suffix}")
-    else:
-        # If no list provided, analyze all merged directories
-        dirs_to_analyze = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
-        print(f"Analyzing all directories: {dirs_to_analyze}")
-
-    print(f"\nDirectories to analyze: {dirs_to_analyze}")
-
-    for dir in dirs_to_analyze:
-        print(f"\nAnalyzing directory: {dir}")
-        # Load required data
-        F_path = expDir + dir + '/suite2p/plane0/F0.npy'
-        iscelll_path = expDir + dir + '/suite2p/plane0/iscell.npy'
-        stim_start_times_path = expDir + dir + '/stimTimes.npy'
-        stat_path = expDir + dir + '/suite2p/plane0/stat.npy'
-        ops_path = expDir + dir + '/suite2p/plane0/ops.npy'
-        print(f"Loading data from: {F_path}")
-        print(f"Loading stim times from: {stim_start_times_path}")
-
-        F = np.load(F_path, allow_pickle=True)
-        iscell = np.load(iscelll_path, allow_pickle=True)
-        stim_start_times = np.load(stim_start_times_path, allow_pickle=True)
-        stat = np.load(stat_path, allow_pickle=True)
-        ops = np.load(ops_path, allow_pickle=True).item()
-        #print(stat)
-
-#--------CALCULATIONS--------
-        # Extract the ROI indexes for cells
-        cell_indices = np.where(iscell[:, 0] == 1)[0]  # Get indices of valid ROIs
-        num_cells = len(cell_indices)
-        stimulation_duration_frames = int((stim_dur / 1000) * frame_rate)
-        #print(f" rois of cells: {cell_indices}")
-        num_cells = len(cell_indices)
-        if roi_idx  not in cell_indices:
-            raise ValueError
-
-        F_index = np.where(cell_indices == roi_idx)[0][0]
-        # Calculate time windows (1s before, 3s after)
-        pre_frames = frame_rate  # 1 second before
-        post_frames = frame_rate * 3  # 3 seconds after
-        total_frames = pre_frames + post_frames
-        start_btw_stim_frames = start_btw_stim * frame_rate
-        trial_delay_frames = trial_delay * frame_rate
+            F_index = np.where(cell_indices == roi_idx)[0][0]
+            # Calculate time windows (1s before, 3s after)
+            pre_frames = frame_rate  # 1 second before
+            post_frames = frame_rate * 3  # 3 seconds after
+            total_frames = pre_frames + post_frames
+            start_btw_stim_frames = start_btw_stim * frame_rate
+            trial_delay_frames = trial_delay * frame_rate
 
 
-        # Storage for traces: Shape (ROIs, repeats, stimulations, frames)
-        all_traces = np.zeros((num_repeats, num_stims_per_repeat, total_frames))
-        start_timepoints = []
-        for repeat in range(num_repeats):
-            for stim_idx in range(num_stims_per_repeat):
-
-                # stimulation start time
-                if stim_idx == 0 and repeat == 0:
-                    start_stim = int(stim_start_times[0])  # First stimulation from stim_start_times
-                    start_timepoints.append(start_stim)
-                elif repeat == 0:
-                    start_stim = int(stim_start_times[0] + stim_idx * start_btw_stim_frames)
-                    start_timepoints.append(start_stim)
-                else:
-                    start_stim = int(stim_start_times[0] + (stim_idx * start_btw_stim_frames) + (repeat * (((num_stims_per_repeat-1) * start_btw_stim_frames)+ trial_delay_frames)))
-                    start_timepoints.append(start_stim)
-                #print(f"ROI {roi_idx}, Repeat {repeat}, Stim {stim_idx}: Start = {start_stim}")
-
-
-                # Define time window (1 sec before, 3 sec after)
-                pre_start = max(0, start_stim  - pre_frames)
-                post_end = min(F.shape[1], start_stim  + post_frames)
-
-                # Extract fluorescence trace for this ROI
-                trace_segment = F[F_index, pre_start:post_end]
-
-                '''
-                # Pad if needed
-                if trace_segment.shape[0] < total_frames:
-                    pad_width = total_frames - trace_segment.shape[0]
-                    if pre_start == 0:
-                        trace_segment = np.pad(trace_segment, (pad_width, 0), mode='edge')
-                    else:
-                        trace_segment = np.pad(trace_segment, (0, pad_width), mode='edge')
-                '''
-                # Store trace for this ROI, repeat, and stimulation index
-                if trace_segment.shape[0] == 0:
-                    trace_segment = np.zeros(total_frames)
-
-                all_traces[repeat, stim_idx] = trace_segment
-
-        min_trace_value = np.min(all_traces)
-        max_trace_value = np.max(all_traces)
-        #print(start_timepoints)
-        np.save(expDir + dir + '/start_timepoints.npy', start_timepoints)
-
-        #---CALUCALTE ACTIVATED NEURONS PER REPEAT---
-        baseline_duration = int(stim_start_times[0]) - 1
-
-        activation_results = {roi_idx: [] for roi_idx in cell_indices}
-        activation_count = 0
-        for roi_idx in cell_indices:
-            F_index_act = np.where(cell_indices == roi_idx)[0][0]
-            baseline_data = F[F_index_act, :max(1, int(stim_start_times[0]) - 1)]
-            baseline_avg = np.mean(baseline_data) if baseline_data.size > 0 else 0
-            baseline_std = np.std(baseline_data) if baseline_data.size > 0 else 0
-            threshold = baseline_std * threshold_value + baseline_avg
-            roi_activation = []
-            activated_rois = []
+            # Storage for traces: Shape (ROIs, repeats, stimulations, frames)
+            all_traces = np.zeros((num_repeats, num_stims_per_repeat, total_frames))
+            start_timepoints = []
             for repeat in range(num_repeats):
-                repeat_activation = []
                 for stim_idx in range(num_stims_per_repeat):
-                    stim_idx_global = repeat * num_stims_per_repeat + stim_idx
-                    start_time = start_timepoints[stim_idx_global]
-                    stim_end_time = start_time + stimulation_duration_frames
-                    stim_segment = F[F_index_act, start_time:stim_end_time]
-                    avg_stim_resp = np.mean(stim_segment)
-                    activation = 1 if avg_stim_resp > threshold else 0
-                    repeat_activation.append(activation)
-                roi_activation.append(repeat_activation)
-            activation_results[roi_idx] = roi_activation
-            if activation == 1:
-                activated_rois.append(roi_idx)
-                activation_count += 1
 
-        print(f"Number of activated neurons: {activation_count} out of {num_cells} cells")
-        column_names = [f"Repeat {i + 1}" for i in range(num_repeats)]
-        activation_df = pd.DataFrame.from_dict(activation_results, orient='index', columns=column_names)
-        activation_df.insert(0, "ROI", activation_df.index)
-        csv_path = os.path.join(expDir, dir, 'activation_results.csv')
-        activation_df.to_csv(csv_path, index=False)
-        print(f"Results saved to {csv_path}")
-
-    #Average x coordinates calculation
-        #print(activation_results)
-        x_coords_per_repeat = [[] for _ in range(num_repeats)]
-        y_coords_per_repeat = [[] for _ in range(num_repeats)]
-        # first_3_rois = list(activation_results.keys())[:3]
-        for repeat in range(num_repeats):
-            x_coords = []
-            y_coords = []
-            for roi_idx in activation_results.keys():
-            #for roi_idx in first_3_rois:
-                act = activation_results[roi_idx]
-                if any(act[repeat]):
-                    if 'med' in stat[roi_idx]:
-                        x_coords.append(stat[roi_idx]['med'][1])
-                        y_coords.append(stat[roi_idx]['med'][0])
-            if x_coords:
-                avg_x = np.mean(x_coords)
-                std_x = np.std(x_coords)
-            else:
-                avg_x = np.nan
-            x_coords_per_repeat[repeat] = avg_x
-            #distances_from_artif_o = euclidean_distances(artif_origo, )
-        #print(f"trafo dist vals : {distances_from_artif_o}")
-
-        # Avg x_coords for each repeat
-        data = []
-        data_x = []
-        for repeat, avg_x in enumerate(x_coords_per_repeat):
-            #print(f"Repeat {repeat + 1} x coordinates: {avg_x}")
-            data.append({'Repeat': repeat + 1, 'Avg_X_Coordinate': avg_x})
-            data_x.append(avg_x)
-
-        ovreall_avg_x = np.mean(data_x)
-        x_std = np.std(data_x)
-        data.append({'Repeat': 'Overall_Avg', 'Avg_X_Coordinate': ovreall_avg_x})
-        data.append({'Repeat': 'Std_Dev_all', 'Avg_X_Coordinate': std_x})
-        data.append({'Repeat': 'Std_Dev', 'Avg_X_Coordinate': x_std})
+                    # stimulation start time
+                    if stim_idx == 0 and repeat == 0:
+                        start_stim = int(stim_start_times[0])  # First stimulation from stim_start_times
+                        start_timepoints.append(start_stim)
+                    elif repeat == 0:
+                        start_stim = int(stim_start_times[0] + stim_idx * start_btw_stim_frames)
+                        start_timepoints.append(start_stim)
+                    else:
+                        start_stim = int(stim_start_times[0] + (stim_idx * start_btw_stim_frames) + (repeat * (((num_stims_per_repeat-1) * start_btw_stim_frames)+ trial_delay_frames)))
+                        start_timepoints.append(start_stim)
+                    print(f"ROI {roi_idx}, Repeat {repeat}, Stim {stim_idx}: Start = {start_stim}")
 
 
-        df = pd.DataFrame(data)
-        csv_path = os.path.join(expDir, dir, 'avg_x_per_repeat.csv')
-        df.to_csv(csv_path, index=False)
-        print(f"Avg med x values saved to {csv_path}")
+                    # Define time window (1 sec before, 3 sec after)
+                    pre_start = max(0, start_stim  - pre_frames)
+                    post_end = min(F.shape[1], start_stim  + post_frames)
 
-        # trafo for origo to get act neuron distance, changed into um
-        #um
-        trafo = 1.07422
-        y, x = ops['Ly'], ops['Lx']
-        artif_origo_y, artif_origo_x = y / 2 * trafo, x / 2 * trafo
-        artif_origo = (artif_origo_y, artif_origo_x)
-        #pix
-        artif_o_pix = (y/2, x/2)
-        #reshape bc eucledian dist function expects 2d arrays:
-        #artif_origo = np.array([[artif_origo_y, artif_origo_x]])
-        def nd1_eucledian_distance(point1, point2):
-            point1 = np.array(point1)
-            point2 = np.array(point2)
-            if point1.ndim == 1:
-                point1 = point1.reshape(1, -1)
-            if point2.ndim == 1:
-                point2 = point2.reshape(1, -1)
-            return np.linalg.norm(point1 - point2)
-        #um
-        med_val_um = []
-        dist_from_artf_o_um = []
-        #pix
-        med_val = []
-        dist_from_artf_o_pix = []
-        roi_names = []
-        for roi_idx in cell_indices:
-            #um
-            med_val_um.append((stat[roi_idx]['med'][0] * trafo, stat[roi_idx]['med'][1] * trafo))
-            dist_from_artf_o_um.append(nd1_eucledian_distance(artif_origo, med_val_um))
-            #pix
-            med_val.append((stat[roi_idx]['med'][0],stat[roi_idx]['med'][1] ))
-            dist_from_artf_o_pix.append(nd1_eucledian_distance(artif_o_pix, med_val))
-            roi_names.append(roi_idx)
+                    # Extract fluorescence trace for this ROI
+                    trace_segment = F[F_index, pre_start:post_end]
 
+                    '''
+                    # Pad if needed
+                    if trace_segment.shape[0] < total_frames:
+                        pad_width = total_frames - trace_segment.shape[0]
+                        if pre_start == 0:
+                            trace_segment = np.pad(trace_segment, (pad_width, 0), mode='edge')
+                        else:
+                            trace_segment = np.pad(trace_segment, (0, pad_width), mode='edge')
+                    '''
+                    # Store trace for this ROI, repeat, and stimulation index
+                    if trace_segment.shape[0] == 0:
+                        trace_segment = np.zeros(total_frames)
 
-        dist_from_o_pix_path = os.path.join(expDir, dir, 'dist_from_o_pix.txt',)
-        np.savetxt(dist_from_o_pix_path, dist_from_artf_o_pix)
+                    all_traces[repeat, stim_idx] = trace_segment
 
+            min_trace_value = np.min(all_traces)
+            max_trace_value = np.max(all_traces)
+            #print(start_timepoints)
+            np.save(expDir + dir + '/start_timepoints.npy', start_timepoints)
 
+            #---CALUCALTE ACTIVATED NEURONS PER REPEAT---
+            baseline_duration = int(stim_start_times[0]) - 1
 
-        #um
-        '''im = np.zeros((int(artif_origo_y), int(artif_origo_x)))
-        plt.scatter(*artif_origo, color='black', label='Artificial Origin um')
-        # Plot all rois & distances
-        for i, (coord, dist) in enumerate(zip(med_val_um, dist_from_artf_o_um)):
-            plt.scatter(*coord, label=f'ROI {i + 1}')
-            #plt.text(coord[0], coord[1], f'{dist:.2f} um', fontsize=9)
-
-        #plt.imshow(im)
-        plt.colorbar()
-        plt.gca().invert_yaxis()  # Invert the y-axis
-        plt.title('activated rois & dist from artif. origo in um')
-        plt.show()'''
-        #plt.figure(figsize=((int(artif_origo_y), int(artif_origo_x)))
-        #print roi names & med values together
-        roi_names = []
-        med_val = []
-        for roi_idx in cell_indices:
-            roi_names.append(roi_idx)
-            med_val.append((stat[roi_idx]['med'][0], stat[roi_idx]['med'][1]))
-            #print(f"roi: {roi_names[roi_idx]}, medy: {stat[roi_idx]['med'][0]}, medx: {stat[roi_idx]['med'][1]} ")
-        for i, (roi, dist_) in enumerate(zip(roi_names, dist_from_artf_o_um)):
-            print(f'{roi_names[i]}', dist_)
-
-        '''
-        #plt.figure(figsize=(10, 10))
-        ###reflected plot,  dude nem tudom mit kene meg tukrozni, de ez meg mindig nem jo
-        reflected_med_val_um = [(-coord[0], coord[1]) for coord in med_val_um]
-        #reflected
-        scatter = plt.scatter(
-            [coord[0] for coord in reflected_med_val_um],
-            [coord[1] for coord in reflected_med_val_um],
-            c=dist_from_artf_o_um,
-            cmap='viridis',
-            marker='x',
-            label='ROIs'
-        )
-        #
-        for i, coord in enumerate(reflected_med_val_um):
-            plt.text(coord[0], coord[1], f'{roi_names[i]}', fontsize=9, ha='right')
-
-        # colorbar--distance
-        cbar = plt.colorbar(scatter)
-        cbar.set_label('activated rois & dist from artif. origo in um')
-        #plt.gca().invert_yaxis()
-        plt.title('Activated ROIs')
-        plt.legend()
-        plt.show()'''
-
-        #pix
-        '''im = np.zeros((ops['Ly'], ops['Lx']))
-        plt.scatter(*artif_o_pix, color='black', label='Artificial Origin pix')
-        # Plot all rois & distances
-        for i, (coord, dist) in enumerate(zip(med_val, dist_from_artf_o_pix)):
-            plt.scatter(*coord, label=f'ROI {i + 1}')
-            # plt.text(coord[0], coord[1], f'{dist:.2f} um', fontsize=9)
-
-        plt.imshow(im, cmap='ocean')
-        plt.colorbar()
-        plt.gca().invert_yaxis()  # Invert the y-axis
-        plt.title('activated rois & dist from artif. origo in pix ')
-        plt.show()'''
-
-
-        '''#--Plot out activated neurons--jo!!
-        im = np.zeros((ops['Ly'], ops['Lx']))
-        #plt.figure(figsize=(y, x))
-        #print(im)
-
-        # Define the activated ROIs (example list, replace with actual data)
-        activated_rois = list(activation_results.keys())  # Replace with the actual list of activated ROIs
-        cell_stat = [stat[i] for i in cell_indices]
-        distances = []
-        # Plot all ROIs
-        for n in range(len(cell_stat)):
-            ypix = cell_stat[n]['ypix'][~cell_stat[n]['overlap']]
-            xpix = cell_stat[n]['xpix'][~cell_stat[n]['overlap']]
-            #euclidean distance
-            distance = np.sqrt((ypix - artif_o_pix[0]) ** 2 + (xpix - artif_o_pix[1]) ** 2)
-            distances.append(distance)
-            im[ypix, xpix] = n + 1
-        for i, coord in enumerate(med_val):
-            plt.text(coord[1], coord[0], f'{roi_names[i]}', fontsize=9, color = 'white')
-
-        # Plot the image
-        plt.imshow(im)
-        scatter = plt.scatter([coord[1] for coord in med_val], [coord[0] for coord in med_val], c=dist_from_artf_o_pix)
-        plt.scatter(*artif_o_pix, color='white',  label='artificial origo')
-        plt.colorbar(label = 'distance from origo')
-        plt.title('Activated ROI dist from origo')
-        plt.show()'''
-
-        '''#Stimulation counts
-        stim_activation_counts = []
-        stimulation_amplitudes = [10, 20, 30, 15, 25]
-        sorted_indices = np.argsort(stimulation_amplitudes)
-        sorted_amplitudes = np.array(stimulation_amplitudes)[sorted_indices]
-        print(sorted_indices, sorted_amplitudes)
-        for repeat in range(num_repeats):
-            print(f"repeat: {repeat}")
-            for stim_idx in range(num_stims_per_repeat):
-                #print(f"sima: {stim_idx}")
-                sorted_stim_idx = sorted_indices[stim_idx]
-                #print(f"sorted: {sorted_stim_idx}")
-                stim_start = start_timepoints[repeat * num_stims_per_repeat + sorted_stim_idx]
-                stim_end = stim_start + stimulation_duration_frames
+            activation_results = {roi_idx: [] for roi_idx in cell_indices}
+            activation_count = 0
+            for roi_idx in cell_indices:
+                F_index_act = np.where(cell_indices == roi_idx)[0][0]
+                baseline_data = F[F_index_act, :max(1, int(stim_start_times[0]) - 1)]
+                baseline_avg = np.mean(baseline_data) if baseline_data.size > 0 else 0
+                baseline_std = np.std(baseline_data) if baseline_data.size > 0 else 0
+                threshold = baseline_std * threshold_value + baseline_avg
+                roi_activation = []
                 activated_rois = []
-                for roi_idx in cell_indices:
-                    F_index_act = np.where(cell_indices == roi_idx)[0][0]
-                    stim_data = F[F_index_act, stim_start:stim_end]
-                    baseline_data = F[F_index_act, :max(1, int(stim_start_times[0]) - 1)]
-                    baseline_avg = np.mean(baseline_data) if baseline_data.size > 0 else 0
-                    baseline_std = np.std(baseline_data) if baseline_data.size > 0 else 0
-                    threshold = baseline_std * threshold_value + baseline_avg
-                    if np.any(stim_data > threshold):
-                        print(roi_idx)
-                        activated_rois.append(roi_idx)
+                for repeat in range(num_repeats):
+                    repeat_activation = []
+                    for stim_idx in range(num_stims_per_repeat):
+                        stim_idx_global = repeat * num_stims_per_repeat + stim_idx
+                        start_time = start_timepoints[stim_idx_global]
+                        stim_end_time = start_time + stimulation_duration_frames
+                        stim_segment = F[F_index_act, start_time:stim_end_time]
+                        avg_stim_resp = np.mean(stim_segment)
+                        activation = 1 if avg_stim_resp > threshold else 0
+                        repeat_activation.append(activation)
+                    roi_activation.append(repeat_activation)
+                activation_results[roi_idx] = roi_activation
+                if activation == 1:
+                    activated_rois.append(roi_idx)
+                    activation_count += 1
 
-                stim_activation_counts.append({
-                    'Repeat': repeat + 1,
-                    'Stimulation': stim_idx + 1,
-                    'Activated_ROIs': activated_rois,
-                    'Sum_Activated_ROIs': len(activated_rois)
+            print(f"Number of activated neurons: {activation_count} out of {num_cells} cells")
+            column_names = [f"Repeat {i + 1}" for i in range(num_repeats)]
+            activation_df = pd.DataFrame.from_dict(activation_results, orient='index', columns=column_names)
+            activation_df.insert(0, "ROI", activation_df.index)
+            csv_path = os.path.join(expDir, dir, 'activation_results.csv')
+            activation_df.to_csv(csv_path, index=False)
+            print(f"Results saved to {csv_path}")
 
-                })
-        # dataframe for csv
-        data = {'stim ampl': [f'{amp}ua' for amp in sorted_amplitudes]}
-        for repeat in range(num_repeats):
-            data[f'Repeat {repeat + 1}'] = [', '.join(map(str, stim_activation_counts[repeat * num_stims_per_repeat + stim_idx]['Activated_ROIs'])) for stim_idx in range(num_stims_per_repeat)]
-            data[f'Sum_Repeat {repeat + 1}'] = [stim_activation_counts[repeat * num_stims_per_repeat + stim_idx]['Sum_Activated_ROIs'] for stim_idx in range(num_stims_per_repeat)]
-        stim_activation_df = pd.DataFrame(data)
-        stim_activation_csv_path = os.path.join(expDir, dir, 'stim_activation_counts.csv')
-        stim_activation_df.to_csv(stim_activation_csv_path, index=False)
-        print(f"Stimulation activation counts saved to {stim_activation_csv_path}")'''
+        #Average x coordinates calculation
+            #print(activation_results)
+            x_coords_per_repeat = [[] for _ in range(num_repeats)]
+            y_coords_per_repeat = [[] for _ in range(num_repeats)]
+            # first_3_rois = list(activation_results.keys())[:3]
+            for repeat in range(num_repeats):
+                x_coords = []
+                y_coords = []
+                for roi_idx in activation_results.keys():
+                #for roi_idx in first_3_rois:
+                    act = activation_results[roi_idx]
+                    if any(act[repeat]):
+                        if 'med' in stat[roi_idx]:
+                            x_coords.append(stat[roi_idx]['med'][1])
+                            y_coords.append(stat[roi_idx]['med'][0])
+                if x_coords:
+                    avg_x = np.mean(x_coords)
+                    std_x = np.std(x_coords)
+                else:
+                    avg_x = np.nan
+                x_coords_per_repeat[repeat] = avg_x
+                #distances_from_artif_o = euclidean_distances(artif_origo, )
+            #print(f"trafo dist vals : {distances_from_artif_o}")
 
-        '''# grid of subplots of activated rois
-        fig, axs = plt.subplots(num_repeats, num_stims_per_repeat, figsize=(15, 3 * num_repeats))
-        #loop through each repeat and stimulation
-        for repeat in range(num_repeats):
-            for stim_idx in range(num_stims_per_repeat):
-                sorted_stim_idx = sorted_indices[stim_idx]
-                ax = axs[repeat, stim_idx]
+            # Avg x_coords for each repeat
+            data = []
+            data_x = []
+            for repeat, avg_x in enumerate(x_coords_per_repeat):
+                #print(f"Repeat {repeat + 1} x coordinates: {avg_x}")
+                data.append({'Repeat': repeat + 1, 'Avg_X_Coordinate': avg_x})
+                data_x.append(avg_x)
 
-                im = np.zeros((ops['Ly'], ops['Lx']))
-
-                # plot activated rois for current repeat & stimulation
-                for roi_idx in cell_indices:
-                    if activation_results[roi_idx][repeat][sorted_stim_idx] == 1:
-                        ypix = stat[roi_idx]['ypix'][~stat[roi_idx]['overlap']]
-                        xpix = stat[roi_idx]['xpix'][~stat[roi_idx]['overlap']]
-                        im[ypix, xpix] = 1
-
-                ax.imshow(im, cmap='hot', interpolation='nearest')
-                ax.set_title(f'Repeat {repeat + 1}, Stim {sorted_amplitudes[stim_idx]}uA')
-                ax.axis('off')
-
-        # Adjust layout and show the plot
-        plt.tight_layout()
-        plt.show()'''
+            ovreall_avg_x = np.mean(data_x)
+            x_std = np.std(data_x)
+            data.append({'Repeat': 'Overall_Avg', 'Avg_X_Coordinate': ovreall_avg_x})
+            data.append({'Repeat': 'Std_Dev_all', 'Avg_X_Coordinate': std_x})
+            data.append({'Repeat': 'Std_Dev', 'Avg_X_Coordinate': x_std})
 
 
-        #------------PLOTTING------------
-#----plot1
-        '''
-        time = np.linspace(-1, 3, total_frames)
-        # Create grid plot
-        fig, axes = plt.subplots(num_repeats, num_stims_per_repeat, figsize=(5 * num_stims_per_repeat, 4 * num_repeats))
-        fig.suptitle('Calcium Traces Around Stimulation', fontsize=16)
+            df = pd.DataFrame(data)
+            csv_path = os.path.join(expDir, dir, 'avg_x_per_repeat.csv')
+            df.to_csv(csv_path, index=False)
+            print(f"Avg med x values saved to {csv_path}")
 
-        for repeat in range(num_repeats):
+            # trafo for origo to get act neuron distance, changed into um
+            #um
+            trafo = 1.07422
+            y, x = ops['Ly'], ops['Lx']
+            artif_origo_y, artif_origo_x = y / 2 * trafo, x / 2 * trafo
+            artif_origo = (artif_origo_y, artif_origo_x)
+            #pix
+            artif_o_pix = (y/2, x/2)
+            #reshape bc eucledian dist function expects 2d arrays:
+            #artif_origo = np.array([[artif_origo_y, artif_origo_x]])
+            def nd1_eucledian_distance(point1, point2):
+                point1 = np.array(point1)
+                point2 = np.array(point2)
+                if point1.ndim == 1:
+                    point1 = point1.reshape(1, -1)
+                if point2.ndim == 1:
+                    point2 = point2.reshape(1, -1)
+                return np.linalg.norm(point1 - point2)
+            #um
+            med_val_um = []
+            dist_from_artf_o_um = []
+            #pix
+            med_val = []
+            dist_from_artf_o_pix = []
+            roi_names = []
+            for roi_idx in cell_indices:
+                #um
+                med_val_um.append((stat[roi_idx]['med'][0] * trafo, stat[roi_idx]['med'][1] * trafo))
+                dist_from_artf_o_um.append(nd1_eucledian_distance(artif_origo, med_val_um))
+                #pix
+                med_val.append((stat[roi_idx]['med'][0],stat[roi_idx]['med'][1] ))
+                dist_from_artf_o_pix.append(nd1_eucledian_distance(artif_o_pix, med_val))
+                roi_names.append(roi_idx)
 
-            for stim_idx in range(num_stims_per_repeat):
-                ax = axes[repeat, stim_idx]
-                ax.plot(time, all_traces[repeat, stim_idx], label=f"Repeat {repeat}, Stim {stim_idx}")
-                ax.axvline(x=0, color='r', linestyle='--', alpha=0.5)  # Mark stimulation onset
-                ax.set_title(f'Repeat {repeat + 1}, Stim {stim_idx + 1}')
 
-                # Set only three x-axis labels: pre, stim, post
-                #x_ticks = [-1, 0, 3]  # -1s, 0s (stim onset), +3s
-                #x_labels = [f"{(start_stim - pre_frames) / frame_rate:.1f}", f"{start_stim / frame_rate:.1f}", f"{(start_stim + post_frames) / frame_rate:.1f}"]
-                #x_labels = [-1, 0, 1]
-                #ax.set_xticks(x_ticks)
-                #ax.set_xticklabels(x_labels)
+            dist_from_o_pix_path = os.path.join(expDir, dir, 'dist_from_o_pix.txt',)
+            np.savetxt(dist_from_o_pix_path, dist_from_artf_o_pix)
 
-                ax.set_xlim(-1, 3)
+
+
+            #um
+            '''im = np.zeros((int(artif_origo_y), int(artif_origo_x)))
+            plt.scatter(*artif_origo, color='black', label='Artificial Origin um')
+            # Plot all rois & distances
+            for i, (coord, dist) in enumerate(zip(med_val_um, dist_from_artf_o_um)):
+                plt.scatter(*coord, label=f'ROI {i + 1}')
+                #plt.text(coord[0], coord[1], f'{dist:.2f} um', fontsize=9)
+    
+            #plt.imshow(im)
+            plt.colorbar()
+            plt.gca().invert_yaxis()  # Invert the y-axis
+            plt.title('activated rois & dist from artif. origo in um')
+            plt.show()'''
+            #plt.figure(figsize=((int(artif_origo_y), int(artif_origo_x)))
+            #print roi names & med values together
+            roi_names = []
+            med_val = []
+            for roi_idx in cell_indices:
+                roi_names.append(roi_idx)
+                med_val.append((stat[roi_idx]['med'][0], stat[roi_idx]['med'][1]))
+                #print(f"roi: {roi_names[roi_idx]}, medy: {stat[roi_idx]['med'][0]}, medx: {stat[roi_idx]['med'][1]} ")
+            #for i, (roi, dist_) in enumerate(zip(roi_names, dist_from_artf_o_um)):
+                #print(f'{roi_names[i]}', dist_)
+
+            '''
+            #plt.figure(figsize=(10, 10))
+            ###reflected plot,  dude nem tudom mit kene meg tukrozni, de ez meg mindig nem jo
+            reflected_med_val_um = [(-coord[0], coord[1]) for coord in med_val_um]
+            #reflected
+            scatter = plt.scatter(
+                [coord[0] for coord in reflected_med_val_um],
+                [coord[1] for coord in reflected_med_val_um],
+                c=dist_from_artf_o_um,
+                cmap='viridis',
+                marker='x',
+                label='ROIs'
+            )
+            #
+            for i, coord in enumerate(reflected_med_val_um):
+                plt.text(coord[0], coord[1], f'{roi_names[i]}', fontsize=9, ha='right')
+    
+            # colorbar--distance
+            cbar = plt.colorbar(scatter)
+            cbar.set_label('activated rois & dist from artif. origo in um')
+            #plt.gca().invert_yaxis()
+            plt.title('Activated ROIs')
+            plt.legend()
+            plt.show()'''
+
+            #pix
+            '''im = np.zeros((ops['Ly'], ops['Lx']))
+            plt.scatter(*artif_o_pix, color='black', label='Artificial Origin pix')
+            # Plot all rois & distances
+            for i, (coord, dist) in enumerate(zip(med_val, dist_from_artf_o_pix)):
+                plt.scatter(*coord, label=f'ROI {i + 1}')
+                # plt.text(coord[0], coord[1], f'{dist:.2f} um', fontsize=9)
+    
+            plt.imshow(im, cmap='ocean')
+            plt.colorbar()
+            plt.gca().invert_yaxis()  # Invert the y-axis
+            plt.title('activated rois & dist from artif. origo in pix ')
+            plt.show()'''
+
+
+            #--Plot out activated neurons--jo!!
+            im = np.zeros((ops['Ly'], ops['Lx']))
+            #plt.figure(figsize=(y, x))
+            #print(im)
+
+            # Define the activated ROIs (example list, replace with actual data)
+            activated_rois = list(activation_results.keys())  # Replace with the actual list of activated ROIs
+            cell_stat = [stat[i] for i in cell_indices]
+            distances = []
+            # Plot all ROIs
+            for n in range(len(cell_stat)):
+                ypix = cell_stat[n]['ypix'][~cell_stat[n]['overlap']]
+                xpix = cell_stat[n]['xpix'][~cell_stat[n]['overlap']]
+                #euclidean distance
+                distance = np.sqrt((ypix - artif_o_pix[0]) ** 2 + (xpix - artif_o_pix[1]) ** 2)
+                distances.append(distance)
+                im[ypix, xpix] = n + 1
+            for i, coord in enumerate(med_val):
+                plt.text(coord[1], coord[0], f'{roi_names[i]}', fontsize=9, color = 'white')
+
+            # Plot the image
+            plt.imshow(im)
+            scatter = plt.scatter([coord[1] for coord in med_val], [coord[0] for coord in med_val], c=dist_from_artf_o_pix)
+            plt.scatter(*artif_o_pix, color='white',  label='artificial origo')
+            plt.colorbar(label = 'distance from origo')
+            plt.title('Activated ROI dist from origo')
+            plt.show()
+
+            #Stimulation counts
+            stim_activation_counts = []
+            stimulation_amplitudes = [10, 20, 30, 15, 25]
+            sorted_indices = np.argsort(stimulation_amplitudes)
+            sorted_amplitudes = np.array(stimulation_amplitudes)[sorted_indices]
+            print(sorted_indices, sorted_amplitudes)
+            for repeat in range(num_repeats):
+                print(f"repeat: {repeat}")
+                for stim_idx in range(num_stims_per_repeat):
+                    #print(f"sima: {stim_idx}")
+                    sorted_stim_idx = sorted_indices[stim_idx]
+                    #print(f"sorted: {sorted_stim_idx}")
+                    stim_start = start_timepoints[repeat * num_stims_per_repeat + sorted_stim_idx]
+                    stim_end = stim_start + stimulation_duration_frames
+                    activated_rois = []
+                    for roi_idx in cell_indices:
+                        F_index_act = np.where(cell_indices == roi_idx)[0][0]
+                        stim_data = F[F_index_act, stim_start:stim_end]
+                        baseline_data = F[F_index_act, :max(1, int(stim_start_times[0]) - 1)]
+                        baseline_avg = np.mean(baseline_data) if baseline_data.size > 0 else 0
+                        baseline_std = np.std(baseline_data) if baseline_data.size > 0 else 0
+                        threshold = baseline_std * threshold_value + baseline_avg
+                        if np.any(stim_data > threshold):
+                            print(roi_idx)
+                            activated_rois.append(roi_idx)
+
+                    stim_activation_counts.append({
+                        'Repeat': repeat + 1,
+                        'Stimulation': stim_idx + 1,
+                        'Activated_ROIs': activated_rois,
+                        'Sum_Activated_ROIs': len(activated_rois)
+
+                    })
+            # dataframe for csv
+            data = {'stim ampl': [f'{amp}ua' for amp in sorted_amplitudes]}
+            for repeat in range(num_repeats):
+                data[f'Repeat {repeat + 1}'] = [', '.join(map(str, stim_activation_counts[repeat * num_stims_per_repeat + stim_idx]['Activated_ROIs'])) for stim_idx in range(num_stims_per_repeat)]
+                data[f'Sum_Repeat {repeat + 1}'] = [stim_activation_counts[repeat * num_stims_per_repeat + stim_idx]['Sum_Activated_ROIs'] for stim_idx in range(num_stims_per_repeat)]
+            stim_activation_df = pd.DataFrame(data)
+            stim_activation_csv_path = os.path.join(expDir, dir, 'stim_activation_counts.csv')
+            stim_activation_df.to_csv(stim_activation_csv_path, index=False)
+            print(f"Stimulation activation counts saved to {stim_activation_csv_path}")
+
+            # grid of subplots of activated rois
+            fig, axs = plt.subplots(num_repeats, num_stims_per_repeat, figsize=(15, 3 * num_repeats))
+            #loop through each repeat and stimulation
+            for repeat in range(num_repeats):
+                for stim_idx in range(num_stims_per_repeat):
+                    sorted_stim_idx = sorted_indices[stim_idx]
+                    ax = axs[repeat, stim_idx]
+
+                    im = np.zeros((ops['Ly'], ops['Lx']))
+
+                    # plot activated rois for current repeat & stimulation
+                    for roi_idx in cell_indices:
+                        if activation_results[roi_idx][repeat][sorted_stim_idx] == 1:
+                            ypix = stat[roi_idx]['ypix'][~stat[roi_idx]['overlap']]
+                            xpix = stat[roi_idx]['xpix'][~stat[roi_idx]['overlap']]
+                            im[ypix, xpix] = 1
+
+                    ax.imshow(im, cmap='hot', interpolation='nearest')
+                    ax.set_title(f'Repeat {repeat + 1}, Stim {sorted_amplitudes[stim_idx]}uA')
+                    ax.axis('off')
+
+            # Adjust layout and show the plot
+            plt.tight_layout()
+            plt.show()
+
+
+            #------------PLOTTING------------
+    #----plot1
+
+            time = np.linspace(-1, 3, total_frames)
+            # Create grid plot
+            fig, axes = plt.subplots(num_repeats, num_stims_per_repeat, figsize=(5 * num_stims_per_repeat, 4 * num_repeats))
+            fig.suptitle('Calcium Traces Around Stimulation', fontsize=16)
+
+            for repeat in range(num_repeats):
+
+                for stim_idx in range(num_stims_per_repeat):
+                    ax = axes[repeat, stim_idx]
+                    ax.plot(time, all_traces[repeat, stim_idx], label=f"Repeat {repeat}, Stim {stim_idx}")
+                    ax.axvline(x=0, color='r', linestyle='--', alpha=0.5)  # Mark stimulation onset
+                    ax.set_title(f'Repeat {repeat + 1}, Stim {stim_idx + 1}')
+
+                    # Set only three x-axis labels: pre, stim, post
+                    #x_ticks = [-1, 0, 3]  # -1s, 0s (stim onset), +3s
+                    #x_labels = [f"{(start_stim - pre_frames) / frame_rate:.1f}", f"{start_stim / frame_rate:.1f}", f"{(start_stim + post_frames) / frame_rate:.1f}"]
+                    #x_labels = [-1, 0, 1]
+                    #ax.set_xticks(x_ticks)
+                    #ax.set_xticklabels(x_labels)
+
+                    ax.set_xlim(-1, 3)
+                    ax.set_xlabel('Time (s)')
+                    ax.set_ylabel('ΔF/F')
+                    ax.set_ylim(min_trace_value, max_trace_value)
+                    ax.grid(True)
+
+            plt.tight_layout()
+            savepath = os.path.join(expDir, dir, 'stim_traces_grid.svg')
+            plt.savefig(savepath)
+            plt.show()
+
+    #--------plot 2
+            # Create figure of overlapped traces with one subplot per repeat
+            amplitude_values = sorted([10, 20, 30, 15, 25])  # Adjust if necessary
+            amplitude_colors = {10: 'blue', 20: 'orange', 30: 'green', 15: 'red', 25: 'purple'}
+
+            # Create figure with one subplot per repeat
+            fig, axes = plt.subplots(1, num_repeats, figsize=(4 * num_repeats, 4), sharey=True)
+            fig.suptitle(f'Overlapping Stimulations for ROI {roi_idx}', fontsize=16)
+
+            # Define stimulation period for shading (e.g., 1s to 2s after onset)
+            stim_start_sec = 1  # Relative to onset (adjust if needed)
+            stim_end_sec = 2
+            colors = ['blue', 'red', 'purple', 'brown', 'green']
+            for repeat in range(num_repeats):
+                ax = axes[repeat] if num_repeats > 1 else axes  # Handle case when only 1 repeat
+                for stim_idx, amplitude in enumerate(amplitude_values):
+                    # Assign color based on predefined mapping
+                    color = amplitude_colors.get(amplitude, 'black')  # Default to black if missing
+
+                    # Plot trace with defined color
+                    ax.plot(time, all_traces[repeat, stim_idx], color=color, label=f"{amplitude} μA")
+
+                avg_trace = np.mean(all_traces[:, stim_idx, :], axis=0)
+                ax.plot(time, avg_trace, color='black', linewidth=1, label="Avg Response")
+
+                # Add shaded region to indicate stimulation period
+                #ax.axvspan(stim_start_sec, stim_end_sec, color='gray', alpha=0.3)
+
+                # Formatting
                 ax.set_xlabel('Time (s)')
-                ax.set_ylabel('ΔF/F')
+                if repeat == 0:
+                    ax.set_ylabel('Mean ΔF/F₀')
+                ax.set_title(f'Trial {repeat + 1}')
                 ax.set_ylim(min_trace_value, max_trace_value)
                 ax.grid(True)
 
-        plt.tight_layout()
-        savepath = os.path.join(expDir, dir, 'stim_traces_grid.svg')
-        plt.savefig(savepath)
-        plt.show()
 
-#--------plot 2
-        # Create figure of overlapped traces with one subplot per repeat
-        amplitude_values = sorted([10, 20, 30, 15, 25])  # Adjust if necessary
-        amplitude_colors = {10: 'blue', 20: 'orange', 30: 'green', 15: 'red', 25: 'purple'}
+            # Add a single legend outside the subplots
+            legend_handles = [plt.Line2D([0], [0], color=amplitude_colors[amplitude], lw=2, label=f"{amplitude} μA") for amplitude in amplitude_values]
+            legend_handles.append(plt.Line2D([0], [0], color='black', lw=2, linestyle='dashed', label="Avg Response"))  # Add Avg Response
+            fig.legend(handles=legend_handles, loc='upper right', fontsize=8, title="Legend", bbox_to_anchor=(0.98, 1))
 
-        # Create figure with one subplot per repeat
-        fig, axes = plt.subplots(1, num_repeats, figsize=(4 * num_repeats, 4), sharey=True)
-        fig.suptitle(f'Overlapping Stimulations for ROI {roi_idx}', fontsize=16)
+            plt.tight_layout()
+            plt.savefig(os.path.join(expDir, dir, 'overlapping_stim_traces.png'))
+            plt.show()
 
-        # Define stimulation period for shading (e.g., 1s to 2s after onset)
-        stim_start_sec = 1  # Relative to onset (adjust if needed)
-        stim_end_sec = 2
-        colors = ['blue', 'red', 'purple', 'brown', 'green']
-        for repeat in range(num_repeats):
-            ax = axes[repeat] if num_repeats > 1 else axes  # Handle case when only 1 repeat
+    # --------plot 3
+
+            #overlap trials by amplitude
+            trial_values = [1,2,4,4,5,6]  # Adjust as needed
+            trial_colors = {1: 'blue', 2: 'orange', 3: 'green', 4: 'red', 5: 'purple', 6: 'brown'}
+
+            # Create figure with one subplot per amplitude
+            fig, axes = plt.subplots(1, len(amplitude_values), figsize=(4 * len(amplitude_values), 4), sharey=True)
+            fig.suptitle(f'Overlapping Trials for Each Amplitude - ROI {roi_idx}', fontsize=16)
+
+            # Define stimulation period for shading (e.g., 1s to 2s after onset)
+            stim_start_sec = 1  # Relative to onset (adjust if needed)
+            stim_end_sec = 2
             for stim_idx, amplitude in enumerate(amplitude_values):
-                # Assign color based on predefined mapping
-                color = amplitude_colors.get(amplitude, 'black')  # Default to black if missing
+                ax = axes[stim_idx] if len(amplitude_values) > 1 else axes  # Handle case when only 1 amplitude
+                #color = trial_colors.get(trial, 'black')  # Assign color based on amplitude
+                for repeat, trial in enumerate(trial_values):
+                    # Plot each trial for this amplitude
+                    color = trial_colors.get(trial + 1, 'black')  # Assign color based on trial
+                    ax.plot(time, all_traces[repeat, stim_idx], color=color, alpha=0.5, label=f"Trial {stim_idx + 1}")
 
-                # Plot trace with defined color
-                ax.plot(time, all_traces[repeat, stim_idx], color=color, label=f"{amplitude} μA")
+                # Add a bold average trace for this amplitude
+                avg_trace = np.mean(all_traces[:, stim_idx, :], axis=0)
+                ax.plot(time, avg_trace, color='black', linewidth=2, label="Avg Response")
 
-            avg_trace = np.mean(all_traces[:, stim_idx, :], axis=0)
-            ax.plot(time, avg_trace, color='black', linewidth=1, label="Avg Response")
+                # Add shaded region to indicate stimulation period
+               # ax.axvspan(stim_start_sec, stim_end_sec, color='gray', alpha=0.3)
 
-            # Add shaded region to indicate stimulation period
-            #ax.axvspan(stim_start_sec, stim_end_sec, color='gray', alpha=0.3)
+                # Formatting
+                ax.set_xlabel('Time (s)')
 
-            # Formatting
-            ax.set_xlabel('Time (s)')
-            if repeat == 0:
-                ax.set_ylabel('Mean ΔF/F₀')
-            ax.set_title(f'Trial {repeat + 1}')
-            ax.set_ylim(min_trace_value, max_trace_value)
-            ax.grid(True)
+                if stim_idx == 0:
+                    ax.set_ylabel('Mean ΔF/F₀')
 
+                #ax.set_ylabel('Mean ΔF/F₀')
 
-        # Add a single legend outside the subplots
-        legend_handles = [plt.Line2D([0], [0], color=amplitude_colors[amplitude], lw=2, label=f"{amplitude} μA") for amplitude in amplitude_values]
-        legend_handles.append(plt.Line2D([0], [0], color='black', lw=2, linestyle='dashed', label="Avg Response"))  # Add Avg Response
-        fig.legend(handles=legend_handles, loc='upper right', fontsize=8, title="Legend", bbox_to_anchor=(0.98, 1))
+                ax.set_title(f'{amplitude} μA')
 
-        plt.tight_layout()
-        plt.savefig(os.path.join(expDir, dir, 'overlapping_stim_traces.png'))
-        plt.show()
+                ax.set_ylim(min_trace_value, max_trace_value)
 
-# --------plot 3
+                # Remove duplicate legend entries
+                handles, labels = ax.get_legend_handles_labels()
+                unique_legend = dict(zip(labels, handles))  # Remove duplicates
+                #ax.legend(unique_legend.values(), unique_legend.keys(), loc='upper left', fontsize=8)
 
-        #overlap trials by amplitude
-        trial_values = [1,2,4,4,5,6]  # Adjust as needed
-        trial_colors = {1: 'blue', 2: 'orange', 3: 'green', 4: 'red', 5: 'purple', 6: 'brown'}
+                ax.grid(True)
 
-        # Create figure with one subplot per amplitude
-        fig, axes = plt.subplots(1, len(amplitude_values), figsize=(4 * len(amplitude_values), 4), sharey=True)
-        fig.suptitle(f'Overlapping Trials for Each Amplitude - ROI {roi_idx}', fontsize=16)
+            # Add a single legend outside the subplots
+            legend_handles = [plt.Line2D([0], [0], color=color, lw=1, label=f"Trial {trial}") for trial, color in trial_colors.items()]
+            legend_handles.append(plt.Line2D([0], [0], color='black', lw=2, linestyle='dashed', label="Avg Response"))  # Add Avg Response
+            fig.legend(handles=legend_handles, loc='upper left', fontsize=8, title="Legend", bbox_to_anchor=(0.95, 1))
 
-        # Define stimulation period for shading (e.g., 1s to 2s after onset)
-        stim_start_sec = 1  # Relative to onset (adjust if needed)
-        stim_end_sec = 2
-        for stim_idx, amplitude in enumerate(amplitude_values):
-            ax = axes[stim_idx] if len(amplitude_values) > 1 else axes  # Handle case when only 1 amplitude
-            #color = trial_colors.get(trial, 'black')  # Assign color based on amplitude
-            for repeat, trial in enumerate(trial_values):
-                # Plot each trial for this amplitude
-                color = trial_colors.get(trial + 1, 'black')  # Assign color based on trial
-                ax.plot(time, all_traces[repeat, stim_idx], color=color, alpha=0.5, label=f"Trial {stim_idx + 1}")
-
-            # Add a bold average trace for this amplitude
-            avg_trace = np.mean(all_traces[:, stim_idx, :], axis=0)
-            ax.plot(time, avg_trace, color='black', linewidth=2, label="Avg Response")
-
-            # Add shaded region to indicate stimulation period
-           # ax.axvspan(stim_start_sec, stim_end_sec, color='gray', alpha=0.3)
-
-            # Formatting
-            ax.set_xlabel('Time (s)')
-
-            if stim_idx == 0:
-                ax.set_ylabel('Mean ΔF/F₀')
-
-            #ax.set_ylabel('Mean ΔF/F₀')
-
-            ax.set_title(f'{amplitude} μA')
-
-            ax.set_ylim(min_trace_value, max_trace_value)
-
-            # Remove duplicate legend entries
-            handles, labels = ax.get_legend_handles_labels()
-            unique_legend = dict(zip(labels, handles))  # Remove duplicates
-            #ax.legend(unique_legend.values(), unique_legend.keys(), loc='upper left', fontsize=8)
-
-            ax.grid(True)
-
-        # Add a single legend outside the subplots
-        legend_handles = [plt.Line2D([0], [0], color=color, lw=1, label=f"Trial {trial}") for trial, color in trial_colors.items()]
-        legend_handles.append(plt.Line2D([0], [0], color='black', lw=2, linestyle='dashed', label="Avg Response"))  # Add Avg Response
-        fig.legend(handles=legend_handles, loc='upper left', fontsize=8, title="Legend", bbox_to_anchor=(0.95, 1))
-
-        plt.tight_layout()
-        plt.savefig(os.path.join(expDir, dir, 'amplitude_overlapping_subplots.png'))
-        plt.show()'''
+            plt.tight_layout()
+            plt.savefig(os.path.join(expDir, dir, 'amplitude_overlapping_subplots.png'))
+            plt.show()
 
 #scratch_1
 def scratch_val(tiff_dir):

@@ -7,6 +7,8 @@ from pathlib import Path
 import re
 import ast
 
+from sklearn.metrics import euclidean_distances
+
 
 #stim_dur
 def stim_dur_val(tiff_dir, list_of_file_nums):
@@ -1030,6 +1032,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats=int, num_stims_per_repeat=i
         iscelll_path = expDir + dir + '/suite2p/plane0/iscell.npy'
         stim_start_times_path = expDir + dir + '/stimTimes.npy'
         stat_path = expDir + dir + '/suite2p/plane0/stat.npy'
+        ops_path = expDir + dir + '/suite2p/plane0/ops.npy'
         print(f"Loading data from: {F_path}")
         print(f"Loading stim times from: {stim_start_times_path}")
 
@@ -1037,6 +1040,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats=int, num_stims_per_repeat=i
         iscell = np.load(iscelll_path, allow_pickle=True)
         stim_start_times = np.load(stim_start_times_path, allow_pickle=True)
         stat = np.load(stat_path, allow_pickle=True)
+        ops = np.load(ops_path, allow_pickle=True).item()
         #print(stat)
 
 #--------CALCULATIONS--------
@@ -1141,41 +1145,250 @@ def plot_stim_traces(expDir, frame_rate, num_repeats=int, num_stims_per_repeat=i
         activation_df.to_csv(csv_path, index=False)
         print(f"Results saved to {csv_path}")
 
+    #Average x coordinates calculation
         #print(activation_results)
         x_coords_per_repeat = [[] for _ in range(num_repeats)]
+        y_coords_per_repeat = [[] for _ in range(num_repeats)]
         # first_3_rois = list(activation_results.keys())[:3]
         for repeat in range(num_repeats):
             x_coords = []
+            y_coords = []
             for roi_idx in activation_results.keys():
             #for roi_idx in first_3_rois:
                 act = activation_results[roi_idx]
                 if any(act[repeat]):
                     if 'med' in stat[roi_idx]:
                         x_coords.append(stat[roi_idx]['med'][1])
+                        y_coords.append(stat[roi_idx]['med'][0])
             if x_coords:
                 avg_x = np.mean(x_coords)
+                std_x = np.std(x_coords)
             else:
                 avg_x = np.nan
             x_coords_per_repeat[repeat] = avg_x
+            #distances_from_artif_o = euclidean_distances(artif_origo, )
+        #print(f"trafo dist vals : {distances_from_artif_o}")
 
         # Avg x_coords for each repeat
         data = []
         data_x = []
         for repeat, avg_x in enumerate(x_coords_per_repeat):
-            print(f"Repeat {repeat + 1} x coordinates: {avg_x}")
+            #print(f"Repeat {repeat + 1} x coordinates: {avg_x}")
             data.append({'Repeat': repeat + 1, 'Avg_X_Coordinate': avg_x})
             data_x.append(avg_x)
 
         ovreall_avg_x = np.mean(data_x)
         x_std = np.std(data_x)
-        print(ovreall_avg_x, x_std)
         data.append({'Repeat': 'Overall_Avg', 'Avg_X_Coordinate': ovreall_avg_x})
+        data.append({'Repeat': 'Std_Dev_all', 'Avg_X_Coordinate': std_x})
         data.append({'Repeat': 'Std_Dev', 'Avg_X_Coordinate': x_std})
+
 
         df = pd.DataFrame(data)
         csv_path = os.path.join(expDir, dir, 'avg_x_per_repeat.csv')
         df.to_csv(csv_path, index=False)
-        print(f"Values saved to {csv_path}")
+        print(f"Avg med x values saved to {csv_path}")
+
+        # trafo for origo to get act neuron distance, changed into um
+        #um
+        trafo = 1.07422
+        y, x = ops['Ly'], ops['Lx']
+        artif_origo_y, artif_origo_x = y / 2 * trafo, x / 2 * trafo
+        artif_origo = (artif_origo_y, artif_origo_x)
+        #pix
+        artif_o_pix = (y/2, x/2)
+        #reshape bc eucledian dist function expects 2d arrays:
+        #artif_origo = np.array([[artif_origo_y, artif_origo_x]])
+        def nd1_eucledian_distance(point1, point2):
+            point1 = np.array(point1)
+            point2 = np.array(point2)
+            if point1.ndim == 1:
+                point1 = point1.reshape(1, -1)
+            if point2.ndim == 1:
+                point2 = point2.reshape(1, -1)
+            return np.linalg.norm(point1 - point2)
+        #um
+        med_val_um = []
+        dist_from_artf_o_um = []
+        #pix
+        med_val = []
+        dist_from_artf_o_pix = []
+        roi_names = []
+        for roi_idx in cell_indices:
+            #um
+            med_val_um.append((stat[roi_idx]['med'][0] * trafo, stat[roi_idx]['med'][1] * trafo))
+            dist_from_artf_o_um.append(nd1_eucledian_distance(artif_origo, med_val_um))
+            #pix
+            med_val.append((stat[roi_idx]['med'][0],stat[roi_idx]['med'][1] ))
+            dist_from_artf_o_pix.append(nd1_eucledian_distance(artif_o_pix, med_val))
+            roi_names.append(roi_idx)
+
+
+        dist_from_o_pix_path = os.path.join(expDir, dir, 'dist_from_o_pix.txt',)
+        np.savetxt(dist_from_o_pix_path, dist_from_artf_o_pix)
+
+
+
+        #um
+        '''im = np.zeros((int(artif_origo_y), int(artif_origo_x)))
+        plt.scatter(*artif_origo, color='black', label='Artificial Origin um')
+        # Plot all rois & distances
+        for i, (coord, dist) in enumerate(zip(med_val_um, dist_from_artf_o_um)):
+            plt.scatter(*coord, label=f'ROI {i + 1}')
+            #plt.text(coord[0], coord[1], f'{dist:.2f} um', fontsize=9)
+
+        #plt.imshow(im)
+        plt.colorbar()
+        plt.gca().invert_yaxis()  # Invert the y-axis
+        plt.title('activated rois & dist from artif. origo in um')
+        plt.show()'''
+        #plt.figure(figsize=((int(artif_origo_y), int(artif_origo_x)))
+        #print roi names & med values together
+        roi_names = []
+        med_val = []
+        for roi_idx in cell_indices:
+            roi_names.append(roi_idx)
+            med_val.append((stat[roi_idx]['med'][0], stat[roi_idx]['med'][1]))
+            #print(f"roi: {roi_names[roi_idx]}, medy: {stat[roi_idx]['med'][0]}, medx: {stat[roi_idx]['med'][1]} ")
+        for i, (roi, dist_) in enumerate(zip(roi_names, dist_from_artf_o_um)):
+            print(f'{roi_names[i]}', dist_)
+
+        '''
+        #plt.figure(figsize=(10, 10))
+        ###reflected plot,  dude nem tudom mit kene meg tukrozni, de ez meg mindig nem jo
+        reflected_med_val_um = [(-coord[0], coord[1]) for coord in med_val_um]
+        #reflected
+        scatter = plt.scatter(
+            [coord[0] for coord in reflected_med_val_um],
+            [coord[1] for coord in reflected_med_val_um],
+            c=dist_from_artf_o_um,
+            cmap='viridis',
+            marker='x',
+            label='ROIs'
+        )
+        #
+        for i, coord in enumerate(reflected_med_val_um):
+            plt.text(coord[0], coord[1], f'{roi_names[i]}', fontsize=9, ha='right')
+
+        # colorbar--distance
+        cbar = plt.colorbar(scatter)
+        cbar.set_label('activated rois & dist from artif. origo in um')
+        #plt.gca().invert_yaxis()
+        plt.title('Activated ROIs')
+        plt.legend()
+        plt.show()'''
+
+        #pix
+        '''im = np.zeros((ops['Ly'], ops['Lx']))
+        plt.scatter(*artif_o_pix, color='black', label='Artificial Origin pix')
+        # Plot all rois & distances
+        for i, (coord, dist) in enumerate(zip(med_val, dist_from_artf_o_pix)):
+            plt.scatter(*coord, label=f'ROI {i + 1}')
+            # plt.text(coord[0], coord[1], f'{dist:.2f} um', fontsize=9)
+
+        plt.imshow(im, cmap='ocean')
+        plt.colorbar()
+        plt.gca().invert_yaxis()  # Invert the y-axis
+        plt.title('activated rois & dist from artif. origo in pix ')
+        plt.show()'''
+
+
+        '''#--Plot out activated neurons--jo!!
+        im = np.zeros((ops['Ly'], ops['Lx']))
+        #plt.figure(figsize=(y, x))
+        #print(im)
+
+        # Define the activated ROIs (example list, replace with actual data)
+        activated_rois = list(activation_results.keys())  # Replace with the actual list of activated ROIs
+        cell_stat = [stat[i] for i in cell_indices]
+        distances = []
+        # Plot all ROIs
+        for n in range(len(cell_stat)):
+            ypix = cell_stat[n]['ypix'][~cell_stat[n]['overlap']]
+            xpix = cell_stat[n]['xpix'][~cell_stat[n]['overlap']]
+            #euclidean distance
+            distance = np.sqrt((ypix - artif_o_pix[0]) ** 2 + (xpix - artif_o_pix[1]) ** 2)
+            distances.append(distance)
+            im[ypix, xpix] = n + 1
+        for i, coord in enumerate(med_val):
+            plt.text(coord[1], coord[0], f'{roi_names[i]}', fontsize=9, color = 'white')
+
+        # Plot the image
+        plt.imshow(im)
+        scatter = plt.scatter([coord[1] for coord in med_val], [coord[0] for coord in med_val], c=dist_from_artf_o_pix)
+        plt.scatter(*artif_o_pix, color='white',  label='artificial origo')
+        plt.colorbar(label = 'distance from origo')
+        plt.title('Activated ROI dist from origo')
+        plt.show()'''
+
+        '''#Stimulation counts
+        stim_activation_counts = []
+        stimulation_amplitudes = [10, 20, 30, 15, 25]
+        sorted_indices = np.argsort(stimulation_amplitudes)
+        sorted_amplitudes = np.array(stimulation_amplitudes)[sorted_indices]
+        print(sorted_indices, sorted_amplitudes)
+        for repeat in range(num_repeats):
+            print(f"repeat: {repeat}")
+            for stim_idx in range(num_stims_per_repeat):
+                #print(f"sima: {stim_idx}")
+                sorted_stim_idx = sorted_indices[stim_idx]
+                #print(f"sorted: {sorted_stim_idx}")
+                stim_start = start_timepoints[repeat * num_stims_per_repeat + sorted_stim_idx]
+                stim_end = stim_start + stimulation_duration_frames
+                activated_rois = []
+                for roi_idx in cell_indices:
+                    F_index_act = np.where(cell_indices == roi_idx)[0][0]
+                    stim_data = F[F_index_act, stim_start:stim_end]
+                    baseline_data = F[F_index_act, :max(1, int(stim_start_times[0]) - 1)]
+                    baseline_avg = np.mean(baseline_data) if baseline_data.size > 0 else 0
+                    baseline_std = np.std(baseline_data) if baseline_data.size > 0 else 0
+                    threshold = baseline_std * threshold_value + baseline_avg
+                    if np.any(stim_data > threshold):
+                        print(roi_idx)
+                        activated_rois.append(roi_idx)
+
+                stim_activation_counts.append({
+                    'Repeat': repeat + 1,
+                    'Stimulation': stim_idx + 1,
+                    'Activated_ROIs': activated_rois,
+                    'Sum_Activated_ROIs': len(activated_rois)
+
+                })
+        # dataframe for csv
+        data = {'stim ampl': [f'{amp}ua' for amp in sorted_amplitudes]}
+        for repeat in range(num_repeats):
+            data[f'Repeat {repeat + 1}'] = [', '.join(map(str, stim_activation_counts[repeat * num_stims_per_repeat + stim_idx]['Activated_ROIs'])) for stim_idx in range(num_stims_per_repeat)]
+            data[f'Sum_Repeat {repeat + 1}'] = [stim_activation_counts[repeat * num_stims_per_repeat + stim_idx]['Sum_Activated_ROIs'] for stim_idx in range(num_stims_per_repeat)]
+        stim_activation_df = pd.DataFrame(data)
+        stim_activation_csv_path = os.path.join(expDir, dir, 'stim_activation_counts.csv')
+        stim_activation_df.to_csv(stim_activation_csv_path, index=False)
+        print(f"Stimulation activation counts saved to {stim_activation_csv_path}")'''
+
+        '''# grid of subplots of activated rois
+        fig, axs = plt.subplots(num_repeats, num_stims_per_repeat, figsize=(15, 3 * num_repeats))
+        #loop through each repeat and stimulation
+        for repeat in range(num_repeats):
+            for stim_idx in range(num_stims_per_repeat):
+                sorted_stim_idx = sorted_indices[stim_idx]
+                ax = axs[repeat, stim_idx]
+
+                im = np.zeros((ops['Ly'], ops['Lx']))
+
+                # plot activated rois for current repeat & stimulation
+                for roi_idx in cell_indices:
+                    if activation_results[roi_idx][repeat][sorted_stim_idx] == 1:
+                        ypix = stat[roi_idx]['ypix'][~stat[roi_idx]['overlap']]
+                        xpix = stat[roi_idx]['xpix'][~stat[roi_idx]['overlap']]
+                        im[ypix, xpix] = 1
+
+                ax.imshow(im, cmap='hot', interpolation='nearest')
+                ax.set_title(f'Repeat {repeat + 1}, Stim {sorted_amplitudes[stim_idx]}uA')
+                ax.axis('off')
+
+        # Adjust layout and show the plot
+        plt.tight_layout()
+        plt.show()'''
+
 
         #------------PLOTTING------------
 #----plot1

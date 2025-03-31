@@ -1094,8 +1094,8 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             np.save(expDir + dir + '/start_timepoints.npy', start_timepoints)
 
         #---CALUCALTE ACTIVATED NEURONS PER REPEAT---
+            # Activation calc
             baseline_duration = int(stim_start_times[0]) - 1
-        #Activation calc
             activation_results = {roi_idx: [] for roi_idx in cell_indices}
             activation_count = 0
             for roi_idx in cell_indices:
@@ -1106,7 +1106,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 threshold = baseline_std * threshold_value + baseline_avg
                 roi_activation = []
                 activated_rois = []
-                activation = []
+                is_active = False # whether the roi is active
                 for repeat in range(num_repeats):
                     repeat_activation = []
                     for stim_idx in range(num_stims_per_repeat):
@@ -1117,10 +1117,11 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                         avg_stim_resp = np.mean(stim_segment)
                         activation = 1 if avg_stim_resp > threshold else 0
                         repeat_activation.append(activation)
+                        if activation == 1:
+                            is_active = True
                     roi_activation.append(repeat_activation)
                 activation_results[roi_idx] = roi_activation
-                if activation == 1:
-                    activated_rois.append(roi_idx)
+                if is_active:
                     activation_count += 1
 
             #print(activation_results)

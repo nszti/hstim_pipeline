@@ -1182,7 +1182,8 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             y_std = np.std(all_y_vals)
 
             data.append({'Stimulation': 'Overall_Avg', **{f'Avg_X_Repeat_{i + 1}': overall_avg_x for i in range(num_repeats)},**{f'Avg_Y_Repeat_{i + 1}': overall_avg_y for i in range(num_repeats)}})
-            data.append({'Stimulation': 'Std_Dev_all', **{f'Avg_X_Repeat_{i + 1}': x_std for i in range(num_repeats)},**{f'Avg_Y_Repeat_{i + 1}': y_std for i in range(num_repeats)}})
+            #data.append({'Stimulation': 'Std_Dev_all', **{f'Avg_X_Repeat_{i + 1}': x_std for i in range(num_repeats)},**{f'Avg_Y_Repeat_{i + 1}': y_std for i in range(num_repeats)}})
+            data.append({'Stimulation': 'Std_Dev_all', 'Avg_X_Repeat_1': x_std, 'Avg_Y_Repeat_1': y_std })
             data.append({'Stimulation': 'Sum_cells', 'Avg_X_Repeat_1': num_cells, **{f'Avg_X_Repeat_{i + 2}': '' for i in range(num_repeats - 1)}, **{f'Avg_Y_Repeat_{i + 1}': '' for i in range(num_repeats)}})
 
             # Sort data by ascending order of stimulation amplitudes

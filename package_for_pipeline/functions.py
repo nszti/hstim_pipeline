@@ -1030,7 +1030,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             # Extract the ROI indexes for cells
             stimulation_amplitudes = [10, 20, 30, 15, 25]
             cell_indices = np.where(iscell[:, 0] == 1)[0]  # Get indices of valid ROIs
-            print(cell_indices)
+            #print(cell_indices)
             num_cells = len(cell_indices)
             stimulation_duration_frames = int(round((stim_dur / 1000) * frame_rate,0))
             #print(f" rois of cells: {cell_indices}")
@@ -1039,7 +1039,6 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 raise ValueError
 
             F_index = np.where(cell_indices == roi_idx_og)[0][0]
-            print(roi_idx_og)
             # Calculate time windows (1s before, 3s after)
             pre_frames = int(np.round(frame_rate,0))  # 1 second before
             post_frames = int(np.round((frame_rate * 3),0))  # 3 seconds after
@@ -1057,7 +1056,6 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     # stimulation start time
                     if stim_idx == 0 and repeat == 0:
                         start_stim = int(stim_start_times[0][0])  # First stimulation from stim_start_times
-                        print(start_stim)
                         start_timepoints.append(start_stim)
                     elif repeat == 0:
 
@@ -1066,7 +1064,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     else:
                         start_stim = int(np.round((stim_start_times[0][0] + (stim_idx * start_btw_stim_frames) + (repeat * (((num_stims_per_repeat-1) * start_btw_stim_frames)+ trial_delay_frames))),0))
                         start_timepoints.append(start_stim)
-                    print(f"ROI {roi_idx_og}, Repeat {repeat}, Stim {stim_idx}: Start = {start_stim}")
+                    #print(f"ROI {roi_idx_og}, Repeat {repeat}, Stim {stim_idx}: Start = {start_stim}")
 
 
                     # Define time window (1 sec before, 3 sec after)
@@ -1095,12 +1093,11 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             #print(start_timepoints)
             np.save(expDir + dir + '/start_timepoints.npy', start_timepoints)
 
-            #---CALUCALTE ACTIVATED NEURONS PER REPEAT---
+        #---CALUCALTE ACTIVATED NEURONS PER REPEAT---
             baseline_duration = int(stim_start_times[0]) - 1
-
+        #Activation calc
             activation_results = {roi_idx: [] for roi_idx in cell_indices}
             activation_count = 0
-            print(f'roiact:{roi_idx}')
             for roi_idx in cell_indices:
                 F_index_act = np.where(cell_indices == roi_idx)[0][0]
                 baseline_data = F[F_index_act, :max(1, int(stim_start_times[0]) - 1)]
@@ -1109,6 +1106,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 threshold = baseline_std * threshold_value + baseline_avg
                 roi_activation = []
                 activated_rois = []
+                activation = []
                 for repeat in range(num_repeats):
                     repeat_activation = []
                     for stim_idx in range(num_stims_per_repeat):
@@ -1125,13 +1123,14 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     activated_rois.append(roi_idx)
                     activation_count += 1
 
+            #print(activation_results)
             print(f"Number of activated neurons: {activation_count} out of {num_cells} cells")
             column_names = [f"Repeat {i + 1}" for i in range(num_repeats)]
             activation_df = pd.DataFrame.from_dict(activation_results, orient='index', columns=column_names)
             activation_df.insert(0, "ROI", activation_df.index)
-            csv_path = os.path.join(expDir, dir, 'activation_results.csv')
-            activation_df.to_csv(csv_path, index=False)
-            print(f"Results saved to {csv_path}")
+            #csv_path = os.path.join(expDir, dir, 'activation_results.csv')
+            #activation_df.to_csv(csv_path, index=False)
+            #print(f"Results saved to {csv_path}")
 
         #Average x coordinates calculation
             #print(activation_results)
@@ -1147,7 +1146,8 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     #for roi_idx in first_3_rois:
                         act = activation_results[roi_idx]
                         #if any(act[repeat]):
-                        if act[repeat][stim_idx] == 1:
+                        #print(act[repeat][stim_idx])
+                        if act[repeat][stim_idx] == 1:  # any() missing but integare is not iterable
                             if 'med' in stat[roi_idx]:
                                 x_coords.append(stat[roi_idx]['med'][1])
                                 y_coords.append(stat[roi_idx]['med'][0])
@@ -1166,7 +1166,6 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
             # Avg coords for each repeat
             data = []
-            # stimulation_amplitudes
             for stim_idx in range(num_stims_per_repeat):
                 row = {'Stimulation': f'{stimulation_amplitudes[stim_idx]}uA'}
                 for repeat in range(num_repeats):
@@ -1182,7 +1181,6 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             y_std = np.std(all_y_vals)
 
             data.append({'Stimulation': 'Overall_Avg', 'Avg_X_Repeat_1': overall_avg_x, 'Avg_Y_Repeat_1': overall_avg_y})
-            #data.append({'Stimulation': 'Std_Dev_all', **{f'Avg_X_Repeat_{i + 1}': x_std for i in range(num_repeats)},**{f'Avg_Y_Repeat_{i + 1}': y_std for i in range(num_repeats)}})
             data.append({'Stimulation': 'Std_Dev_all', 'Avg_X_Repeat_1': x_std, 'Avg_Y_Repeat_1': y_std })
             data.append({'Stimulation': 'Sum_cells', 'Avg_X_Repeat_1': num_cells, **{f'Avg_X_Repeat_{i + 2}': '' for i in range(num_repeats - 1)}, **{f'Avg_Y_Repeat_{i + 1}': '' for i in range(num_repeats)}})
 
@@ -1209,7 +1207,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     row['Std_X'] = avg_std_row['Std_X']
                     row['Std_Y'] = avg_std_row['Std_Y']
 
-            # Create DataFrame for the final data
+            # DF for final data
             final_df = pd.DataFrame(data)
 
             csv_path = os.path.join(expDir, dir, f'avg_x_y_per_repeat_stim_file_{file_suffix}.csv')
@@ -1251,8 +1249,8 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             df.to_csv(csv_path, index=False)
             print(f"Avg med x,y values saved to {csv_path}")
             '''
-
-            # trafo for origo to get act neuron distance, changed into um
+            '''    
+        # Distance calc from artif. origo
             #um
             trafo = 1.07422
             y, x = ops['Ly'], ops['Lx']
@@ -1289,9 +1287,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
             dist_from_o_pix_path = os.path.join(expDir, dir, 'dist_from_o_pix.txt',)
             np.savetxt(dist_from_o_pix_path, dist_from_artf_o_pix)
-
-
-
+            '''
             #um
             '''im = np.zeros((int(artif_origo_y), int(artif_origo_x)))
             plt.scatter(*artif_origo, color='black', label='Artificial Origin um')
@@ -1306,6 +1302,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             plt.title('activated rois & dist from artif. origo in um')
             plt.show()'''
             #plt.figure(figsize=((int(artif_origo_y), int(artif_origo_x)))
+
             #print roi names & med values together
             roi_names = []
             med_val = []
@@ -1347,13 +1344,12 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             plt.savefig(os.path.join(expDir, dir, 'roi_map.png'))
             plt.show()
             '''
-            #Stimulation counts
+        #Stimulation counts
             stim_activation_counts = []
             sorted_indices = np.argsort(stimulation_amplitudes)
             sorted_amplitudes = np.array(stimulation_amplitudes)[sorted_indices]
-            print(sorted_indices, sorted_amplitudes)
+            #print(sorted_indices, sorted_amplitudes)
             for repeat in range(num_repeats):
-                print(f"repeat: {repeat}")
                 for stim_idx in range(num_stims_per_repeat):
                     #print(f"sima: {stim_idx}")
                     sorted_stim_idx = sorted_indices[stim_idx]
@@ -1362,14 +1358,14 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     stim_end = stim_start + stimulation_duration_frames
                     activated_rois = []
                     for roi_idx in cell_indices:
-
                         F_index_act = np.where(cell_indices == roi_idx)[0][0]
                         stim_data = F[F_index_act, stim_start:stim_end]
+                        avg_stim_data = np.mean(stim_data)
                         baseline_data = F[F_index_act, :max(1, int(stim_start_times[0]) - 1)]
                         baseline_avg = np.mean(baseline_data) if baseline_data.size > 0 else 0
                         baseline_std = np.std(baseline_data) if baseline_data.size > 0 else 0
                         threshold = baseline_std * threshold_value + baseline_avg
-                        if np.any(stim_data > threshold):
+                        if np.any(avg_stim_data > threshold):
                             activated_rois.append(roi_idx)
 
                     stim_activation_counts.append({
@@ -1377,7 +1373,6 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                         'Stimulation': stim_idx + 1,
                         'Activated_ROIs': activated_rois,
                         'Sum_Activated_ROIs': len(activated_rois)
-
                     })
             # dataframe for csv
             data = {'stim ampl': [f'{amp}ua' for amp in sorted_amplitudes]}
@@ -1385,9 +1380,10 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 data[f'Repeat {repeat + 1}'] = [', '.join(map(str, stim_activation_counts[repeat * num_stims_per_repeat + stim_idx]['Activated_ROIs'])) for stim_idx in range(num_stims_per_repeat)]
                 data[f'Sum_Repeat {repeat + 1}'] = [stim_activation_counts[repeat * num_stims_per_repeat + stim_idx]['Sum_Activated_ROIs'] for stim_idx in range(num_stims_per_repeat)]
             stim_activation_df = pd.DataFrame(data)
-            stim_activation_csv_path = os.path.join(expDir, dir, 'stim_activation_counts.csv')
+            stim_activation_csv_path = os.path.join(expDir, dir, 'stim_activation_counts_jav.csv')
             stim_activation_df.to_csv(stim_activation_csv_path, index=False)
             print(f"Stimulation activation counts saved to {stim_activation_csv_path}")
+
             '''
             #---grid of subplots of activated rois---
             fig, axs = plt.subplots(num_repeats, num_stims_per_repeat, figsize=(15, 3 * num_repeats))

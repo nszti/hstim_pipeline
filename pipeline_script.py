@@ -9,6 +9,7 @@ from general import ascii_to_str, find_frame_index_from_timestamp
 from package_for_pipeline import mesc_tiff_extract
 from package_for_pipeline import functions_og
 #from package_for_pipeline import suite2p_neuropil
+from package_for_pipeline import overlap
 
 import os
 
@@ -30,17 +31,17 @@ import os
 #------STEPS IN PIPELINE END------
 
 #------VALUES TO CHANGE------
-root_directory = 'c:/Hyperstim/data_analysis/2025-03-25-Amouse-invivo-GCaMP6f/' #
-#root_directory = 'd:/2P/Experiments/AMouse-2025-03-05-invivo-GCaMP6f/'
-tiff_directory = 'c:/Hyperstim/data_analysis/2025-03-25-Amouse-invivo-GCaMP6f/merged_tiffs/'
-#tiff_directory= 'd:/2P/Experiments/AMouse-2025-03-05-invivo-GCaMP6f/merged_tiffs/'
+#root_directory = 'c:/Hyperstim/data_analysis/2025-03-25-Amouse-invivo-GCaMP6f/' #
+root_directory = 'd:/2P/Experiments/AMouse-2025-03-05-invivo-GCaMP6f/'
+#tiff_directory = 'c:/Hyperstim/data_analysis/2025-03-25-Amouse-invivo-GCaMP6f/merged_tiffs/'
+tiff_directory= 'd:/2P/Experiments/AMouse-2025-03-05-invivo-GCaMP6f/merged_tiffs/'
 mesc_file_name = '2025-03-25-Amouse-invivo-GCaMP6f'
 mesc_DATA_file = 'mesc_data.npy' #from mesc_tiff_extract
 list_of_file_nums = [
-  [15],
-  [16],
-  [17]
+  [10],
+  [13]
 ]
+
 gcamp = 'f' #for GCaMP6s: 's'
 stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
 
@@ -61,7 +62,7 @@ stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
 #-----1.2.step: frequency_to_save, electrode_roi_to_save-->automatization pending-----
 #mesc_data_handling.extract_stim_frame(root_directory, mesc_DATA_file, list_of_file_nums)
 #mesc_data_handling.tiff_merge(mesc_file_name, list_of_file_nums, root_directory)
-suite2p_script.run_suite2p(os.path.join(root_directory,'merged_tiffs/'), gcamp)
+#suite2p_script.run_suite2p(os.path.join(root_directory,'merged_tiffs/'), gcamp)
 
 #--------------Suite2p manual sorting------------------
 
@@ -77,9 +78,10 @@ functions.stim_dur_val(tiff_directory, list_of_file_nums)'''
 #functions.data_analysis_values(stim_type, tiff_directory, list_of_file_nums)
 #functions_current_steering.plot_stim_traces(tiff_directory, num_repeats=6, num_stims_per_repeat=5)
 
-#functions.plot_stim_traces(tiff_directory, 31, 6, 5, list_of_file_nums, 8, 5.4, 8) #5.165
+#functions.plot_stim_traces(tiff_directory, 31, 6, 5, list_of_file_nums, 8, 5.2, 8) #5.165
 
-
+overlap.overlap_calc(tiff_directory, list_of_file_nums)
+#overlap.create_roi_map(tiff_directory, list_of_file_nums)
 
 
 '''

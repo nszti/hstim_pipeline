@@ -1028,6 +1028,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
     #--------CALCULATIONS--------
             # Extract the ROI indexes for cells
+            stimulation_amplitudes = [10, 20, 30, 15, 25]
             cell_indices = np.where(iscell[:, 0] == 1)[0]  # Get indices of valid ROIs
             print(cell_indices)
             num_cells = len(cell_indices)
@@ -1134,59 +1135,63 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
         #Average x coordinates calculation
             #print(activation_results)
-            x_coords_per_repeat = [[] for _ in range(num_repeats)]
-            y_coords_per_repeat = [[] for _ in range(num_repeats)]
+            x_coords_per_repeat_stim = [[[] for _ in range(num_stims_per_repeat)] for _ in range(num_repeats)]
+            y_coords_per_repeat_stim = [[[] for _ in range(num_stims_per_repeat)] for _ in range(num_repeats)]
+            #[[] for _ in range(num_repeats)]
             # first_3_rois = list(activation_results.keys())[:3]
             for repeat in range(num_repeats):
-                x_coords = []
-                y_coords = []
-                for roi_idx in activation_results.keys():
-                #for roi_idx in first_3_rois:
-                    act = activation_results[roi_idx]
-                    if any(act[repeat]):
-                        if 'med' in stat[roi_idx]:
-                            x_coords.append(stat[roi_idx]['med'][1])
-                            y_coords.append(stat[roi_idx]['med'][0])
-                if x_coords:
-                    avg_x = np.mean(x_coords)
-                    avg_y = np.mean(y_coords)
-                    std_x = np.std(x_coords)
-                    std_y = np.std(y_coords)
-                else:
-                    avg_x = np.nan
-                x_coords_per_repeat[repeat] = avg_x
-                y_coords_per_repeat[repeat] = avg_y
-                #distances_from_artif_o = euclidean_distances(artif_origo, )
-            #print(f"trafo dist vals : {distances_from_artif_o}")
+                for stim_idx in range(num_stims_per_repeat):
+                    x_coords = []
+                    y_coords = []
+                    for roi_idx in activation_results.keys():
+                    #for roi_idx in first_3_rois:
+                        act = activation_results[roi_idx]
+                        #if any(act[repeat]):
+                        if act[repeat][stim_idx] == 1:
+                            if 'med' in stat[roi_idx]:
+                                x_coords.append(stat[roi_idx]['med'][1])
+                                y_coords.append(stat[roi_idx]['med'][0])
+                    if x_coords:
+                        avg_x = np.mean(x_coords)
+                        avg_y = np.mean(y_coords)
+                        std_x = np.std(x_coords)
+                        std_y = np.std(y_coords)
+                    else:
+                        avg_x = np.nan
+                        avg_y = np.nan
+                    x_coords_per_repeat_stim[repeat][stim_idx] = avg_x
+                    y_coords_per_repeat_stim[repeat][stim_idx] = avg_y
+                    #distances_from_artif_o = euclidean_distances(artif_origo, )
+                #print(f"trafo dist vals : {distances_from_artif_o}")
 
             # Avg coords for each repeat
             data = []
-            data_x = []
-            data_y = []
-            for repeat, (avg_x, avg_y) in enumerate(zip(x_coords_per_repeat, y_coords_per_repeat)):
-                print(avg_y)
-                #print(f"Repeat {repeat + 1} x coordinates: {avg_x}")
-                data.append({'Repeat': repeat + 1, 'Avg_X_Coordinate': avg_x, 'Avg_Y_Coordinate':avg_y})
-                data_x.append(avg_x)
-                data_y.append(avg_y)
+            # stimulation_amplitudes
+            for stim_idx in range(num_stims_per_repeat):
+                row = {'Stimulation': f'{stimulation_amplitudes[stim_idx]}uA'}
+                for repeat in range(num_repeats):
+                    row[f'Avg_X_Repeat_{repeat + 1}'] = x_coords_per_repeat_stim[repeat][stim_idx]
+                    row[f'Avg_Y_Repeat_{repeat + 1}'] = y_coords_per_repeat_stim[repeat][stim_idx]
+                data.append(row)
+            # Calculate overall averages and standard deviations
+            all_x_vals = [x for repeat_vals in x_coords_per_repeat_stim for x in repeat_vals]
+            all_y_vals = [y for repeat_vals in y_coords_per_repeat_stim for y in repeat_vals]
+            overall_avg_x = np.mean(all_x_vals)
+            overall_avg_y = np.mean(all_y_vals)
+            x_std = np.std(all_x_vals)
+            y_std = np.std(all_y_vals)
 
-            ovreall_avg_x = np.mean(data_x)
-            overall_avg_y = np.mean(data_y)
-            #x_std = np.std(data_x)
-            #y_std = np.std(data_y)
-            data.append({'Repeat': 'Overall_Avg', 'Avg_X_Coordinate': ovreall_avg_x, 'Avg_Y_Coordinate': overall_avg_y})
-            data.append({'Repeat': 'Std_Dev_all', 'Avg_X_Coordinate': std_x, 'Avg_Y_Coordinate': std_y})
-            #data.append({'Repeat': 'Overall_Avg', 'Avg_Y_Coordinate': overall_avg_y})
-            #data.append({'Repeat': 'Std_Dev_all', 'Avg_Y_Coordinate': std_y})
-            data.append({'Repeat': 'Sum_cells', 'Avg_X_Coordinate': num_cells})
-            #data.append({'Repeat': 'Sum_activated_cells', 'Avg_X_Coordinate':activation_count})
+            data.append({'Stimulation': 'Overall_Avg', **{f'Avg_X_Repeat_{i + 1}': overall_avg_x for i in range(num_repeats)},**{f'Avg_Y_Repeat_{i + 1}': overall_avg_y for i in range(num_repeats)}})
+            data.append({'Stimulation': 'Std_Dev_all', **{f'Avg_X_Repeat_{i + 1}': x_std for i in range(num_repeats)},**{f'Avg_Y_Repeat_{i + 1}': y_std for i in range(num_repeats)}})
+            data.append({'Stimulation': 'Sum_cells', 'Avg_X_Repeat_1': num_cells, **{f'Avg_X_Repeat_{i + 2}': '' for i in range(num_repeats - 1)}, **{f'Avg_Y_Repeat_{i + 1}': '' for i in range(num_repeats)}})
 
-
+            # Sort data by ascending order of stimulation amplitudes
+            data = sorted(data, key=lambda x: int(x['Stimulation'].replace('uA', '')) if 'uA' in x['Stimulation'] else float('inf'))
 
             df = pd.DataFrame(data)
-            csv_path = os.path.join(expDir, dir, 'avg_x_y_per_repeat.csv')
+            csv_path = os.path.join(expDir, dir, 'avg_x_y_per_repeat_stim_2.csv')
             df.to_csv(csv_path, index=False)
-            print(f"Avg med x values saved to {csv_path}")
+            print(f"Avg med x,y values saved to {csv_path}")
 
             # trafo for origo to get act neuron distance, changed into um
             #um
@@ -1285,7 +1290,6 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             '''
             #Stimulation counts
             stim_activation_counts = []
-            stimulation_amplitudes = [10, 20, 30, 15, 25]
             sorted_indices = np.argsort(stimulation_amplitudes)
             sorted_amplitudes = np.array(stimulation_amplitudes)[sorted_indices]
             print(sorted_indices, sorted_amplitudes)

@@ -1163,7 +1163,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     y_coords_per_repeat_stim[repeat][stim_idx] = avg_y
                     #distances_from_artif_o = euclidean_distances(artif_origo, )
                 #print(f"trafo dist vals : {distances_from_artif_o}")
-            '''
+
             # Avg coords for each repeat
             data = []
             # stimulation_amplitudes
@@ -1190,12 +1190,34 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             data = sorted(data, key=lambda x: int(x['Stimulation'].replace('uA', '')) if 'uA' in x['Stimulation'] else float('inf'))
 
             df = pd.DataFrame(data)
-            csv_path = os.path.join(expDir, dir, 'avg_x_y_per_repeat_stim_2.csv')
-            df.to_csv(csv_path, index=False)
+            #calc avg & std per amplitude
+            amplitude_groups = df[df['Stimulation'].str.contains('uA')].groupby('Stimulation')
+            avg_std_data = []
+            for name, group in amplitude_groups:
+                avg_x = group[[f'Avg_X_Repeat_{i + 1}' for i in range(num_repeats)]].mean(axis=1).mean()
+                avg_y = group[[f'Avg_Y_Repeat_{i + 1}' for i in range(num_repeats)]].mean(axis=1).mean()
+                std_x = group[[f'Avg_X_Repeat_{i + 1}' for i in range(num_repeats)]].std(axis=1).mean()
+                std_y = group[[f'Avg_Y_Repeat_{i + 1}' for i in range(num_repeats)]].std(axis=1).mean()
+                avg_std_data.append({'Stimulation': name, 'Avg_X': avg_x, 'Avg_Y': avg_y, 'Std_X': std_x, 'Std_Y': std_y})
+
+            for row in data:
+                if 'uA' in row['Stimulation']:
+                    stim = row['Stimulation']
+                    avg_std_row = next(item for item in avg_std_data if item['Stimulation'] == stim)
+                    row['Avg_X'] = avg_std_row['Avg_X']
+                    row['Avg_Y'] = avg_std_row['Avg_Y']
+                    row['Std_X'] = avg_std_row['Std_X']
+                    row['Std_Y'] = avg_std_row['Std_Y']
+
+            # Create DataFrame for the final data
+            final_df = pd.DataFrame(data)
+
+            csv_path = os.path.join(expDir, dir, f'avg_x_y_per_repeat_stim_file_{file_suffix}.csv')
+            final_df.to_csv(csv_path, index=False)
             print(f"Avg med x,y values saved to {csv_path}")
+
+
             '''
-
-
             #og
             data = []
             data_x = []
@@ -1228,6 +1250,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             csv_path = os.path.join(expDir, dir, 'avg_x_y_per_repeat_stim.csv')
             df.to_csv(csv_path, index=False)
             print(f"Avg med x,y values saved to {csv_path}")
+            '''
 
             # trafo for origo to get act neuron distance, changed into um
             #um

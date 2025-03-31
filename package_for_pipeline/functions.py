@@ -1163,7 +1163,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     y_coords_per_repeat_stim[repeat][stim_idx] = avg_y
                     #distances_from_artif_o = euclidean_distances(artif_origo, )
                 #print(f"trafo dist vals : {distances_from_artif_o}")
-
+            '''
             # Avg coords for each repeat
             data = []
             # stimulation_amplitudes
@@ -1191,6 +1191,41 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
             df = pd.DataFrame(data)
             csv_path = os.path.join(expDir, dir, 'avg_x_y_per_repeat_stim_2.csv')
+            df.to_csv(csv_path, index=False)
+            print(f"Avg med x,y values saved to {csv_path}")
+            '''
+
+
+            #og
+            data = []
+            data_x = []
+            data_y = []
+            # for repeat, (avg_x, avg_y) in enumerate(zip(x_coords_per_repeat, y_coords_per_repeat)):
+            for repeat in range(num_repeats):
+                for stim_idx in range(num_stims_per_repeat):
+                    avg_x = x_coords_per_repeat_stim[repeat][stim_idx]
+                    avg_y = y_coords_per_repeat_stim[repeat][stim_idx]
+                    # print(f"Repeat {repeat + 1} x coordinates: {avg_x}")
+                    data.append(
+                        {'Repeat': repeat + 1, 'Stimulation': stim_idx + 1, 'Avg_X_Coordinate': avg_x, 'Avg_Y_Coordinate': avg_y})
+                    data_x.append(avg_x)
+                    data_y.append(avg_y)
+
+            ovreall_avg_x = np.mean(data_x)
+            overall_avg_y = np.mean(data_y)
+            x_std = np.std(data_x)
+            y_std = np.std(data_y)
+
+            data.append(
+                {'Repeat': 'Overall_Avg', 'Stimulation': '', 'Avg_X_Coordinate': ovreall_avg_x, 'Avg_Y_Coordinate': overall_avg_y})
+            data.append({'Repeat': 'Std_Dev_all', 'Stimulation': '', 'Avg_X_Coordinate': std_x, 'Avg_Y_Coordinate': std_y})
+            # data.append({'Repeat': 'Overall_Avg', 'Avg_Y_Coordinate': overall_avg_y})
+            # data.append({'Repeat': 'Std_Dev_all', 'Avg_Y_Coordinate': std_y})
+            data.append({'Repeat': 'Sum_cells', 'Stimulation': '', 'Avg_X_Coordinate': num_cells})
+            # data.append({'Repeat': 'Sum_activated_cells', 'Avg_X_Coordinate':activation_count})
+
+            df = pd.DataFrame(data)
+            csv_path = os.path.join(expDir, dir, 'avg_x_y_per_repeat_stim.csv')
             df.to_csv(csv_path, index=False)
             print(f"Avg med x,y values saved to {csv_path}")
 

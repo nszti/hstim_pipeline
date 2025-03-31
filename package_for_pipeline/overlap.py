@@ -182,14 +182,16 @@ def overlap_calc(expDir, list_of_file_nums):
     idx = idx.flatten()
 
     matches = []
-    for i, j in enumerate(idx):
-        d_score = dice_coefficient(maskA[i], maskB[j])
-        matches.append({
-            'ROI_A': i,
-            'ROI_B': j,
-            'centroid_distance': dist[i],
-            'dice_coefficient': d_score
-        })
+    for i, maskA_i in enumerate(maskA):
+        if i < len(dist):  # Ensure index is within bounds
+            for j, maskB_j in enumerate(maskB):
+                d_score = dice_coefficient(maskA_i, maskB_j)
+                matches.append({
+                    'ROI_A': i,
+                    'ROI_B': j,
+                    'centroid_distance': dist[i],
+                    'dice_coefficient': d_score
+                })
     print(f"\nTotal matches: {len(matches)}")
 
     for i, m1 in enumerate(maskA):

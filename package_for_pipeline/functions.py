@@ -1031,7 +1031,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             cell_indices = np.where(iscell[:, 0] == 1)[0]  # Get indices of valid ROIs
             print(cell_indices)
             num_cells = len(cell_indices)
-            stimulation_duration_frames = int((stim_dur / 1000) * frame_rate)
+            stimulation_duration_frames = int(round((stim_dur / 1000) * frame_rate,0))
             #print(f" rois of cells: {cell_indices}")
             num_cells = len(cell_indices)
             if roi_idx_og  not in cell_indices:
@@ -1040,9 +1040,9 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             F_index = np.where(cell_indices == roi_idx_og)[0][0]
             print(roi_idx_og)
             # Calculate time windows (1s before, 3s after)
-            pre_frames = frame_rate  # 1 second before
-            post_frames = frame_rate * 3  # 3 seconds after
-            total_frames = pre_frames + post_frames
+            pre_frames = int(np.round(frame_rate,0))  # 1 second before
+            post_frames = int(np.round((frame_rate * 3),0))  # 3 seconds after
+            total_frames = int(np.round((pre_frames + post_frames), 0))
             start_btw_stim_frames = start_btw_stim * frame_rate
             trial_delay_frames = trial_delay * frame_rate
 
@@ -1055,13 +1055,15 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
                     # stimulation start time
                     if stim_idx == 0 and repeat == 0:
-                        start_stim = int(stim_start_times[0])  # First stimulation from stim_start_times
+                        start_stim = int(stim_start_times[0][0])  # First stimulation from stim_start_times
+                        print(start_stim)
                         start_timepoints.append(start_stim)
                     elif repeat == 0:
-                        start_stim = int(stim_start_times[0] + stim_idx * start_btw_stim_frames)
+
+                        start_stim = int(np.round((stim_start_times[0][0] + stim_idx * start_btw_stim_frames),0))
                         start_timepoints.append(start_stim)
                     else:
-                        start_stim = int(stim_start_times[0] + (stim_idx * start_btw_stim_frames) + (repeat * (((num_stims_per_repeat-1) * start_btw_stim_frames)+ trial_delay_frames)))
+                        start_stim = int(np.round((stim_start_times[0][0] + (stim_idx * start_btw_stim_frames) + (repeat * (((num_stims_per_repeat-1) * start_btw_stim_frames)+ trial_delay_frames))),0))
                         start_timepoints.append(start_stim)
                     print(f"ROI {roi_idx_og}, Repeat {repeat}, Stim {stim_idx}: Start = {start_stim}")
 
@@ -1069,7 +1071,6 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     # Define time window (1 sec before, 3 sec after)
                     pre_start = max(0, start_stim  - pre_frames)
                     post_end = min(F.shape[1], start_stim  + post_frames)
-
                     # Extract fluorescence trace for this ROI
                     trace_segment = F[F_index, pre_start:post_end]
 
@@ -1324,7 +1325,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             stim_activation_csv_path = os.path.join(expDir, dir, 'stim_activation_counts.csv')
             stim_activation_df.to_csv(stim_activation_csv_path, index=False)
             print(f"Stimulation activation counts saved to {stim_activation_csv_path}")
-'''
+            '''
             #---grid of subplots of activated rois---
             fig, axs = plt.subplots(num_repeats, num_stims_per_repeat, figsize=(15, 3 * num_repeats))
             #loop through each repeat and stimulation
@@ -1350,11 +1351,11 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             plt.savefig(os.path.join(expDir, dir, 'roi_map_per_stim.png'))
             plt.show()
 
-'''
+            '''
 
             #------------PLOTTING------------
     #----plot1
-'''
+
             time = np.linspace(-1, 3, total_frames)
             # Create grid plot
             fig, axes = plt.subplots(num_repeats, num_stims_per_repeat, figsize=(5 * num_stims_per_repeat, 4 * num_repeats))
@@ -1486,7 +1487,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
             plt.tight_layout()
             plt.savefig(os.path.join(expDir, dir, f'overlapping_per_param_for_roi0.png'))
-            plt.show()'''
+            plt.show()
 
 #scratch_1
 def scratch_val(tiff_dir):

@@ -33,9 +33,18 @@ def suite2p_to_cellreg_masks(expDir, list_of_file_nums):
             cell_indices = np.where(iscell[:, 0] == 1)[0]
             stat = [stat[i] for i in cell_indices]
 
+
+            filtered_stat = []
+            for roi in stat:
+                y, x = roi['med']
+                if x > 1 and y > 1:  # Exclude ROIs too close to the image edge (which may lead to 0 distances)
+                    filtered_stat.append(roi)
+                else:
+                    continue
+
             Ly, Lx = ops['Ly'], ops['Lx']
             masks = []
-            for roi in stat:
+            for roi in filtered_stat:
                 mask = np.zeros((Ly, Lx), dtype=np.uint8)
                 ypix = roi['ypix']
                 xpix = roi['xpix']

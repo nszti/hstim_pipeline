@@ -43,8 +43,10 @@ def suite2p_to_cellreg_masks(expDir, list_of_file_nums):
                 masks.append(mask)
             if masks:
                 mask_stack = np.stack(masks, axis=-0).astype(np.double)   # [nROIs, Ly, Lx]
-                out_name = f'session_{suffix}_cells.mat'
-                output_dir = os.path.join(base_dir, dir)
-                out_path = os.path.join(output_dir, out_name)
+
+                output_folder = os.path.join(expDir, 'cellreg_files')
+                os.makedirs(output_folder, exist_ok=True)
+                out_name = f'{matched_file}.mat'
+                out_path = os.path.join(output_folder, out_name)
                 savemat(out_path, {'cells_map': mask_stack})
                 print(f" Saved: {out_path} with shape {mask_stack.shape}")

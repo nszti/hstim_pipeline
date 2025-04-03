@@ -1,6 +1,7 @@
 import os.path
-
+import numpy as np
 from scipy.io import savemat
+from pathlib import Path
 
 def suite2p_to_cellreg_masks(expDir, list_of_file_nums):
     base_dir = Path(expDir)
@@ -15,7 +16,7 @@ def suite2p_to_cellreg_masks(expDir, list_of_file_nums):
                 file_suffix = num_to_search_split[1].rsplit('.', 1)[0]
                 if file_suffix == suffix:
                     matched_file = dir
-                    print(matched_file)
+                    print(f'Found file: {matched_file}')
                     # print(matched_file)
                     break
         else:
@@ -27,18 +28,18 @@ def suite2p_to_cellreg_masks(expDir, list_of_file_nums):
             stat = np.load(stat_path, allow_pickle=True)
             ops = np.load(ops_path, allow_pickle=True).item()
 
-    Ly, Lx = ops['Ly'], ops['Lx']
-    masks = []
-    for roi in stat:
-        mask = np.zeros((Ly, Lx), dtype=np.uint8)
-        ypix = roi['ypix']
-        xpix = roi['xpix']
-        mask[ypix, xpix] = 1
-        masks.append(mask)
-    if masks:
-        mask_stack = np.stack(masks, axis=-1)  # [Ly, Lx, nROIs]
-        out_name = f'session_{suffix}_cells.mat'
-        output_dir = os.path.join(base_dir, dir)
-        out_path = os.path.join(output_dir, out_name)
-        savemat(out_path, {'cells_map': mask_stack})
-        print(f" Saved: {out_path} with shape {mask_stack.shape}")
+        Ly, Lx = ops['Ly'], ops['Lx']
+        masks = []
+        for roi in stat:
+            mask = np.zeros((Ly, Lx), dtype=np.uint8)
+            ypix = roi['ypix']
+            xpix = roi['xpix']
+            mask[ypix, xpix] = 1
+            masks.append(mask)
+        if masks:
+            mask_stack = np.stack(masks, axis=-0)  # [nROIs, Ly, Lx]
+            out_name = f'session_{suffix}_cells.mat'
+            output_dir = os.path.join(base_dir, dir)
+            out_path = os.path.join(output_dir, out_name)
+            savemat(out_path, {'cells_map': mask_stack})
+            print(f" Saved: {out_path} with shape {mask_stack.shape}")

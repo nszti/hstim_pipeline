@@ -104,14 +104,16 @@ def analyse_mesc_file(filepath, output_path,  plot_curves=False, print_all_attri
                                 print(f"Stimulation start indices (ms): {stim_start_indices}")
 
                 # ---Printing Unit attributes---
-                if print_all_attributes:
+                '''if print_all_attributes:
+                    print("belep")
                     for attr_key in selected_unit._v_attrs._v_attrnames:
+                        print(attr_key, selected_unit._v_attrs[attr_key])
                         try:
                             print(attr_key, ascii_to_str(selected_unit._v_attrs[attr_key]) or None)
                         except TypeError:
                             print(attr_key, ' has caused type error.')
                         except OverflowError:
-                            print(attr_key, ' has caused overflow error.')
+                            print(attr_key, ' has caused overflow error.')'''
 
                 frame_time_ms = selected_unit._v_attrs['ZAxisConversionConversionLinearScale'] + selected_unit._v_attrs['ZAxisConversionConversionLinearOffset']
 

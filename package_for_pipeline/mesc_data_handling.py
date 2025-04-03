@@ -132,7 +132,7 @@ def extract_stim_frame(directory, mesc_DATA_file, list_of_file_nums):
             print(save_dir)
 
             for num_id in sublist:
-                #print(num_id)
+                print("belepett")
                 #search_frameNumber
                 num_id_str = str(num_id)
                 mask = [fid.split('_')[-1] == num_id_str for fid in fileIds]

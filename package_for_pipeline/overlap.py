@@ -197,8 +197,9 @@ def overlap_calc(expDir, list_of_file_nums):
     for i, m1 in enumerate(maskA):
         for j, m2 in enumerate(maskB):
             dice = dice_coefficient(m1, m2)
-            if dice > 0.3:
-                print(f"ROI {i} in {dir1} matches ROI {j} in {dir2} with Dice {dice:.2f}")
+            print(f"ROI {i} in {dir1} matches ROI {j} in {dir2} with Dice {dice:.2f}")
+            #if dice > 0.3:
+                #print(f"ROI {i} in {dir1} matches ROI {j} in {dir2} with Dice {dice:.2f}")
 
     #overlap roi maps
     fig, ax = plt.subplots()

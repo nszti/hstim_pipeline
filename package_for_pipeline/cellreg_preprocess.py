@@ -1,3 +1,4 @@
+import os.path
 
 from scipy.io import savemat
 
@@ -34,7 +35,10 @@ def suite2p_to_cellreg_masks(expDir, list_of_file_nums):
         xpix = roi['xpix']
         mask[ypix, xpix] = 1
         masks.append(mask)
-    return np.stack(masks, axis=-1)  # shape: (Ly, Lx, nROIs)
-
-masks = suite2p_to_cellreg_masks(stat, ops)
-savemat('session1_cells.mat', {'cells_map': masks})
+    if masks:
+        mask_stack = np.stack(masks, axis=-1)  # [Ly, Lx, nROIs]
+        out_name = f'session_{suffix}_cells.mat'
+        output_dir = os.path.join(base_dir, dir)
+        out_path = os.path.join(output_dir, out_name)
+        savemat(out_path, {'cells_map': mask_stack})
+        print(f" Saved: {out_path} with shape {mask_stack.shape}")

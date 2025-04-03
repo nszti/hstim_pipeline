@@ -9,8 +9,10 @@ import os
 from pathlib import Path
 import re
 import ast
-
-from torch.ao.nn.quantized.functional import threshold
+from scipy.spatial.distance import cdist
+from scipy.spatial.distance import cdist, directed_hausdorff
+from skimage.draw import polygon
+from tqdm import tqdm
 
 
 def find_dir():
@@ -243,5 +245,119 @@ def overlap_calc(expDir, list_of_file_nums):
 
 
 
+#******
 
+def load_suite2p_data(expDir, list_of_file_nums):
+    base_dir = Path(expDir)
+    filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+    for numbers_to_merge in list_of_file_nums:
+        suffix = '_'.join(map(str, numbers_to_merge))
+        num_to_search = []
+        for dir in filenames:
+            num_to_search_split = dir.split('MUnit_')
+            # print(num_to_search_split)
+            if len(num_to_search_split) > 1:
+                file_suffix = num_to_search_split[1].rsplit('.', 1)[0]
+                if file_suffix == suffix:
+                    matched_file = dir
+                    print(matched_file)
+                    # print(matched_file)
+                    break
+        else:
+            continue
+
+        if matched_file:
+            stat_path = expDir + dir + '/suite2p/plane0/stat.npy'
+            ops_path = expDir + dir + '/suite2p/plane0/ops.npy'
+            stat = np.load(stat_path, allow_pickle=True)
+            ops = np.load(ops_path, allow_pickle=True).item()
+    return stat, ops
+
+def create_binary_mask(stat, ops):
+    masks = []
+    Ly, Lx = ops['Ly'], ops['Lx']
+    for roi in stat:
+        mask = np.zeros((Ly, Lx), dtype=bool)
+        ypix = roi['ypix']
+        xpix = roi['xpix']
+        mask[ypix, xpix] = True
+        masks.append(mask)
+    return masks
+
+
+def hausdorff_distance(mask1, mask2):
+    # [0,inf] 0-perfect shape match
+    pts1 = np.column_stack(np.nonzero(mask1))
+    pts2 = np.column_stack(np.nonzero(mask2))
+
+    if len(pts1) == 0 or len(pts2) == 0:
+        return np.inf  # one mask is empty
+
+    d1 = directed_hausdorff(pts1, pts2)[0]
+    d2 = directed_hausdorff(pts2, pts1)[0]
+    return max(d1, d2)
+#in similarity score
+def scaled_hausdorff(mask1, mask2, max_dist=20):
+    #max_dist = dist at which 2 masks are totally different
+    hd = hausdorff_distance(mask1, mask2)
+    return max(0, 1 - min(hd, max_dist) / max_dist)  #normalize
+
+def compute_jaccard(mask1, mask2):
+    # [0,1] 1-perfect overlap
+    intersection = np.logical_and(mask1, mask2).sum()
+    union = np.logical_or(mask1, mask2).sum()
+    return intersection / union if union > 0 else 0
+
+
+def match_rois(stat_a, masks_a, stat_b, masks_b, distance_thresh=15, jaccard_thresh=0.3, score_thresh=0.5,
+               w1=0.5, w2=0.4, w3=0.1):
+    matches = []
+    meds_a = np.array([roi['med'] for roi in stat_a])
+    meds_b = np.array([roi['med'] for roi in stat_b])
+
+    # compute pairwise distances between medians, uses euclidean by default
+    dist_matrix = cdist(meds_a, meds_b)
+    # normalize distance by diag ( diag.
+    fov_diag = np.linalg.norm([masks_a[0].shape[0], masks_a[0].shape[1]])
+
+    for i, row in enumerate(dist_matrix):
+        for j, dist in enumerate(row):
+            if dist < distance_thresh:
+                norm_dist = dist / fov_diag
+                jaccard = compute_jaccard(masks_a[i], masks_b[j])
+                shape_sim = scaled_hausdorff_similarity(masks_a[i], masks_b[j])
+
+                score = w1 * (1 - norm_dist) + w2 * jaccard + w3 * shape_sim
+
+                if jaccard >= jaccard_thresh and score >= score_thresh:
+                    matches.append((i, j, dist, jaccard, shape_sim, score))
+
+    return sorted(matches, key=lambda x: -x[-1])  # sort by similarity score descending
+
+
+def match_suite2p_rois(stat_a_path, ops_a_path, stat_b_path, ops_b_path,
+                       distance_thresh=15,
+                       jaccard_thresh=0.3,
+                       score_thresh=0.5,
+                       w1=0.4, w2=0.3, w3=0.3):
+    """
+    Matches ROIs between two Suite2p recordings and returns list of matches:
+    (index_A, index_B, distance, jaccard, shape_similarity, combined_score)
+    """
+    # Load Suite2p outputs
+    stat_a, ops_a = load_suite2p_data(stat_a_path, ops_a_path)
+    stat_b, ops_b = load_suite2p_data(stat_b_path, ops_b_path)
+
+    # Generate full-size binary ROI masks
+    masks_a = create_binary_mask(stat_a, ops_a)
+    masks_b = create_binary_mask(stat_b, ops_b)
+
+    # Match ROIs with combined similarity score
+    matches = match_rois(stat_a, masks_a, stat_b, masks_b,
+                         distance_thresh=distance_thresh,
+                         jaccard_thresh=jaccard_thresh,
+                         score_thresh=score_thresh,
+                         w1=w1, w2=w2, w3=w3)
+
+    return matches
 

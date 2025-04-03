@@ -25,21 +25,26 @@ def suite2p_to_cellreg_masks(expDir, list_of_file_nums):
         if matched_file:
             stat_path = expDir + dir + '/suite2p/plane0/stat.npy'
             ops_path = expDir + dir + '/suite2p/plane0/ops.npy'
+            iscell_path = expDir + dir + '/suite2p/plane0/iscell.npy'
             stat = np.load(stat_path, allow_pickle=True)
             ops = np.load(ops_path, allow_pickle=True).item()
+            iscell = np.load(iscell_path, allow_pickle=True)
 
-        Ly, Lx = ops['Ly'], ops['Lx']
-        masks = []
-        for roi in stat:
-            mask = np.zeros((Ly, Lx), dtype=np.uint8)
-            ypix = roi['ypix']
-            xpix = roi['xpix']
-            mask[ypix, xpix] = 1
-            masks.append(mask)
-        if masks:
-            mask_stack = np.stack(masks, axis=-0).astype(np.double)   # [nROIs, Ly, Lx]
-            out_name = f'session_{suffix}_cells.mat'
-            output_dir = os.path.join(base_dir, dir)
-            out_path = os.path.join(output_dir, out_name)
-            savemat(out_path, {'cells_map': mask_stack})
-            print(f" Saved: {out_path} with shape {mask_stack.shape}")
+            cell_indices = np.where(iscell[:, 0] == 1)[0]
+            stat = [stat[i] for i in cell_indices]
+
+            Ly, Lx = ops['Ly'], ops['Lx']
+            masks = []
+            for roi in stat:
+                mask = np.zeros((Ly, Lx), dtype=np.uint8)
+                ypix = roi['ypix']
+                xpix = roi['xpix']
+                mask[ypix, xpix] = 1
+                masks.append(mask)
+            if masks:
+                mask_stack = np.stack(masks, axis=-0).astype(np.double)   # [nROIs, Ly, Lx]
+                out_name = f'session_{suffix}_cells.mat'
+                output_dir = os.path.join(base_dir, dir)
+                out_path = os.path.join(output_dir, out_name)
+                savemat(out_path, {'cells_map': mask_stack})
+                print(f" Saved: {out_path} with shape {mask_stack.shape}")

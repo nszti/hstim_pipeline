@@ -1,13 +1,10 @@
 import scipy.io as sio
-import h5py
+import hdf5storage
 import numpy as np
 
-with h5py.File('cell_registered_struct.mat', 'r') as f:
-    # Extract the data from the HDF5 file
-    cell_to_index_map = f['cell_registered_struct']['cell_to_index_map'][0, 0]
-    cell_to_index_map_data = f[cell_to_index_map][:].T
-
-cell_to_index_map = cell_to_index_map_data.astype(int)
+data = hdf5storage.loadmat('cell_registered_struct.mat')
+cell_to_index_map = data['cell_registered_struct']['cell_to_index_map']
+cell_to_index_map = np.array(cell_to_index_map, dtype=int)
 num_registered_cells, num_sessions = cell_to_index_map.shape
 
 #Ttotal number of detected cells in each session
@@ -26,3 +23,4 @@ for i in range(num_sessions):
                                       cell_to_index_map[:, j] > 0)
         num_overlap = np.sum(overlap_mask)
         print(f"  Sessions {i+1} & {j+1}: {num_overlap} overlapping cells")
+

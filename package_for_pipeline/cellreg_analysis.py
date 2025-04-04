@@ -1,10 +1,13 @@
 import scipy.io as sio
+import h5py
 import numpy as np
 
-# === Load data ===
-mat = sio.loadmat('cell_registered_struct.mat')  # Path to your CellReg output
-cell_to_index_map = mat['cell_registered_struct']['cell_to_index_map'][0, 0]
+with h5py.File('cell_registered_struct.mat', 'r') as f:
+    # Extract the data from the HDF5 file
+    cell_to_index_map = f['cell_registered_struct']['cell_to_index_map'][0, 0]
+    cell_to_index_map_data = f[cell_to_index_map][:].T
 
+cell_to_index_map = cell_to_index_map_data.astype(int)
 num_registered_cells, num_sessions = cell_to_index_map.shape
 
 #Ttotal number of detected cells in each session

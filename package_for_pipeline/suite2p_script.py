@@ -67,9 +67,9 @@ def run_suite2p(data_path, gcamp):
                               # (or folder of folders with tiffs if look_one_level_down is True, or subfolders is not empty)
                               'subfolders': [],  # choose subfolders of 'data_path' to look in (optional)
                               'tau': 0.5,
-                              'fs': 31.0,
+                              'fs': 30.97,
                               'batch_size': 500,
-                              'spatial_scale': 1,
+                              'spatial_scale': 0,
                               'denoise': True,
                               'threshold_scaling': 0.25,
                               'max_overlap': 0.7,

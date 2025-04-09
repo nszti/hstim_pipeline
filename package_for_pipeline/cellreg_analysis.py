@@ -31,7 +31,7 @@ def cellreg_analysis(expDir, mat_file):
     df = pd.DataFrame(result_mtx, columns=[f'Session {i+1}' for i in range(num_sessions)])
     csv_path = os.path.join(cell_reg_path, 'overlap_matrix.csv')
     df.to_csv(csv_path)
-print("Overlap matrix saved as overlap_matrix.csv")
+    print("Overlap matrix saved as overlap_matrix.csv")
 
 
 

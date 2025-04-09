@@ -1101,6 +1101,8 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             baseline_duration = int(stim_start_times[0]) - 1
             activation_results = {roi_idx: [] for roi_idx in cell_indices}
             activation_count = 0
+            stat = np.load(stat_path, allow_pickle=True)
+            Ly, Lx = ops['Ly'], ops['Lx']
             for roi_idx in cell_indices:
                 F_index_act = np.where(cell_indices == roi_idx)[0][0]
                 baseline_data = F[F_index_act, :max(1, int(stim_start_times[0]) - 1)]
@@ -1126,6 +1128,13 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 activation_results[roi_idx] = roi_activation
                 if is_active:
                     activation_count += 1
+            cellreg_data = np.zeros(activation_count, Ly, Lx), dtype=np.uint8)
+            for idx, roi_data in enumerate(activation_results):
+                for x,y in zip(roi_data['xpix'], roi_data['ypix']):
+                    if x < Lx and y < Ly:
+                        cellreg_data[idx, y, x] = 1
+            mat_path = os.path.join(session_path, f"cellreg_input_{session_folder}.mat")
+            savemat(mat_path, {"footprints": footprints})
 
             #print(activation_results)
             print(f"Number of activated neurons: {activation_count} out of {num_cells} cells")

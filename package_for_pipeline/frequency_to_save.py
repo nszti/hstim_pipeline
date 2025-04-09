@@ -7,8 +7,7 @@ print(frequency)
 '''
 #frequency = np.array([0, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 50, 100, 200, 300, 400, 200])
 #frequency = np.zeros((25,), dtype=int)
-frequency = np.full(25,200)
-#frequency[12] = 100
-output_path = 'c:/Hyperstim/data_analysis/AMouse-2025-03-05-invivo-GCaMP6f/merged_tiffs/'
+frequency = np.full(50,100)
+output_path = 'c:/Hyperstim/data_analysis/2023_09_25_GCAMP6F/merged_tiffs/'
 np.save(output_path +'frequencies.npy', frequency)
 print(frequency)

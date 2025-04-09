@@ -11,7 +11,7 @@ import re
 import ast
 from scipy.spatial.distance import cdist
 from scipy.spatial.distance import cdist, directed_hausdorff
-from skimage.draw import polygon
+#from skimage.draw import polygon
 from tqdm import tqdm
 
 

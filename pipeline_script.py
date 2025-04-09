@@ -10,6 +10,7 @@ from package_for_pipeline import mesc_tiff_extract
 from package_for_pipeline import functions_og
 #from package_for_pipeline import suite2p_neuropil
 from package_for_pipeline import overlap
+from package_for_pipeline import cellreg_preprocess
 
 import os
 
@@ -31,14 +32,22 @@ import os
 #------STEPS IN PIPELINE END------
 
 #------VALUES TO CHANGE------
-root_directory = 'c:/Hyperstim/data_analysis/2025-04-01-Amouse-invivo-GCaMP6f/' #
+#root_directory = 'c:/Hyperstim/data_analysis/2025-04-01-Amouse-invivo-GCaMP6f/' #
+root_directory = 'c:/Hyperstim/data_analysis/2023_09_25_GCAMP6F/'
 #root_directory = 'd:/2P/Experiments/AMouse-2025-03-05-invivo-GCaMP6f/'
-tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-01-Amouse-invivo-GCaMP6f/merged_tiffs/'
+#tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-01-Amouse-invivo-GCaMP6f/merged_tiffs/'
+tiff_directory = 'c:/Hyperstim/data_analysis/2023_09_25_GCAMP6F/merged_tiffs/'
 #tiff_directory= 'd:/2P/Experiments/AMouse-2025-03-05-invivo-GCaMP6f/merged_tiffs/'
-mesc_file_name = '2025-04-01-Amouse-invivo-GCaMP6f-2'
+#mesc_file_name = '2025-04-01-Amouse-invivo-GCaMP6f-2'
+mesc_file_name = '2023_09_25_in_vivo_test_GCAMP6f'
 mesc_DATA_file = 'mesc_data.npy' #from mesc_tiff_extract
+mat_file = 'cellRegistered_20250404_115825.mat'
 list_of_file_nums = [
-  [8]
+  [3],
+  [4],
+  [5],
+  [6]
+
 
 ]
 
@@ -66,28 +75,31 @@ stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
 mesc_data_handling.tiff_merge(mesc_file_name, list_of_file_nums, root_directory) 
 mesc_data_handling.extract_stim_frame(root_directory, mesc_DATA_file, list_of_file_nums) #--> saves stimTimes.npy needed for baseline
 suite2p_script.run_suite2p(os.path.join(root_directory,'merged_tiffs/'), gcamp)
-'''
 
+'''
 #--------------Suite2p manual sorting------------------
+
 '''
 functions.stim_dur_val(tiff_directory, list_of_file_nums)
 functions.electROI_val(tiff_directory, list_of_file_nums)
 functions.dist_vals(tiff_directory, list_of_file_nums)
 functions.stim_dur_val(tiff_directory, list_of_file_nums)
+'''
 functions.baseline_val(root_directory, tiff_directory, list_of_file_nums) #--> saves F0.npy
 
-'''
+
 
 #functions.activated_neurons_val(root_directory, tiff_directory, list_of_file_nums, 1)
 #functions.timecourse_vals(tiff_directory, list_of_file_nums, 5)
 #functions.data_analysis_values(stim_type, tiff_directory, list_of_file_nums)
 #functions_current_steering.plot_stim_traces(tiff_directory, num_repeats=6, num_stims_per_repeat=5)
 
-functions.plot_stim_traces(tiff_directory, 30.97, 5, 5, list_of_file_nums, 8, 5.2, 0) #5.165
+#functions.plot_stim_traces(tiff_directory, 30.97, 5, 5, list_of_file_nums, 8, 5.2, 0) #5.165
 
 #overlap.overlap_calc(tiff_directory, list_of_file_nums)
 #overlap.create_roi_map(tiff_directory, list_of_file_nums)
-
+#cellreg_preprocess.suite2p_to_cellreg_masks(tiff_directory, list_of_file_nums)
+cellreg_preprocess.cellreg_analysis(tiff_directory, mat_file)
 
 '''
 functions.stim_dur_val(tiff_directory, list_of_file_nums)

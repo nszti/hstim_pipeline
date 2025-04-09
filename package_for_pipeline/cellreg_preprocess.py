@@ -86,11 +86,9 @@ def cellreg_analysis(expDir, mat_file):
             # Print the number of matches for this session pair
             print(f"Sessions {i+1} & {j+1}: {num_matches} overlapping cells")
             result_rows.append([f"Session {i + 1}", f"Session {j + 1}", num_matches])
-            result_rows.append(f"All registered cells in session {i + 1}: {total_cells_per_session[i]}")
-            result_rows.append(f"All registered cells in session {j + 1}: {total_cells_per_session[j]}")
-            result_rows.append(["TOTAL", "", "", num_cells])
+    result_rows.append(["Total cells registered", num_cells])
     csv_path = os.path.join(cell_reg_path, 'session_pair_overlap.csv')
-    df = pd.DataFrame(result_rows, columns=['Session 1', 'Session 2', 'Number of Overlapping Cells', 'Total Registered Cells'])
+    df = pd.DataFrame(result_rows, columns=['Session A', 'Session B', 'Number of Overlapping Cells'])
 
     df.to_csv(csv_path, index=False)
     print("Overlap matrix saved as overlap_matrix.csv")

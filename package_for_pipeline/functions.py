@@ -1128,15 +1128,34 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 activation_results[roi_idx] = roi_activation
                 if is_active:
                     activation_count += 1
-            cellreg_data = np.zeros(activation_count, Ly, Lx), dtype=np.uint8)
-            for idx, roi_data in enumerate(activation_results):
-                for x,y in zip(roi_data['xpix'], roi_data['ypix']):
-                    if x < Lx and y < Ly:
-                        cellreg_data[idx, y, x] = 1
-            mat_path = os.path.join(session_path, f"cellreg_input_{session_folder}.mat")
-            savemat(mat_path, {"footprints": footprints})
 
-            #print(activation_results)
+            stat = [stat[i] for i in cell_indices]
+            filtered_stat = []
+            for roi in stat:
+                y, x = roi['med']
+                if x > 1 and y > 1:  # Exclude ROIs too close to the image edge (which may lead to 0 distances)
+                    filtered_stat.append(roi)
+                else:
+                    continue
+            Ly, Lx = ops['Ly'], ops['Lx']
+            masks = []
+            for idx, roi_data in enumerate(activation_results):
+                for roi in filtered_stat:
+                    mask = np.zeros((Ly, Lx), dtype=np.uint8)
+                    xpix = roi['xpix']
+                    ypix = roi['ypix']
+                    mask[ypix, xpix] = 1
+                    masks.append(mask)
+            if masks:
+                mask_stack = np.stack(masks, axis=-0).astype(np.double)  # [nROIs, Ly, Lx]
+                output_folder = os.path.join(expDir, 'cellreg_files')
+                os.makedirs(output_folder, exist_ok=True)
+                out_name = f'{matched_file}.mat'
+                out_path = os.path.join(output_folder, out_name)
+                savemat(out_path, {'cells_map': mask_stack})
+                print(f" Saved: {out_path} with shape {mask_stack.shape}")
+
+            # print(activation_results)
             print(f"Number of activated neurons: {activation_count} out of {num_cells} cells")
             column_names = [f"Repeat {i + 1}" for i in range(num_repeats)]
             activation_df = pd.DataFrame.from_dict(activation_results, orient='index', columns=column_names)

@@ -402,6 +402,8 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
             ROI_numbers_path = tiff_dir + matched_dir + '/suite2p/plane0/ROI_numbers.npy'
             stim_start_times_path = tiff_dir + matched_dir + '/stimTimes.npy'
             frame_numbers_path = tiff_dir + matched_dir + '/frameNum.npy'
+            stat_path = tiff_dir + matched_dir + '/suite2p/plane0/stat.npy'
+            ops_path = tiff_dir + matched_dir + '/suite2p/plane0/ops.npy'
 
             F0 = np.load(F0_path, allow_pickle=True)
             iscell = np.load(iscell_path, allow_pickle=True)
@@ -410,6 +412,8 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
             stim_start_times = np.load(stim_start_times_path, allow_pickle=True)
             #print(stim_start_times)
             frame_numbers = np.load(frame_numbers_path, allow_pickle=True)
+            stat = np.load(stat_path, allow_pickle=True)
+            ops = np.load(ops_path, allow_pickle=True)
             #print(frame_numbers)
             #print(stim_start_times[0][0])
 
@@ -475,6 +479,30 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
             threshold_array = np.array(threshold_list)
             results_array = np.array(results_list)
             # print(len(ROI_numbers), len(results_list))
+            # store xpix and ypix values for each ROI===========
+            xpix_list = []
+            ypix_list = []
+            filtered_roi_numbers = []
+            filtered_thresholds = []
+            filtered_activations = []
+            for i in range(len(F0)):
+                Ly, Lx = ops['Ly'], ops['Lx']
+                masks = []
+                activation = results_list[i]
+                if any(activation):  # At least one time block activated
+                    mask = np.zeros((Ly, Lx), dtype=np.uint8)
+                    filtered_roi_numbers.append(i)
+                    filtered_thresholds.append(threshold_list[i])
+                    filtered_activations.append(activation)
+                    xpix_list.append(stat[i]['xpix'])
+                    ypix_list.append(stat[i]['ypix'])
+                    mask[ypix, xpix] = 1
+                    masks.append(mask)
+            print(masks)
+            if masks:
+                mask_stack = np.stack(masks, axis=-0).astype(np.double)   # [nROIs, Ly, Lx]
+
+            # store xpix and ypix values for each ROI===========
             result_df = pd.DataFrame({
                 'ROI_number': ROI_numbers,
                 'thresholds': threshold_list,
@@ -482,16 +510,6 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
             })
             pd.set_option('display.max_rows', None)
 
-
-        '''
-                catSum = []
-                for j in range(3):
-                    cat = []
-                    for i in range(len(results_list)):
-                        cat.append(results_list[i][j])
-    
-            print(f"Summary of activation results: {catSum}")
-        '''
         dir_path = os.path.join(base_dir, dir)
         np.save(dir_path + '/suite2p/plane0/activated_neurons.npy', result_df)
         print(f"activated_neurons.npy saved to {dir_path + '/suite2p/plane0/activated_neurons.npy'}")

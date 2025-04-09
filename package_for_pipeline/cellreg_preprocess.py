@@ -81,16 +81,9 @@ def cellreg_analysis(expDir, mat_file):
             for row in range(num_cells):
                 if data[i][row] > 0 and data[j][row] > 0:
                     holder.append(True)
-            result_mtx[i][j] = len(holder)
-            result_mtx[j][i] = len(holder)
             # Count how many matches were found for this session pair
             num_matches = len(holder)
             # Print the number of matches for this session pair
             print(f"Sessions {i+1} & {j+1}: {num_matches} overlapping cells")
-    #df = pd.DataFrame(result_mtx, columns=[f'Session {i+1}' for i in range(num_sessions)])
-    df = pd.DataFrame(result_mtx,
-                      index=[f"Session {i + 1}" for i in range(num_sessions)],
-                      columns=[f"Session {i + 1}" for i in range(num_sessions)])
-    csv_path = os.path.join(cell_reg_path, 'overlap_matrix.csv')
-    df.to_csv(csv_path)
+
     print("Overlap matrix saved as overlap_matrix.csv")

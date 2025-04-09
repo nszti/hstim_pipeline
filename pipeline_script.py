@@ -53,7 +53,7 @@ list_of_file_nums = [
 
 gcamp = 'f' #for GCaMP6s: 's'
 stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
-
+..
 '''
 root_directory = 'C:/Hyperstim/data_analysis/2024_09_18_GCamp6s_in_vivo/' #
 tiff_directory = 'C:/Hyperstim/data_analysis/2024_09_18_GCamp6s_in_vivo/merged_tiffs/'

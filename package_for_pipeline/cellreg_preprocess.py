@@ -94,8 +94,7 @@ def cellreg_analysis(expDir, mat_file):
     df.to_csv(csv_path, index=False)
     print("Overlap matrix saved as overlap_matrix.csv")
 
-def single_block_activation(expDir, frame_rate=30.97, num_repeats=1, num_stims_per_repeat=5, list_of_file_nums, start_btw_stim=2,
-                     trial_delay, stim_dur=200, threshold_value=3):
+def single_block_activation(expDir, frame_rate, num_stims_per_repeat, list_of_file_nums, start_btw_stim, stim_dur, threshold_value):
     base_dir = Path(expDir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
 
@@ -114,7 +113,6 @@ def single_block_activation(expDir, frame_rate=30.97, num_repeats=1, num_stims_p
                     break
         else:
             continue
-
         if matched_file:
             print(f"\nAnalyzing directory: {dir}")
             # Load required data
@@ -140,10 +138,7 @@ def single_block_activation(expDir, frame_rate=30.97, num_repeats=1, num_stims_p
             num_cells = len(cell_indices)
             start_btw_stim_frames = int(start_btw_stim * frame_rate)
             stim_start = int(stim_start_times[0][0])
-            start_timepoints = [
-                stim_start + i * start_btw_stim_frames
-                for i in range(num_stims_per_repeat)
-            ]
+            start_timepoints = [stim_start + i * start_btw_stim_frames for i in range(num_stims_per_repeat)]
             baseline_duration = int(stim_start_times[0]) - 1
             activation_results = {roi_idx: [] for roi_idx in cell_indices}
             activation_count = 0

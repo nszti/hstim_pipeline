@@ -1141,13 +1141,12 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     continue
             Ly, Lx = ops['Ly'], ops['Lx']
             masks = []
-            for idx, roi_data in enumerate(activation_results):
-                for roi in filtered_stat:
-                    mask = np.zeros((Ly, Lx), dtype=np.uint8)
-                    xpix = roi['xpix']
-                    ypix = roi['ypix']
-                    mask[ypix, xpix] = 1
-                    masks.append(mask)
+            for roi_data in activation_results:
+                mask = np.zeros((Ly, Lx), dtype=np.uint8)
+                xpix = roi_data["xpix"]
+                ypix = roi_data["ypix"]
+                mask[ypix, xpix] = 1
+                masks.append(mask)
             if masks:
                 mask_stack = np.stack(masks, axis=-0).astype(np.double)  # [nROIs, Ly, Lx]
                 print(mask_stack.shape)

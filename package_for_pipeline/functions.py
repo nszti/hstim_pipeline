@@ -1131,20 +1131,13 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 if is_active:
                     activation_count += 1
 
-            stat = [stat[i] for i in cell_indices]
-            filtered_stat = []
-            for roi in stat:
-                y, x = roi['med']
-                if x > 1 and y > 1:  # Exclude ROIs too close to the image edge (which may lead to 0 distances)
-                    filtered_stat.append(roi)
-                else:
-                    continue
             Ly, Lx = ops['Ly'], ops['Lx']
             masks = []
-            for roi_data in activation_results:
+            for roi_data in activation_results.keys():
+                roi = stat[roi_data]
+                xpix = roi["xpix"]
+                ypix = roi["ypix"]
                 mask = np.zeros((Ly, Lx), dtype=np.uint8)
-                xpix = roi_data["xpix"]
-                ypix = roi_data["ypix"]
                 mask[ypix, xpix] = 1
                 masks.append(mask)
             if masks:

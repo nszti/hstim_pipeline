@@ -62,11 +62,8 @@ def suite2p_to_cellreg_masks(expDir, list_of_file_nums):
                 savemat(out_path, {'cells_map': mask_stack})
                 print(f" Saved: {out_path} with shape {mask_stack.shape}")
 
-def cellreg_analysis(expDir, mat_file, list_of_file_nums):
+def cellreg_analysis(expDir, mat_file):
     # === Load data ===
-    stat_paths = [os.path.join(expDir, sess_dir, 'suite2p', 'plane0', 'stat.npy') for sess_dir in list_of_file_nums]
-    all_stats = [np.load(p, allow_pickle=True) for p in stat_paths]
-
     cell_reg_path = output_folder = os.path.join(expDir, 'cellreg_files/')
     input_file = os.path.join(cell_reg_path, mat_file)
     with h5py.File(input_file, 'r') as file:
@@ -97,32 +94,7 @@ def cellreg_analysis(expDir, mat_file, list_of_file_nums):
     df.to_csv(csv_path, index=False)
     print("Overlap matrix saved as overlap_matrix.csv")
 
-    #extracting coordinates
-    coord_output = []
-    for cell_idx in range(num_cells):
-        coord_row = {'CellReg Index': cell_idx}
-        for sess_idx in range(num_sessions):
-            roi_idx = data[cell_idx, sess_idx]
-            if roi_idx > 0:
-                roi = all_stats[sess_idx][int(roi_idx)]
-                y, x = roi['med']
-                coord_row[f"Session {sess_idx + 1} ROI"] = int(roi_idx)
-                coord_row[f"Session {sess_idx + 1} X"] = round(float(x), 2)
-                coord_row[f"Session {sess_idx + 1} Y"] = round(float(y), 2)
-            else:
-                coord_row[f"Session {sess_idx + 1} ROI"] = None
-                coord_row[f"Session {sess_idx + 1} X"] = None
-                coord_row[f"Session {sess_idx + 1} Y"] = None
-        coord_output.append(coord_row)
-
-    coord_df = pd.DataFrame(coord_output)
-    coord_csv_path = os.path.join(cell_reg_path, 'cell_registered_coordinates.csv')
-    coord_df.to_csv(coord_csv_path, index=False)
-    print(f" ROI coordinates saved to {coord_csv_path}")
-
-
-def single_block_activation(expDir, frame_rate=30.97, num_repeats=1, num_stims_per_repeat=5, list_of_file_nums, start_btw_stim=2,
-                     trial_delay, stim_dur=200, threshold_value=3):
+def single_block_activation(expDir, frame_rate, num_stims_per_repeat, list_of_file_nums, start_btw_stim, stim_dur, threshold_value):
     base_dir = Path(expDir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
 
@@ -141,7 +113,6 @@ def single_block_activation(expDir, frame_rate=30.97, num_repeats=1, num_stims_p
                     break
         else:
             continue
-
         if matched_file:
             print(f"\nAnalyzing directory: {dir}")
             # Load required data
@@ -167,10 +138,7 @@ def single_block_activation(expDir, frame_rate=30.97, num_repeats=1, num_stims_p
             num_cells = len(cell_indices)
             start_btw_stim_frames = int(start_btw_stim * frame_rate)
             stim_start = int(stim_start_times[0][0])
-            start_timepoints = [
-                stim_start + i * start_btw_stim_frames
-                for i in range(num_stims_per_repeat)
-            ]
+            start_timepoints = [stim_start + i * start_btw_stim_frames for i in range(num_stims_per_repeat)]
             baseline_duration = int(stim_start_times[0]) - 1
             activation_results = {roi_idx: [] for roi_idx in cell_indices}
             activation_count = 0

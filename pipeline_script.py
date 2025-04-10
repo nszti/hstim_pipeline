@@ -32,6 +32,7 @@ import os
 #------STEPS IN PIPELINE END------
 
 #------VALUES TO CHANGE------
+'''
 root_directory = 'c:/Hyperstim/data_analysis/2025-03-25-Amouse-invivo-GCaMP6f/' #
 #root_directory = 'c:/Hyperstim/data_analysis/2023_09_25_GCAMP6F/'
 #root_directory = 'd:/2P/Experiments/AMouse-2025-03-05-invivo-GCaMP6f/'
@@ -51,17 +52,20 @@ list_of_file_nums = [
 gcamp = 'f' #for GCaMP6s: 's'
 stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
 '''
-root_directory = 'C:/Hyperstim/data_analysis/2024_09_18_GCamp6s_in_vivo/' #
-tiff_directory = 'C:/Hyperstim/data_analysis/2024_09_18_GCamp6s_in_vivo/merged_tiffs/'
-mesc_file_name = '2025-04-01-Amouse-invivo-GCaMP6f'
+root_directory = 'c:/Hyperstim/data_analysis/2023_09_25_GCAMP6F/' #
+tiff_directory = 'c:/Hyperstim/data_analysis/2023_09_25_GCAMP6F/merged_tiffs/'
+mesc_file_name = '2023_09_25_in_vivo_test_GCAMP6f'
 mesc_DATA_file = 'mesc_data.npy'
 list_of_file_nums = [
-  [4,5]
+  [3],
+  [4],
+  [5],
+  [6]
 
 ]
-gcamp = 's' #for GCaMP6s: 's'
+gcamp = 'f' #for GCaMP6s: 's'
 stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
-'''
+
 #------VALUES TO CHANGE END------
 
 #mesc_tiff_extract.analyse_mesc_file(Path(root_directory)/mesc_file_name, root_directory, print_all_attributes=True, plot_curves = True)
@@ -84,18 +88,18 @@ functions.stim_dur_val(tiff_directory, list_of_file_nums)
 #functions.baseline_val(root_directory, tiff_directory, list_of_file_nums) #--> saves F0.npy
 
 
-
 #functions.activated_neurons_val(root_directory, tiff_directory, list_of_file_nums, 1)
 #functions.timecourse_vals(tiff_directory, list_of_file_nums, 5)
 #functions.data_analysis_values(stim_type, tiff_directory, list_of_file_nums)
 #functions_current_steering.plot_stim_traces(tiff_directory, num_repeats=6, num_stims_per_repeat=5)
 
-functions.plot_stim_traces(tiff_directory, 30.97, 5, 5, list_of_file_nums, 8, 5.2, 0) #5.165
+#functions.plot_stim_traces(tiff_directory, 30.97, 5, 5, list_of_file_nums, 8, 5.2, 0) #5.165
 
 #overlap.overlap_calc(tiff_directory, list_of_file_nums)
 #overlap.create_roi_map(tiff_directory, list_of_file_nums)
 #cellreg_preprocess.suite2p_to_cellreg_masks(tiff_directory, list_of_file_nums)
 #cellreg_preprocess.cellreg_analysis(tiff_directory, mat_file)
+cellreg_preprocess.single_block_activation(tiff_directory, 30.97, 5, list_of_file_nums, 2.4,200, 3 )
 
 '''
 functions.stim_dur_val(tiff_directory, list_of_file_nums)

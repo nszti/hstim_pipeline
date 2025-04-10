@@ -43,9 +43,9 @@ mesc_file_name = '2023_09_25_in_vivo_test_GCAMP6f'
 mesc_DATA_file = 'mesc_data.npy' #from mesc_tiff_extract
 mat_file = 'cellRegistered_20250404_115825.mat'
 list_of_file_nums = [
-  [15],
-  [16],
-  [17]
+  [24],
+  [25],
+  [26]
 ]
 
 gcamp = 'f' #for GCaMP6s: 's'

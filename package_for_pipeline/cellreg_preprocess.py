@@ -62,8 +62,10 @@ def suite2p_to_cellreg_masks(expDir, list_of_file_nums):
                 savemat(out_path, {'cells_map': mask_stack})
                 print(f" Saved: {out_path} with shape {mask_stack.shape}")
 
-def cellreg_analysis(expDir, mat_file):
+def cellreg_analysis(expDir, mat_file, list_of_file_nums):
     # === Load data ===
+    stat_paths = [os.path.join(expDir, sess_dir, 'suite2p', 'plane0', 'stat.npy') for sess_dir in list_of_file_nums]
+    all_stats = [np.load(p, allow_pickle=True) for p in stat_paths]
     cell_reg_path = output_folder = os.path.join(expDir, 'cellreg_files/')
     input_file = os.path.join(cell_reg_path, mat_file)
     with h5py.File(input_file, 'r') as file:
@@ -93,6 +95,38 @@ def cellreg_analysis(expDir, mat_file):
     df = pd.DataFrame(result_rows, columns=['Session A', 'Session B', 'Number of Overlapping Cells', 'Overlap %'])
     df.to_csv(csv_path, index=False)
     print("Overlap matrix saved as overlap_matrix.csv")
+
+    coord_matches = []
+    for i in range(num_sessions):
+        for j in range(i + 1, num_sessions):
+            for row in range(num_cells):
+                roi_i = data[row, i]
+                roi_j = data[row, j]
+                if roi_i > 0 and roi_j > 0:
+                    roi_i = int(roi_i)
+                    roi_j = int(roi_j)
+
+                    stat_i = all_stats[i][roi_i]
+                    stat_j = all_stats[j][roi_j]
+                    y_i, x_i = stat_i['med']
+                    y_j, x_j = stat_j['med']
+
+                    coord_matches.append({
+                        'CellReg Index': row,
+                        'Session A': i + 1,
+                        'Session B': j + 1,
+                        'ROI A': roi_i,
+                        'X A': round(float(x_i), 2),
+                        'Y A': round(float(y_i), 2),
+                        'ROI B': roi_j,
+                        'X B': round(float(x_j), 2),
+                        'Y B': round(float(y_j), 2),
+                    })
+
+    coord_df = pd.DataFrame(coord_matches)
+    coord_csv_path = os.path.join(cell_reg_path, 'overlap_coordinates.csv')
+    coord_df.to_csv(coord_csv_path, index=False)
+    print(f"Matched ROI coordinate info saved to: {coord_csv_path}")
 
 def single_block_activation(expDir, frame_rate, num_stims_per_repeat, list_of_file_nums, start_btw_stim, stim_dur, threshold_value):
     base_dir = Path(expDir)

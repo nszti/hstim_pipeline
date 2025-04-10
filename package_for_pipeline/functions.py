@@ -349,6 +349,112 @@ def baseline_val(root_directory,tiff_dir, list_of_file_nums ):
             print(f"F0.npy saved to {dir_path + '/suite2p/plane0/F0.npy'}")
             #print(all_norm_traces.shape)
             #print(all_norm_traces)
+def single_block_activated_neurons(F0, baseline_durations, stim_start_times, threshold_value):
+    base_dir = Path(expDir)
+    filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+
+    for numbers_to_merge in list_of_file_nums:
+        suffix = '_'.join(map(str, numbers_to_merge))
+        num_to_search = []
+        for dir in filenames:
+            num_to_search_split = dir.split('MUnit_')
+            # print(num_to_search_split)
+            if len(num_to_search_split) > 1:
+                file_suffix = num_to_search_split[1].rsplit('.', 1)[0]
+                if file_suffix == suffix:
+                    matched_file = dir
+                    print(matched_file)
+                    # print(matched_file)
+                    break
+        else:
+            continue
+
+        if matched_file:
+            print(f"\nAnalyzing directory: {dir}")
+            # Load required data
+            F_path = expDir + dir + '/suite2p/plane0/F0.npy'
+            iscelll_path = expDir + dir + '/suite2p/plane0/iscell.npy'
+            stim_start_times_path = expDir + dir + '/stimTimes.npy'
+            stat_path = expDir + dir + '/suite2p/plane0/stat.npy'
+            ops_path = expDir + dir + '/suite2p/plane0/ops.npy'
+            print(f"Loading data from: {F_path}")
+            print(f"Loading stim times from: {stim_start_times_path}")
+
+            F = np.load(F_path, allow_pickle=True)
+            iscell = np.load(iscelll_path, allow_pickle=True)
+            stim_start_times = np.load(stim_start_times_path, allow_pickle=True)
+            stat = np.load(stat_path, allow_pickle=True)
+            ops = np.load(ops_path, allow_pickle=True).item()
+
+            # Calculate TIFF trigger start and end tuples
+            '''time_block = 1
+            if len(F0) > 0:
+                time_block = int(F0[0].shape[0])  # 1085
+                print(time_block)'''
+            time_block = int(frame_numbers[0]) if len(frame_numbers) > 0 else 1
+            num_tif_triggers = int(np.round(len(F0[0]) / time_block))
+            print(len(F0[0]) / time_block)
+            print(num_tif_triggers)
+            tif_triggers = []
+            for i in range(num_tif_triggers):
+                start_time = i * time_block
+                end_time = start_time + time_block
+                tif_triggers.append((start_time, end_time))
+            print(tif_triggers)
+            baseline_durations = [int(stim[0]) - 1 for stim in stim_start_times]
+            # Analyze each ROI
+            threshold_list = []
+            results_list = []
+            ROI_numbers = []
+
+            for roi_idx in range(F0.shape[0]):
+                roi_thresholds = []
+                roi_results = []
+                for baseline_duration, (start_time, end_time) in zip(baseline_durations, tif_triggers):
+                    baseline_segment = F0[roi_idx, start_time:start_time + baseline_duration]
+                    stim_segment = F0[roi_idx,
+                                   start_time + baseline_duration: start_time + baseline_duration + stim_dur]
+                    baseline_avg = np.mean(baseline_segment)
+                    baseline_std = np.std(baseline_segment)
+                    threshold = baseline_avg + threshold_value * baseline_std
+                    stim_avg = np.mean(stim_segment)
+                    activation = 1 if stim_avg > threshold else 0
+                    roi_thresholds.append(threshold)
+                    roi_results.append(activation)
+                threshold_list.append(roi_thresholds)
+                results_list.append(roi_results)
+                ROI_numbers.append(roi_idx)
+            '''
+            # Save activation info
+            result_df = pd.DataFrame({
+                'ROI_number': ROI_numbers,
+                'thresholds': threshold_list,
+                'activated_neurons': results_list
+            })
+            '''
+            Ly, Lx = ops['Ly'], ops['Lx']
+            masks = []
+            activated_roi_indices = []
+            for i, result_row in enumerate(results_list):
+                if any(result_row):  # ROI was activated in any trigger
+                    roi = stat[i]
+                    xpix = roi['xpix']
+                    ypix = roi['ypix']
+                    mask = np.zeros((Ly, Lx), dtype=np.uint8)
+                    mask[ypix, xpix] = 1
+                    masks.append(mask)
+                    activated_roi_indices.append(i)
+            if masks:
+                mask_stack = np.stack(masks, axis=0).astype(np.double)
+                #print(mask_stack.shape)
+                output_folder = os.path.join(block_dir, 'cellreg_files')
+                os.makedirs(output_folder, exist_ok=True)
+                out_mat_path = os.path.join(output_folder, f"{matched_file}_cellreg_input.mat")
+                savemat(out_mat_path, {'cells_map': mask_stack})
+
+
+
+
 
 #activated_neurons
 def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold_value):

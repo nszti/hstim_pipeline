@@ -1133,13 +1133,18 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
             Ly, Lx = ops['Ly'], ops['Lx']
             masks = []
-            for roi_data in activation_results.keys():
-                roi = stat[roi_data]
-                xpix = roi["xpix"]
-                ypix = roi["ypix"]
-                mask = np.zeros((Ly, Lx), dtype=np.uint8)
-                mask[ypix, xpix] = 1
-                masks.append(mask)
+            activated_roi_indices = []
+            for roi_data, pattern in activation_results.items():
+                flat = [stim for repeat in pattern for stim in repeat] #flattens nested activation list so we can check if any activation
+                if any(flat):
+                    roi = stat[roi_data]
+                    xpix = roi['xpix']
+                    ypix = roi['ypix']
+                    mask = np.zeros((Ly, Lx), dtype=np.uint8)
+                    mask[ypix, xpix] = 1
+                    masks.append(mask)
+                    activated_roi_indices.append(roi_data)  # for cellreg_to_suite2p bc activated_roi_indices[i] will contain the original stat index
+
             if masks:
                 mask_stack = np.stack(masks, axis=-0).astype(np.double)  # [nROIs, Ly, Lx]
                 print(mask_stack.shape)

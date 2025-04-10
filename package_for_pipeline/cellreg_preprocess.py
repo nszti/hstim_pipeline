@@ -93,3 +93,108 @@ def cellreg_analysis(expDir, mat_file):
     df = pd.DataFrame(result_rows, columns=['Session A', 'Session B', 'Number of Overlapping Cells', 'Overlap %'])
     df.to_csv(csv_path, index=False)
     print("Overlap matrix saved as overlap_matrix.csv")
+
+def single_block_activation(expDir, frame_rate=30.97, num_repeats=1, num_stims_per_repeat=5, list_of_file_nums, start_btw_stim=2,
+                     trial_delay, stim_dur=200, threshold_value=3):
+    base_dir = Path(expDir)
+    filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+
+    for numbers_to_merge in list_of_file_nums:
+        suffix = '_'.join(map(str, numbers_to_merge))
+        num_to_search = []
+        for dir in filenames:
+            num_to_search_split = dir.split('MUnit_')
+            # print(num_to_search_split)
+            if len(num_to_search_split) > 1:
+                file_suffix = num_to_search_split[1].rsplit('.', 1)[0]
+                if file_suffix == suffix:
+                    matched_file = dir
+                    print(matched_file)
+                    # print(matched_file)
+                    break
+        else:
+            continue
+
+        if matched_file:
+            print(f"\nAnalyzing directory: {dir}")
+            # Load required data
+            F_path = expDir + dir + '/suite2p/plane0/F0.npy'
+            iscelll_path = expDir + dir + '/suite2p/plane0/iscell.npy'
+            stim_start_times_path = expDir + dir + '/stimTimes.npy'
+            stat_path = expDir + dir + '/suite2p/plane0/stat.npy'
+            ops_path = expDir + dir + '/suite2p/plane0/ops.npy'
+            print(f"Loading data from: {F_path}")
+            print(f"Loading stim times from: {stim_start_times_path}")
+
+            F = np.load(F_path, allow_pickle=True)
+            iscell = np.load(iscelll_path, allow_pickle=True)
+            stim_start_times = np.load(stim_start_times_path, allow_pickle=True)
+            stat = np.load(stat_path, allow_pickle=True)
+            ops = np.load(ops_path, allow_pickle=True).item()
+            # print(stat)
+
+            # --------CALCULATIONS--------
+            # Extract the ROI indexes for cells
+            cell_indices = np.where(iscell[:, 0] == 1)[0]  # Get indices of valid ROIs
+            stimulation_duration_frames = int(round((stim_dur / 1000) * frame_rate, 0))
+            num_cells = len(cell_indices)
+            start_btw_stim_frames = int(start_btw_stim * frame_rate)
+            stim_start = int(stim_start_times[0][0])
+            start_timepoints = [
+                stim_start + i * start_btw_stim_frames
+                for i in range(num_stims_per_repeat)
+            ]
+            baseline_duration = int(stim_start_times[0]) - 1
+            activation_results = {roi_idx: [] for roi_idx in cell_indices}
+            activation_count = 0
+            for roi_idx in cell_indices:
+                F_index_act = np.where(cell_indices == roi_idx)[0][0]
+                baseline_data = F[F_index_act, :max(1, stim_start - 1)]
+                baseline_avg = np.mean(baseline_data)
+                baseline_std = np.std(baseline_data)
+                threshold = baseline_std * threshold_value + baseline_avg
+                roi_activation = []
+                is_active = False  # whether the roi is active
+                for start_time in start_timepoints:
+                    stim_end_time = start_time + stimulation_duration_frames
+                    stim_segment = F[F_index_act, start_time:stim_end_time]
+                    avg_stim_resp = np.mean(stim_segment)
+                    activation = 1 if avg_stim_resp > threshold else 0
+                    roi_activation.append(activation)
+                    if activation == 1:
+                        is_active = True
+                activation_results[roi_idx] = roi_activation
+                if is_active:
+                    activation_count += 1
+
+            Ly, Lx = ops['Ly'], ops['Lx']
+            masks = []
+            activated_roi_indices = []
+            for roi_data, pattern in activation_results.items():
+                if any(pattern):
+                    roi = stat[roi_data]
+                    xpix = roi['xpix']
+                    ypix = roi['ypix']
+                    mask = np.zeros((Ly, Lx), dtype=np.uint8)
+                    mask[ypix, xpix] = 1
+                    masks.append(mask)
+                    activated_roi_indices.append(roi_data)  # for cellreg_to_suite2p bc activated_roi_indices[i] will contain the original stat index
+
+            if masks:
+                mask_stack = np.stack(masks, axis=-0).astype(np.double)  # [nROIs, Ly, Lx]
+                print(mask_stack.shape)
+                output_folder = os.path.join(expDir, 'cellreg_files')
+                os.makedirs(output_folder, exist_ok=True)
+                out_name = f'{matched_file}.mat'
+                out_path = os.path.join(output_folder, out_name)
+                savemat(out_path, {'cells_map': mask_stack})
+                print(f" Saved: {out_path} with shape {mask_stack.shape}")
+
+            # print(activation_results)
+            print(f"Number of activated neurons: {activation_count} out of {num_cells} cells")
+            column_names = [f"Stim {i + 1}" for i in range(num_stims_per_repeat)]
+            activation_df = pd.DataFrame.from_dict(activation_results, orient='index', columns=column_names)
+            activation_df.insert(0, "ROI", activation_df.index)
+            csv_path = os.path.join(expDir, dir, f'activation_results_file{file_suffix}.csv')
+            # activation_df.to_csv(csv_path, index=False)
+            # print(f"Results saved to {csv_path}")

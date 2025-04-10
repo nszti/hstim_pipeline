@@ -4,6 +4,8 @@ import math
 import pandas as pd
 import os
 from pathlib import Path
+from scipy.io import savemat
+import h5py
 import re
 import ast
 
@@ -1094,7 +1096,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
             min_trace_value = np.min(all_traces)
             max_trace_value = np.max(all_traces)
-            np.save(expDir + dir + '/start_timepoints.npy', start_timepoints)
+            #np.save(expDir + dir + '/start_timepoints.npy', start_timepoints)
 
         #---CALUCALTE ACTIVATED NEURONS PER REPEAT---
             # Activation calc
@@ -1148,6 +1150,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     masks.append(mask)
             if masks:
                 mask_stack = np.stack(masks, axis=-0).astype(np.double)  # [nROIs, Ly, Lx]
+                print(mask_stack.shape)
                 output_folder = os.path.join(expDir, 'cellreg_files')
                 os.makedirs(output_folder, exist_ok=True)
                 out_name = f'{matched_file}.mat'
@@ -1161,9 +1164,9 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             activation_df = pd.DataFrame.from_dict(activation_results, orient='index', columns=column_names)
             activation_df.insert(0, "ROI", activation_df.index)
             csv_path = os.path.join(expDir, dir, f'activation_results_file{file_suffix}.csv')
-            activation_df.to_csv(csv_path, index=False)
-            print(f"Results saved to {csv_path}")
-
+            #activation_df.to_csv(csv_path, index=False)
+            #print(f"Results saved to {csv_path}")
+'''
         #Average x coordinates calculation
             #print(activation_results)
             x_coords_per_repeat_stim = [[[] for _ in range(num_stims_per_repeat)] for _ in range(num_repeats)]
@@ -1285,8 +1288,9 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             dist_from_o_pix_path = os.path.join(expDir, dir, 'dist_from_o_pix.txt',)
             np.savetxt(dist_from_o_pix_path, dist_from_artf_o_pix)
 
-            #um
-            '''im = np.zeros((int(artif_origo_y), int(artif_origo_x)))
+            #um ez ki volt kommentelve
+            
+            im = np.zeros((int(artif_origo_y), int(artif_origo_x)))
             plt.scatter(*artif_origo, color='black', label='Artificial Origin um')
             # Plot all rois & distances
             for i, (coord, dist) in enumerate(zip(med_val_um, dist_from_artf_o_um)):
@@ -1297,7 +1301,9 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             plt.colorbar()
             plt.gca().invert_yaxis()  # Invert the y-axis
             plt.title('activated rois & dist from artif. origo in um')
-            plt.show()'''
+            plt.show()
+            
+            #um ez ki volt kommentelve
             #plt.figure(figsize=((int(artif_origo_y), int(artif_origo_x)))
 
             #print roi names & med values together
@@ -1544,7 +1550,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             plt.tight_layout()
             plt.savefig(os.path.join(expDir, dir, f'overlapping_per_param_for_roi0.png'))
             plt.show()
-
+'''
 #scratch_1
 def scratch_val(tiff_dir):
     '''

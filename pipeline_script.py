@@ -32,28 +32,24 @@ import os
 #------STEPS IN PIPELINE END------
 
 #------VALUES TO CHANGE------
-#root_directory = 'c:/Hyperstim/data_analysis/2025-04-01-Amouse-invivo-GCaMP6f/' #
-root_directory = 'c:/Hyperstim/data_analysis/2023_09_25_GCAMP6F/'
+root_directory = 'c:/Hyperstim/data_analysis/2025-03-25-Amouse-invivo-GCaMP6f/' #
+#root_directory = 'c:/Hyperstim/data_analysis/2023_09_25_GCAMP6F/'
 #root_directory = 'd:/2P/Experiments/AMouse-2025-03-05-invivo-GCaMP6f/'
-#tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-01-Amouse-invivo-GCaMP6f/merged_tiffs/'
-tiff_directory = 'c:/Hyperstim/data_analysis/2023_09_25_GCAMP6F/merged_tiffs/'
+tiff_directory = 'c:/Hyperstim/data_analysis/2025-03-25-Amouse-invivo-GCaMP6f/merged_tiffs/'
+#tiff_directory = 'c:/Hyperstim/data_analysis/2023_09_25_GCAMP6F/merged_tiffs/'
 #tiff_directory= 'd:/2P/Experiments/AMouse-2025-03-05-invivo-GCaMP6f/merged_tiffs/'
 #mesc_file_name = '2025-04-01-Amouse-invivo-GCaMP6f-2'
 mesc_file_name = '2023_09_25_in_vivo_test_GCAMP6f'
 mesc_DATA_file = 'mesc_data.npy' #from mesc_tiff_extract
 mat_file = 'cellRegistered_20250404_115825.mat'
 list_of_file_nums = [
-  [3],
-  [4],
-  [5],
-  [6]
-
-
+  [15],
+  [16],
+  [17]
 ]
 
 gcamp = 'f' #for GCaMP6s: 's'
 stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
-..
 '''
 root_directory = 'C:/Hyperstim/data_analysis/2024_09_18_GCamp6s_in_vivo/' #
 tiff_directory = 'C:/Hyperstim/data_analysis/2024_09_18_GCamp6s_in_vivo/merged_tiffs/'
@@ -85,7 +81,7 @@ functions.electROI_val(tiff_directory, list_of_file_nums)
 functions.dist_vals(tiff_directory, list_of_file_nums)
 functions.stim_dur_val(tiff_directory, list_of_file_nums)
 '''
-functions.baseline_val(root_directory, tiff_directory, list_of_file_nums) #--> saves F0.npy
+#functions.baseline_val(root_directory, tiff_directory, list_of_file_nums) #--> saves F0.npy
 
 
 
@@ -94,12 +90,12 @@ functions.baseline_val(root_directory, tiff_directory, list_of_file_nums) #--> s
 #functions.data_analysis_values(stim_type, tiff_directory, list_of_file_nums)
 #functions_current_steering.plot_stim_traces(tiff_directory, num_repeats=6, num_stims_per_repeat=5)
 
-#functions.plot_stim_traces(tiff_directory, 30.97, 5, 5, list_of_file_nums, 8, 5.2, 0) #5.165
+functions.plot_stim_traces(tiff_directory, 30.97, 5, 5, list_of_file_nums, 8, 5.2, 0) #5.165
 
 #overlap.overlap_calc(tiff_directory, list_of_file_nums)
 #overlap.create_roi_map(tiff_directory, list_of_file_nums)
 #cellreg_preprocess.suite2p_to_cellreg_masks(tiff_directory, list_of_file_nums)
-cellreg_preprocess.cellreg_analysis(tiff_directory, mat_file)
+#cellreg_preprocess.cellreg_analysis(tiff_directory, mat_file)
 
 '''
 functions.stim_dur_val(tiff_directory, list_of_file_nums)

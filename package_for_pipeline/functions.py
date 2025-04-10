@@ -415,7 +415,7 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
             #print(stim_start_times)
             frame_numbers = np.load(frame_numbers_path, allow_pickle=True)
             stat = np.load(stat_path, allow_pickle=True)
-            ops = np.load(ops_path, allow_pickle=True)
+            ops = np.load(ops_path, allow_pickle=True).item()
             #print(frame_numbers)
             #print(stim_start_times[0][0])
 
@@ -477,34 +477,33 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
                 results_list.append(roi_results)
                 ROI_numbers.append(i)
             print(results_list)
+            # for cellreg .mat file===========
+            Ly, Lx = ops['Ly'], ops['Lx']
+            masks = []
+            activated_roi_indices = []
+            for i, result_row in enumerate(results_list):
+                if any(result_row):
+                    roi = stat[i]
+                    xpix = roi['xpix']
+                    ypix = roi['ypix']
+                    mask = np.zeros((Ly, Lx), dtype=np.uint8)
+                    mask[ypix, xpix] = 1
+                    masks.append(mask)
+                    activated_roi_indices.append(i)
+            if masks:
+                mask_stack = np.stack(masks, axis=0).astype(np.double)  # [nROIs, Ly, Lx]
+                print(mask_stack.shape)
+                output_folder = os.path.join(base_dir, 'cellreg_files')
+                os.makedirs(output_folder, exist_ok=True)
+                mat_name = matched_dir + '_cellreg_input.mat'
+                mat_path = os.path.join(output_folder, mat_name)
+                savemat(mat_path, {'cells_map': mask_stack})
+                print(f"Saved CellReg input file to {mat_path} with shape {mask_stack.shape}")
+            # for cellreg .mat file===========
             # Convert the lists of threshold values and results to NumPy arrays---???not used
             threshold_array = np.array(threshold_list)
             results_array = np.array(results_list)
             # print(len(ROI_numbers), len(results_list))
-            # store xpix and ypix values for each ROI===========
-            xpix_list = []
-            ypix_list = []
-            filtered_roi_numbers = []
-            filtered_thresholds = []
-            filtered_activations = []
-            for i in range(len(F0)):
-                Ly, Lx = ops['Ly'], ops['Lx']
-                masks = []
-                activation = results_list[i]
-                if any(activation):  # At least one time block activated
-                    mask = np.zeros((Ly, Lx), dtype=np.uint8)
-                    filtered_roi_numbers.append(i)
-                    filtered_thresholds.append(threshold_list[i])
-                    filtered_activations.append(activation)
-                    xpix_list.append(stat[i]['xpix'])
-                    ypix_list.append(stat[i]['ypix'])
-                    mask[ypix, xpix] = 1
-                    masks.append(mask)
-            print(masks)
-            if masks:
-                mask_stack = np.stack(masks, axis=-0).astype(np.double)   # [nROIs, Ly, Lx]
-
-            # store xpix and ypix values for each ROI===========
             result_df = pd.DataFrame({
                 'ROI_number': ROI_numbers,
                 'thresholds': threshold_list,

@@ -111,7 +111,7 @@ def cellreg_analysis(expDir, mat_file, list_of_file_nums):
                     continue
 
                 # med info from stat
-                stat_i = all_stats[i][roi_  i]
+                stat_i = all_stats[i][roi_i]
                 stat_j = all_stats[j][roi_j]
                 y_i, x_i = stat_i['med']
                 y_j, x_j = stat_j['med']
@@ -131,11 +131,12 @@ def cellreg_analysis(expDir, mat_file, list_of_file_nums):
     match_df.to_csv(csv_out, index=False)
     print(f"Matched ROI pairs saved to: {csv_out}")
 
-def single_block_activation(expDir, mat_file, frame_rate, num_stims_per_repeat, list_of_file_nums, start_btw_stim, stim_dur, threshold_value):
+def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per_repeat, list_of_file_nums, start_btw_stim, stim_dur, threshold_value):
     base_dir = Path(expDir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
-    cell_reg_path = os.path.join(expDir, 'cellreg_files')
-    input_file = os.path.join(cell_reg_path, mat_file)
+    cell_reg_path = os.path.join(expDir, 'cellreg_files/')
+    cell_reg_path_input = cell_reg_path + postfix
+    input_file = os.path.join(cell_reg_path_input, mat_file)
     with h5py.File(input_file, 'r') as file:
         data = file['cell_registered_struct']['cell_to_index_map'][:][:]
         data = data.T  # transpose to [cell_reg_idx, session]
@@ -238,11 +239,18 @@ def single_block_activation(expDir, mat_file, frame_rate, num_stims_per_repeat, 
                 print(f" Saved: {out_path} with shape {mask_stack.shape}")
 
             activated_roi_df  = pd.DataFrame({
-                'Activated_ROI_Index': activated_roi_indices,
+                'ROI_Index': activated_roi_indices,
                 'Med_Values': med_values
             })
-            #activation_summary.to_csv(os.path.join(output_folder, 'activation_summary.csv'), index=False)
-            #print(f"Activation summary saved to: {os.path.join(output_folder, 'activation_summary.csv')}")
+            activated_roi_df.to_csv(os.path.join(cell_reg_path_input, 'activation_summary.csv'), index=False)
+            print(f"Activation summary saved to: {os.path.join(cell_reg_path_input, 'activation_summary.csv')}")
+
+            column_names = [f"Stim {i + 1}" for i in range(num_stims_per_repeat)]
+            activation_df = pd.DataFrame.from_dict(activation_results, orient='index', columns=column_names)
+            activation_df.insert(0, "ROI", activation_df.index)
+            csv_path = os.path.join(expDir, dir, f'activation_results_file{file_suffix}.csv')
+            # activation_df.to_csv(csv_path, index=False)
+            # print(f"Results saved to {csv_path}")
 
             # === Match activated ROIs with cellreg data ===
             matched_results = []
@@ -252,23 +260,18 @@ def single_block_activation(expDir, mat_file, frame_rate, num_stims_per_repeat, 
                     roi_i = int(data[cellreg_idx, i])
                     if roi_i <= 0:
                         continue
-                    try:
-                        stat_i = all_stats[i][roi_i]
-                        y_i, x_i = stat_i['med']
-                    except IndexError:
-                        continue
-
                     for j in range(i + 1, data.shape[1]):
                         roi_j = int(data[cellreg_idx, j])
                         if roi_j <= 0:
                             continue
-                        try:
-                            stat_j = all_stats[j][roi_j]
-                            y_j, x_j = stat_j['med']
-                        except IndexError:
-                            continue
+                        # med info from stat
+                        stat_i = all_stats[i][roi_i]
+                        stat_j = all_stats[j][roi_j]
+                        y_i, x_i = stat_i['med']
+                        y_j, x_j = stat_j['med']
 
                         for idx, row in activated_roi_df.iterrows():
+                            print(y_i, x_i,row['Med_Values'])
                             if (y_i, x_i) == row['Med_Values']:
                                 matched_results.append({
                                     'CellReg_Index': cellreg_idx,
@@ -279,9 +282,10 @@ def single_block_activation(expDir, mat_file, frame_rate, num_stims_per_repeat, 
                                     'Match_Med': (y_i, x_i)
                                 })
 
-            column_names = [f"Stim {i + 1}" for i in range(num_stims_per_repeat)]
-            activation_df = pd.DataFrame.from_dict(activation_results, orient='index', columns=column_names)
-            activation_df.insert(0, "ROI", activation_df.index)
-            csv_path = os.path.join(expDir, dir, f'activation_results_file{file_suffix}.csv')
-            # activation_df.to_csv(csv_path, index=False)
-            # print(f"Results saved to {csv_path}")
+
+            print(matched_results)
+            results_df = pd.DataFrame(matched_results)
+            out_path = os.path.join(cell_reg_path_input, 'matched_cellreg_to_suite2p.csv')
+            #results_df.to_csv(out_path, index=False)
+            #print(f"matched cellreg to suite2p saved to {out_path}")
+

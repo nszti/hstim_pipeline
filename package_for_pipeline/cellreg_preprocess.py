@@ -145,20 +145,20 @@ def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per
     print(f"{num_cells} registered cells across {num_sessions} sessions")
 
     all_stats = {}
+    session_idx = 0
 
-    for session_idx, numbers_to_merge in enumerate(list_of_file_nums):
+    for numbers_to_merge in list_of_file_nums:
         suffix = '_'.join(map(str, numbers_to_merge))
         for dir in filenames:
-            num_to_search_split = dir.split('MUnit_')
-            if len(num_to_search_split) > 1:
-                file_suffix = num_to_search_split[1].rsplit('.', 1)[0]
-                if file_suffix == suffix:
-                    matched_file = dir
-                    stat_path = os.path.join(expDir, matched_file, 'suite2p', 'plane0', 'stat.npy')
+            if dir.startswith('merged') and f'MUnit_{suffix}' in dir:
+                matched_file = dir
+                stat_path = os.path.join(expDir, matched_file, 'suite2p', 'plane0', 'stat.npy')
+                if os.path.exists(stat_path):
                     stat_data = np.load(stat_path, allow_pickle=True)
                     all_stats[session_idx] = stat_data
-                    print(f"Session {session_idx} → {matched_file}")
-                    break
+                    print(f"Session {session_idx}: Loaded from {matched_file}")
+                    session_idx += 1  # increment only after successful match
+                break
         else:
             continue
         activated_roi_indices = []

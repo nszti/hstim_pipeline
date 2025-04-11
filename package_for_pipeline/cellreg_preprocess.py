@@ -62,12 +62,13 @@ def suite2p_to_cellreg_masks(expDir, list_of_file_nums):
                 savemat(out_path, {'cells_map': mask_stack})
                 print(f" Saved: {out_path} with shape {mask_stack.shape}")
 
-def cellreg_analysis(expDir, mat_file, list_of_file_nums):
+def cellreg_analysis(expDir, mat_file, list_of_file_nums, postfix):
     # === Load data ===
     stat_paths = [os.path.join(expDir, sess_dir, 'suite2p', 'plane0', 'stat.npy') for sess_dir in list_of_file_nums]
     all_stats = [np.load(p, allow_pickle=True) for p in stat_paths]
     cell_reg_path = output_folder = os.path.join(expDir, 'cellreg_files/')
-    input_file = os.path.join(cell_reg_path, mat_file)
+    cell_reg_path_input = cell_reg_path + postfix
+    input_file = os.path.join(cell_reg_path_input, mat_file)
     with h5py.File(input_file, 'r') as file:
         # List all top-level keys in the .mat file
         #print(list(file.keys()))
@@ -115,7 +116,7 @@ def cellreg_analysis(expDir, mat_file, list_of_file_nums):
                 stat_j = all_stats[j][roi_j]
                 y_i, x_i = stat_i['med']
                 y_j, x_j = stat_j['med']
-
+                print(y_i, x_i)
                 match_pairs.append({
                     'CellReg Index': cellreg_idx,
                     'Session A': i + 1,
@@ -128,8 +129,8 @@ def cellreg_analysis(expDir, mat_file, list_of_file_nums):
 
     match_df = pd.DataFrame(match_pairs)
     csv_out = os.path.join(cell_reg_path, 'cellreg_matched_rois.csv')
-    match_df.to_csv(csv_out, index=False)
-    print(f"Matched ROI pairs saved to: {csv_out}")
+    #match_df.to_csv(csv_out, index=False)
+    #print(f"Matched ROI pairs saved to: {csv_out}")
 
 def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per_repeat, list_of_file_nums, start_btw_stim, stim_dur, threshold_value):
     base_dir = Path(expDir)
@@ -252,16 +253,26 @@ def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per
             # activation_df.to_csv(csv_path, index=False)
             # print(f"Results saved to {csv_path}")
 
-            result_df = pd.DataFrame(matched_results)
-            out_path = os.path.join(cell_reg_path, 'matched_cellreg_to_suite2p.csv')
-            result_df.to_csv(out_path, index=False)
-            print(f"Matched results saved to: {out_path}")
-
             # === Match activated ROIs with cellreg data ===
+            print(all_stats[0][1])
             matched_results = []
+            for i in range(num_sessions-1):
+                for j in range(i+1, num_sessions):
+                    for row in range(data.shape[0]):
+                        print(row)
+                        roi_i= int(data[row,i])
+                        roi_j = int(data[row, j])
+                        print(i, j, roi_j)
+                        if roi_i >0 and roi_j > 0:
+                            stat_i = all_stats[i][roi_i]
+                            stat_j = all_stats[j][roi_j]
+                            med_i = tuple(stat_i['med'])
+                            med_j = tuple(stat_j['med'])
+                            #print(roi_i, med_i, roi_j, med_j)
 
-            for cellreg_idx in range(data.shape[0]):
-                for i in range(data.shape[1]):
+            #for cellreg_idx in data[:,]:
+            '''
+                for i in range(data.shape[cellreg_idx]):
                     roi_i = int(data[cellreg_idx, i])
                     if roi_i <= 0:
                         continue
@@ -274,7 +285,8 @@ def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per
                         stat_j = all_stats[j][roi_j]
                         y_i, x_i = stat_i['med']
                         y_j, x_j = stat_j['med']
-
+                        #print(f'{data[cellreg_idx]},({y_i, x_i}), ({y_j, x_j})')
+                        
                         for idx, row in activated_roi_df.iterrows():
                             print(y_i, x_i,row['Med_Values'])
                             if (y_i, x_i) == row['Med_Values']:
@@ -286,9 +298,10 @@ def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per
                                     'Suite2p_ROI_B': roi_j,
                                     'Match_Med': (y_i, x_i)
                                 })
+            '''
 
 
-            print(matched_results)
+            #print(matched_results)
             results_df = pd.DataFrame(matched_results)
             out_path = os.path.join(cell_reg_path_input, 'matched_cellreg_to_suite2p.csv')
             #results_df.to_csv(out_path, index=False)

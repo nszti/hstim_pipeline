@@ -145,9 +145,8 @@ def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per
     print(f"{num_cells} registered cells across {num_sessions} sessions")
 
     all_stats = {}
-    session_counter = 0
 
-    for numbers_to_merge in list_of_file_nums:
+    for session_idx, numbers_to_merge in enumerate(list_of_file_nums):
         suffix = '_'.join(map(str, numbers_to_merge))
         for dir in filenames:
             num_to_search_split = dir.split('MUnit_')
@@ -157,9 +156,8 @@ def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per
                     matched_file = dir
                     stat_path = os.path.join(expDir, matched_file, 'suite2p', 'plane0', 'stat.npy')
                     stat_data = np.load(stat_path, allow_pickle=True)
-                    all_stats[session_counter] = stat_data
-                    session_counter += 1
-                    print(f"Session {session_counter} -> {matched_file}")
+                    all_stats[session_idx] = stat_data
+                    print(f"Session {session_idx} → {matched_file}")
                     break
         else:
             continue

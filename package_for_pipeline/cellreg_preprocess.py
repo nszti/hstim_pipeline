@@ -77,6 +77,7 @@ def cellreg_analysis(expDir, mat_file, list_of_file_nums):
     print(num_cells, num_sessions)
     total_cells_per_session = np.max(data, axis=0)
 
+    '''
     result_rows = []
     for i in range(num_sessions):
         for j in range(i + 1, num_sessions):
@@ -95,43 +96,57 @@ def cellreg_analysis(expDir, mat_file, list_of_file_nums):
     df = pd.DataFrame(result_rows, columns=['Session A', 'Session B', 'Number of Overlapping Cells', 'Overlap %'])
     df.to_csv(csv_path, index=False)
     print("Overlap matrix saved as overlap_matrix.csv")
+    '''
 
-    coord_matches = []
-    for i in range(num_sessions):
-        for j in range(i + 1, num_sessions):
-            for row in range(num_cells):
-                roi_i = data[row, i]
-                roi_j = data[row, j]
-                if roi_i > 0 and roi_j > 0:
-                    roi_i = int(roi_i)
-                    roi_j = int(roi_j)
+    match_pairs = []
 
-                    stat_i = all_stats[i][roi_i]
-                    stat_j = all_stats[j][roi_j]
-                    y_i, x_i = stat_i['med']
-                    y_j, x_j = stat_j['med']
+    for cellreg_idx in range(data.shape[0]):
+        for i in range(data.shape[1]):
+            roi_i = int(data[cellreg_idx, i])
+            if roi_i <= 0:
+                continue
+            for j in range(i + 1, data.shape[1]):
+                roi_j = int(data[cellreg_idx, j])
+                if roi_j <= 0:
+                    continue
 
-                    coord_matches.append({
-                        'CellReg Index': row,
-                        'Session A': i + 1,
-                        'Session B': j + 1,
-                        'ROI A': roi_i,
-                        'X A': round(float(x_i), 2),
-                        'Y A': round(float(y_i), 2),
-                        'ROI B': roi_j,
-                        'X B': round(float(x_j), 2),
-                        'Y B': round(float(y_j), 2),
-                    })
+                # med info from stat
+                stat_i = all_stats[i][roi_  i]
+                stat_j = all_stats[j][roi_j]
+                y_i, x_i = stat_i['med']
+                y_j, x_j = stat_j['med']
 
-    coord_df = pd.DataFrame(coord_matches)
-    coord_csv_path = os.path.join(cell_reg_path, 'overlap_coordinates.csv')
-    coord_df.to_csv(coord_csv_path, index=False)
-    print(f"Matched ROI coordinate info saved to: {coord_csv_path}")
+                match_pairs.append({
+                    'CellReg Index': cellreg_idx,
+                    'Session A': i + 1,
+                    'Cr ROI A': roi_i,
+                    'med A': [float(y_i), float(x_i)], #(y,x) og suite2p format
+                    'Session B': j + 1,
+                    'Cr ROI B': roi_j,
+                    'med B': [float(y_j), float(x_j)]
+                })
 
-def single_block_activation(expDir, frame_rate, num_stims_per_repeat, list_of_file_nums, start_btw_stim, stim_dur, threshold_value):
+    match_df = pd.DataFrame(match_pairs)
+    csv_out = os.path.join(cell_reg_path, 'cellreg_matched_rois.csv')
+    match_df.to_csv(csv_out, index=False)
+    print(f"Matched ROI pairs saved to: {csv_out}")
+
+def single_block_activation(expDir, mat_file, frame_rate, num_stims_per_repeat, list_of_file_nums, start_btw_stim, stim_dur, threshold_value):
     base_dir = Path(expDir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+    cell_reg_path = os.path.join(expDir, 'cellreg_files')
+    input_file = os.path.join(cell_reg_path, mat_file)
+    with h5py.File(input_file, 'r') as file:
+        data = file['cell_registered_struct']['cell_to_index_map'][:][:]
+        data = data.T  # transpose to [cell_reg_idx, session]
 
+    num_cells, num_sessions = data.shape
+    print(f"{num_cells} registered cells across {num_sessions} sessions")
+
+    # Load stat files
+    stat_paths = [os.path.join(expDir, f'merged_MUnit_{"_".join(map(str, nums))}', 'suite2p', 'plane0', 'stat.npy') for
+                  nums in list_of_file_nums]
+    all_stats = [np.load(p, allow_pickle=True) for p in stat_paths]
     for numbers_to_merge in list_of_file_nums:
         suffix = '_'.join(map(str, numbers_to_merge))
         num_to_search = []
@@ -147,6 +162,7 @@ def single_block_activation(expDir, frame_rate, num_stims_per_repeat, list_of_fi
                     break
         else:
             continue
+        activated_roi_indices = []
         if matched_file:
             print(f"\nAnalyzing directory: {dir}")
             # Load required data
@@ -195,10 +211,13 @@ def single_block_activation(expDir, frame_rate, num_stims_per_repeat, list_of_fi
                 activation_results[roi_idx] = roi_activation
                 if is_active:
                     activation_count += 1
-
+            # print(activation_results)
+            print(f"Number of activated neurons: {activation_count} out of {num_cells} cells")
+            #===
             Ly, Lx = ops['Ly'], ops['Lx']
             masks = []
             activated_roi_indices = []
+            med_values = []
             for roi_data, pattern in activation_results.items():
                 if any(pattern):
                     roi = stat[roi_data]
@@ -208,7 +227,7 @@ def single_block_activation(expDir, frame_rate, num_stims_per_repeat, list_of_fi
                     mask[ypix, xpix] = 1
                     masks.append(mask)
                     activated_roi_indices.append(roi_data)  # for cellreg_to_suite2p bc activated_roi_indices[i] will contain the original stat index
-
+                    med_values.append(roi['med'])
             if masks:
                 mask_stack = np.stack(masks, axis=-0).astype(np.double)  # [nROIs, Ly, Lx]
                 print(mask_stack.shape)
@@ -219,8 +238,48 @@ def single_block_activation(expDir, frame_rate, num_stims_per_repeat, list_of_fi
                 savemat(out_path, {'cells_map': mask_stack})
                 print(f" Saved: {out_path} with shape {mask_stack.shape}")
 
-            # print(activation_results)
-            print(f"Number of activated neurons: {activation_count} out of {num_cells} cells")
+            activated_roi_df  = pd.DataFrame({
+                'Activated_ROI_Index': activated_roi_indices,
+                'Med_Values': med_values
+            })
+            #activation_summary.to_csv(os.path.join(output_folder, 'activation_summary.csv'), index=False)
+            #print(f"Activation summary saved to: {os.path.join(output_folder, 'activation_summary.csv')}")
+
+            # === Match activated ROIs with cellreg data ===
+            matched_results = []
+
+            for cellreg_idx in range(data.shape[0]):
+                for i in range(data.shape[1]):
+                    roi_i = int(data[cellreg_idx, i])
+                    if roi_i <= 0:
+                        continue
+                    try:
+                        stat_i = all_stats[i][roi_i]
+                        y_i, x_i = stat_i['med']
+                    except IndexError:
+                        continue
+
+                    for j in range(i + 1, data.shape[1]):
+                        roi_j = int(data[cellreg_idx, j])
+                        if roi_j <= 0:
+                            continue
+                        try:
+                            stat_j = all_stats[j][roi_j]
+                            y_j, x_j = stat_j['med']
+                        except IndexError:
+                            continue
+
+                        for idx, row in activated_roi_df.iterrows():
+                            if (y_i, x_i) == row['Med_Values']:
+                                matched_results.append({
+                                    'CellReg_Index': cellreg_idx,
+                                    'Session_A': i + 1,
+                                    'Session_B': j + 1,
+                                    'Suite2p_ROI_A': roi_i,
+                                    'Suite2p_ROI_B': roi_j,
+                                    'Match_Med': (y_i, x_i)
+                                })
+
             column_names = [f"Stim {i + 1}" for i in range(num_stims_per_repeat)]
             activation_df = pd.DataFrame.from_dict(activation_results, orient='index', columns=column_names)
             activation_df.insert(0, "ROI", activation_df.index)

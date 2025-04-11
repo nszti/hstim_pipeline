@@ -252,6 +252,11 @@ def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per
             # activation_df.to_csv(csv_path, index=False)
             # print(f"Results saved to {csv_path}")
 
+            result_df = pd.DataFrame(matched_results)
+            out_path = os.path.join(cell_reg_path, 'matched_cellreg_to_suite2p.csv')
+            result_df.to_csv(out_path, index=False)
+            print(f"Matched results saved to: {out_path}")
+
             # === Match activated ROIs with cellreg data ===
             matched_results = []
 
@@ -262,7 +267,7 @@ def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per
                         continue
                     for j in range(i + 1, data.shape[1]):
                         roi_j = int(data[cellreg_idx, j])
-                        if roi_j <= 0:
+                        if roi_j <= 0 or j >= len(all_stats) or roi_j >= len(all_stats[j]):
                             continue
                         # med info from stat
                         stat_i = all_stats[i][roi_i]

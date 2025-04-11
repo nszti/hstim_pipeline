@@ -139,14 +139,10 @@ def single_block_activation(expDir, mat_file, frame_rate, num_stims_per_repeat, 
     with h5py.File(input_file, 'r') as file:
         data = file['cell_registered_struct']['cell_to_index_map'][:][:]
         data = data.T  # transpose to [cell_reg_idx, session]
-
     num_cells, num_sessions = data.shape
     print(f"{num_cells} registered cells across {num_sessions} sessions")
 
-    # Load stat files
-    stat_paths = [os.path.join(expDir, f'merged_MUnit_{"_".join(map(str, nums))}', 'suite2p', 'plane0', 'stat.npy') for
-                  nums in list_of_file_nums]
-    all_stats = [np.load(p, allow_pickle=True) for p in stat_paths]
+    all_stats = []
     for numbers_to_merge in list_of_file_nums:
         suffix = '_'.join(map(str, numbers_to_merge))
         num_to_search = []
@@ -157,6 +153,9 @@ def single_block_activation(expDir, mat_file, frame_rate, num_stims_per_repeat, 
                 file_suffix = num_to_search_split[1].rsplit('.', 1)[0]
                 if file_suffix == suffix:
                     matched_file = dir
+                    stat_path = os.path.join(expDir, matched_file, 'suite2p', 'plane0', 'stat.npy')
+                    stat_data = np.load(stat_path, allow_pickle=True)
+                    all_stats.append(stat_data)
                     print(matched_file)
                     # print(matched_file)
                     break

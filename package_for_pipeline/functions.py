@@ -1154,6 +1154,9 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 savemat(out_path, {'cells_map': mask_stack})
                 print(f" Saved: {out_path} with shape {mask_stack.shape}")
 
+            '''csv_path = os.path.join(expDir, dir, f'og_stat_idx.csv')
+            statidx_df = pd.DataFrame()'''
+            print(activated_roi_indices)
             # print(activation_results)
             print(f"Number of activated neurons: {activation_count} out of {num_cells} cells")
             column_names = [f"Repeat {i + 1}" for i in range(num_repeats)]

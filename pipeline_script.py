@@ -56,12 +56,11 @@ root_directory = 'c:/Hyperstim/data_analysis/2023_09_25_GCAMP6F/' #
 tiff_directory = 'c:/Hyperstim/data_analysis/2023_09_25_GCAMP6F/merged_tiffs/'
 mesc_file_name = '2023_09_25_in_vivo_test_GCAMP6f'
 mesc_DATA_file = 'mesc_data.npy'
+mat_file = 'cellRegistered_20250410_151715.mat'
+postfix = 'activated_5_6/'
 list_of_file_nums = [
-  [3],
-  [4],
   [5],
   [6]
-
 ]
 gcamp = 'f' #for GCaMP6s: 's'
 stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
@@ -98,8 +97,8 @@ functions.stim_dur_val(tiff_directory, list_of_file_nums)
 #overlap.overlap_calc(tiff_directory, list_of_file_nums)
 #overlap.create_roi_map(tiff_directory, list_of_file_nums)
 #cellreg_preprocess.suite2p_to_cellreg_masks(tiff_directory, list_of_file_nums)
-#cellreg_preprocess.cellreg_analysis(tiff_directory, mat_file)
-cellreg_preprocess.single_block_activation(tiff_directory, 30.97, 5, list_of_file_nums, 2.4,200, 3 )
+#cellreg_preprocess.cellreg_analysis(tiff_directory, mat_file, list_of_file_nums, postfix)
+cellreg_preprocess.single_block_activation(tiff_directory,postfix, mat_file,  30.97, 5, list_of_file_nums, 2.4,200, 3 )
 
 '''
 functions.stim_dur_val(tiff_directory, list_of_file_nums)

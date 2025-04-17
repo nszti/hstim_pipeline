@@ -69,7 +69,6 @@ def analyse_mesc_file(filepath, output_path,  plot_curves=False, print_all_attri
                 # Decoding ascii to string
                 comment_str = ascii_to_str(comment)
                 print(f"Unit {unit_id} comment: ", comment_str or "Empty")
-
                 # ---Plotting curves in MUnit---
                 if plot_curves:
                     for key in selected_unit._v_children.keys():
@@ -92,14 +91,11 @@ def analyse_mesc_file(filepath, output_path,  plot_curves=False, print_all_attri
 
                             # ---Extracting stimulation start timepoints---
                             if stim_trig_channel in ascii_to_str(selected_unit[key]._v_attrs['Name']):
-
                                 y_data = selected_unit[key]['CurveDataYRawData'][()]
-                                print(y_data)
                                 stim_start_indices = []
                                 for i in range(1, y_data.shape[0]):
                                     if y_data[i] > y_data[i-1]:
-                                        print(i)
-                                        stim_start_indices.append(i)
+                                        stim_start_indices.append(int(np.round(i/20)))
                                         stim_start.append(i)
                                 print(f"Stimulation start indices (ms): {stim_start_indices}")
 
@@ -121,6 +117,7 @@ def analyse_mesc_file(filepath, output_path,  plot_curves=False, print_all_attri
                 params = extract_useful_xml_params(ascii_to_str(selected_unit._f_getattr('MeasurementParamsXML')))
                 params['framerate'] = 1 / (frame_time_ms / 1000)
                 pprint(params)
+                print(params['framerate'])
 
                 # ---Load recording in Unit---
                 # Load and invert image array (in all test files the recording was in Channnel_0 and there were no other channels)
@@ -129,12 +126,12 @@ def analyse_mesc_file(filepath, output_path,  plot_curves=False, print_all_attri
                 #print(image_seq.shape, image_seq.dtype)
 
                 frame_timestamps = np.arange(0, frame_time_ms * image_seq.shape[0], frame_time_ms)
-
+                print(image_seq.shape)
                 try:
                     if len(stim_start_indices) > 0:
                         stim_start_frame_indices = [find_frame_index_from_timestamp(timestamp, frame_timestamps) for timestamp in stim_start_indices]
+                        print(stim_start_frame_indices)
                         triggers.append(stim_start_frame_indices[0])
-                        print(stim_start_frame_indices[0])
                         files_ids.append(unit_id)
                         frame_nos.append(len(image_seq))
 
@@ -166,7 +163,6 @@ def analyse_mesc_file(filepath, output_path,  plot_curves=False, print_all_attri
             f2.close()
             f3.close()
             #print(len(image_seq))
-
             data = {'FileID' : files_ids, 'FrameNo': frame_nos, 'Trigger' : triggers}
             df = pd.DataFrame(data)
             output_dir_path = f'{output_path}merged_tiffs/mesc_data.npy'

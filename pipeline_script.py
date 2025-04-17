@@ -52,39 +52,47 @@ list_of_file_nums = [
 gcamp = 'f' #for GCaMP6s: 's'
 stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
 '''
-root_directory = 'c:/Hyperstim/data_analysis/2023_09_25_GCAMP6F/' #
-tiff_directory = 'c:/Hyperstim/data_analysis/2023_09_25_GCAMP6F/merged_tiffs/'
-mesc_file_name = '2023_09_25_in_vivo_test_GCAMP6f'
+root_directory = 'c:/Hyperstim/data_analysis/2025-04-14-Amouse-invivo-GCaMP6f/' #
+tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-14-Amouse-invivo-GCaMP6f/merged_tiffs/'
+mesc_file_name = '2025-04-14-Amouse-invivo-GCaMP6f'
 mesc_DATA_file = 'mesc_data.npy'
 mat_file = 'cellRegistered_20250410_151715.mat'
 postfix = 'activated_5_6/'
 list_of_file_nums = [
-  [5],
-  [6]
+  [43],
+  [44],
+  [45],
+  [46],
+  [47]
 ]
 gcamp = 'f' #for GCaMP6s: 's'
 stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
 
-#------VALUES TO CHANGE END------
+RUN_MESC_PREPROCESS = False
+RUN_PREPROCESS = False
+RUN_ABALYSIS_PREP = True
+RUN_FOR_SINGLE_PARAM_EXP = False
+RUN_FOR_ADVANCED_EXP = False
+RUN_CELLREG_PREP = False
 
-#mesc_tiff_extract.analyse_mesc_file(Path(root_directory)/mesc_file_name, root_directory, print_all_attributes=True, plot_curves = True)
+#------VALUES TO CHANGE END------
+if RUN_MESC_PREPROCESS:
+  mesc_tiff_extract.analyse_mesc_file(Path(root_directory)/mesc_file_name, root_directory, print_all_attributes=True, plot_curves = True)
 
 #-----1.2.step: frequency_to_save, electrode_roi_to_save-->automatization pending-----
-'''
-mesc_data_handling.tiff_merge(mesc_file_name, list_of_file_nums, root_directory) 
-mesc_data_handling.extract_stim_frame(root_directory, mesc_DATA_file, list_of_file_nums) #--> saves stimTimes.npy needed for baseline
-suite2p_script.run_suite2p(os.path.join(root_directory,'merged_tiffs/'), gcamp)
+if RUN_PREPROCESS:
+  mesc_data_handling.tiff_merge(mesc_file_name, list_of_file_nums, root_directory)
+  mesc_data_handling.extract_stim_frame(root_directory, mesc_DATA_file, list_of_file_nums) #--> saves stimTimes.npy needed for baseline
+  suite2p_script.run_suite2p(os.path.join(root_directory,'merged_tiffs/'), gcamp)
 
-'''
 #--------------Suite2p manual sorting------------------
 
-'''
-functions.stim_dur_val(tiff_directory, list_of_file_nums)
-functions.electROI_val(tiff_directory, list_of_file_nums)
-functions.dist_vals(tiff_directory, list_of_file_nums)
-functions.stim_dur_val(tiff_directory, list_of_file_nums)
-'''
-#functions.baseline_val(root_directory, tiff_directory, list_of_file_nums) #--> saves F0.npy
+if RUN_ABALYSIS_PREP:
+  functions.stim_dur_val(tiff_directory, list_of_file_nums)
+  functions.electROI_val(tiff_directory, list_of_file_nums)
+  functions.dist_vals(tiff_directory, list_of_file_nums)
+  functions.stim_dur_val(tiff_directory, list_of_file_nums)
+  functions.baseline_val(root_directory, tiff_directory, list_of_file_nums) #--> saves F0.npy
 
 
 #functions.activated_neurons_val(root_directory, tiff_directory, list_of_file_nums, 1)
@@ -96,9 +104,11 @@ functions.stim_dur_val(tiff_directory, list_of_file_nums)
 
 #overlap.overlap_calc(tiff_directory, list_of_file_nums)
 #overlap.create_roi_map(tiff_directory, list_of_file_nums)
-#cellreg_preprocess.suite2p_to_cellreg_masks(tiff_directory, list_of_file_nums)
-#cellreg_preprocess.cellreg_analysis(tiff_directory, mat_file, list_of_file_nums, postfix)
-cellreg_preprocess.single_block_activation(tiff_directory,postfix, mat_file,  30.97, 5, list_of_file_nums, 2.4,200, 3 )
+
+if RUN_CELLREG_PREP:
+  cellreg_preprocess.suite2p_to_cellreg_masks(tiff_directory, list_of_file_nums)
+  #cellreg_preprocess.cellreg_analysis(tiff_directory, mat_file, list_of_file_nums, postfix)
+  #cellreg_preprocess.single_block_activation(tiff_directory,postfix, mat_file,  30.97, 5, list_of_file_nums, 2.4,200, 3 )
 
 '''
 functions.stim_dur_val(tiff_directory, list_of_file_nums)

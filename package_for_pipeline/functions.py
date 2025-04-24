@@ -1556,28 +1556,29 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             plt.show()
 
             ##---plot 4:  grand average--> Avg trace from all activated rois per amplitude ----##
-            fig, ax = plt.subplots(figsize=(8, 5))
+            fig, axes = plt.subplots(1, num_repeats, figsize=(4 * num_repeats, 4), sharey=True)
             time = np.linspace(-1, 3, total_frames)
             fig.suptitle("Overall average of trials per amplitude", fontsize=16)
 
-            for stim_idx, amplitude in enumerate(amplitude_values):
-                roi_traces = []
-                for roi_idx in cell_indices:
-                    is_activated_in_any_repeat = any(activation_results[roi_idx][repeat][stim_idx] == 1 for repeat in range(num_repeats))
-                    if not is_activated_in_any_repeat:
-                        continue
-                    roi_trials = []
-                    for repeat in range(num_repeats):
-                        if activation_results[roi_idx][repeat][stim_idx] == 1:
-                            roi_trials.append(all_traces[repeat, stim_idx])
-                    #avg across trials
-                    if roi_trials:
-                        roi_avg_trace = np.mean(roi_trials, axis=0)
-                        roi_traces.append(roi_avg_trace)
-                #avg across rois
-                if roi_traces:
-                    sum_avg = np.mean(roi_traces, axis=0)
-                    ax.plot(time, sum_avg, label=f"{amplitude} μA", linewidth=2)
+            for repeat in range(num_repeats):
+                ax = axes[repeat] if num_repeats > 1 else axes
+                for stim_idx, amplitude in enumerate(amplitude_values):
+                    roi_traces = []
+
+                    for roi_idx in cell_indices:
+                        F_index = np.where(cell_indices == roi_idx)[0][0]
+                        stim_time = start_timepoints[repeat * num_stims_per_repeat + stim_idx]
+
+                        pre_start = max(0, stim_time - pre_frames)
+                        post_end = min(F.shape[1], stim_time + post_frames)
+                        trace = F[F_index, pre_start:post_end]
+
+                        if trace.shape[0] == total_frames:
+                            roi_traces.append(trace)
+
+                    if roi_traces:
+                        avg_trace = np.mean(roi_traces, axis=0)
+                        ax.plot(time, avg_trace, label=f"{amplitude} μA", linewidth=2)
 
             #ax.axvline(x=0, color='gray', linestyle='--', label='Stim Onset')
             ax.set_xlabel("Time (s)")

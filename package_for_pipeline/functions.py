@@ -1580,15 +1580,17 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                         avg_trace = np.mean(roi_traces, axis=0)
                         ax.plot(time, avg_trace, label=f"{amplitude} μA", linewidth=2)
 
-            ax.set_title(f'Trial {repeat + 1}')
-            ax.set_xlabel("Time (s)")
-            if repeat == 0:
-                ax.set_ylabel("Mean ΔF/F₀")
-            ax.grid(True)
-            ax.set_ylim(min_trace_value, max_trace_value)
-            handles = [plt.Line2D([0], [0], color=color, lw=2, label=f"{amp} μA") for amp, color in amplitude_colors.items()]
+                ax.set_title(f'Trial {repeat + 1}')
+                ax.set_xlabel("Time (s)")
+                if repeat == 0:
+                    ax.set_ylabel("Mean ΔF/F₀")
+                ax.grid(True)
+                ax.set_ylim(min_trace_value, max_trace_value)
 
+            handles = [plt.Line2D([0], [0], color=color, lw=2, label=f"{amp} μA") for amp, color in amplitude_colors.items()]
+            fig.legend(handles=handles, loc='upper right', title="Amplitude", bbox_to_anchor=(0.98, 1))
             avg_plot_path = os.path.join(expDir, dir, 'sum_avg_trace_per_amplitude.png')
+
             plt.tight_layout()
             plt.savefig(avg_plot_path)
             plt.show()

@@ -1546,13 +1546,50 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
                 ax.grid(True)
 
-            # Add a single legend outside the subplots
+            # single legend outside subplots
             legend_handles = [plt.Line2D([0], [0], color=color, lw=1, label=f"Trial {trial}") for trial, color in trial_colors.items()]
             legend_handles.append(plt.Line2D([0], [0], color='black', lw=2, linestyle='dashed', label="Avg Response"))  # Add Avg Response
             fig.legend(handles=legend_handles, loc='upper left', fontsize=8, title="Legend", bbox_to_anchor=(0.95, 1))
 
             plt.tight_layout()
             plt.savefig(os.path.join(expDir, dir, f'overlapping_per_param_for_roi0_05_tif17.png'))
+            plt.show()
+
+            ##---plot 4:  grand average--> Avg trace from all activated rois per amplitude ----##
+            fig, ax = plt.subplots(figsize=(8, 5))
+            time = np.linspace(-1, 3, total_frames)
+            fig.suptitle("Overall average of trials per amplitude", fontsize=16)
+
+            for stim_idx, amplitude in enumerate(amplitude_values):
+                roi_traces = []
+                for roi_idx in cell_indices:
+                    is_activated_in_any_repeat = any(activation_results[roi_idx][repeat][stim_idx] == 1 for repeat in range(num_repeats))
+                    if not is_activated_in_any_repeat:
+                        continue
+                    roi_trials = []
+                    for repeat in range(num_repeats):
+                        if activation_results[roi_idx][repeat][stim_idx] == 1:
+                            roi_trials.append(all_traces[repeat, stim_idx])
+                    #avg across trials
+                    if roi_trials:
+                        roi_avg_trace = np.mean(roi_trials, axis=0)
+                        roi_traces.append(roi_avg_trace)
+                #avg across rois
+                if roi_traces:
+                    sum_avg = np.mean(roi_traces, axis=0)
+                    ax.plot(time, sum_avg, label=f"{amplitude} μA", linewidth=2)
+
+            #ax.axvline(x=0, color='gray', linestyle='--', label='Stim Onset')
+            ax.set_xlabel("Time (s)")
+            ax.set_ylabel("Mean ΔF/F₀")
+            ax.set_title("Averaged across all active rois")
+            ax.legend()
+            ax.grid(True)
+            ax.set_ylim(min_trace_value, max_trace_value)
+
+            avg_plot_path = os.path.join(expDir, dir, 'sum_avg_trace_per_amplitude.png')
+            plt.tight_layout()
+            plt.savefig(avg_plot_path)
             plt.show()
 
 #scratch_1

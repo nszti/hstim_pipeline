@@ -158,6 +158,7 @@ def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per
                     all_stats[session_idx] = stat_data
                     print(f"Session {session_idx}: Loaded from {matched_file}")
                     session_idx += 1  # increment only after successful match
+                    print(session_idx)
                 break
         else:
             continue
@@ -247,12 +248,11 @@ def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per
             column_names = [f"Stim {i + 1}" for i in range(num_stims_per_repeat)]
             activation_df = pd.DataFrame.from_dict(activation_results, orient='index', columns=column_names)
             activation_df.insert(0, "ROI", activation_df.index)
-            csv_path = os.path.join(expDir, dir, f'activation_results_file{file_suffix}.csv')
+            csv_path = os.path.join(expDir, dir, f'activation_results_file{suffix}.csv')
             # activation_df.to_csv(csv_path, index=False)
             # print(f"Results saved to {csv_path}")
 
             # === Match activated ROIs with cellreg data ===
-            print(all_stats[0][1])
             matched_results = []
             for i in range(num_sessions-1):
                 for j in range(i+1, num_sessions):

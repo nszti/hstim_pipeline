@@ -95,7 +95,7 @@ def analyse_mesc_file(filepath, output_path,  plot_curves=False, print_all_attri
                                 stim_start_indices = []
                                 for i in range(1, y_data.shape[0]):
                                     if y_data[i] > y_data[i-1]:
-                                        stim_start_indices.append(int(np.round(i/20)))
+                                        stim_start_indices.append(int(np.round(i/20))) # after 2025.04.07
                                         stim_start.append(i)
                                 print(f"Stimulation start indices (ms): {stim_start_indices}")
 

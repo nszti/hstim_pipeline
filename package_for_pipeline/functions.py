@@ -301,15 +301,18 @@ def baseline_val(root_directory,tiff_dir, list_of_file_nums ):
         else:
             continue
 
-        file_dir = Path(base_dir/matched_dir)
+        '''file_dir = Path(base_dir/matched_dir)
         baseline_durations = []
         for num_id in file_nums_to_search:
-            stim_times_path = os.path.join(file_dir, f'stimTime_{num_id}.npy')
+            stim_times_path = os.path.join(file_dir, f'stimTimes.npy')
+            print(stim_times_path)
             if os.path.exists(stim_times_path):
                 stim_times = np.load(stim_times_path, allow_pickle=True)
+                print(stim_times)
                 if stim_times.size > 0:
+                    print(int(stim_times[0]))
                     baseline_duration = int(stim_times[0]) - 1
-                    baseline_durations.append(baseline_duration)
+                    baseline_durations.append(baseline_duration)'''
 
 
         if matched_dir:
@@ -321,7 +324,7 @@ def baseline_val(root_directory,tiff_dir, list_of_file_nums ):
             F = np.load(F_path, allow_pickle=True)
             iscell = np.load(iscell_path, allow_pickle=True)
             stim_start_times = np.load(stim_start_times_path, allow_pickle=True)
-            #print(f"stim type: {type(stim_start_times)}")
+            print(stim_start_times)
 
 
             all_norm_traces = []
@@ -1047,7 +1050,8 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
     #--------CALCULATIONS--------
             # Extract the ROI indexes for cells
-            stimulation_amplitudes = [-10, -20, -30, -15, -25]
+            # NB! AMPLITUDOKAT MODOSITSD HOGY A PLOTOKNAL RENDEZVE LEGYENEK
+            stimulation_amplitudes = [10, 20, 30, 15, 25]
             cell_indices = np.where(iscell[:, 0] == 1)[0]  # Get indices of valid ROIs
             #print(cell_indices)
             num_cells = len(cell_indices)
@@ -1106,6 +1110,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             Ly, Lx = ops['Ly'], ops['Lx']
             for roi_idx in cell_indices:
                 F_index_act = np.where(cell_indices == roi_idx)[0][0]
+                print(F_index_act)
                 baseline_data = F[F_index_act, :max(1, int(stim_start_times[0]) - 1)]
                 baseline_avg = np.mean(baseline_data) if baseline_data.size > 0 else 0
                 baseline_std = np.std(baseline_data) if baseline_data.size > 0 else 0
@@ -1165,7 +1170,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             csv_path = os.path.join(expDir, dir, f'activation_results_file{file_suffix}.csv')
             #activation_df.to_csv(csv_path, index=False)
             #print(f"Results saved to {csv_path}")
-'''
+
         #Average x coordinates calculation
             #print(activation_results)
             x_coords_per_repeat_stim = [[[] for _ in range(num_stims_per_repeat)] for _ in range(num_repeats)]
@@ -1415,12 +1420,12 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
 
             #------------PLOTTING------------
-    #----plot1
+    #----plot1 : Trace jele egy roinak stim num(novekvo ampl ertekben) & repeat num szerint sorban
 
             time = np.linspace(-1, 3, total_frames)
             # Create grid plot
             fig, axes = plt.subplots(num_repeats, num_stims_per_repeat, figsize=(5 * num_stims_per_repeat, 4 * num_repeats))
-            fig.suptitle('Calcium Traces Around Stimulation', fontsize=16)
+            #fig.suptitle('Calcium Traces Around Stimulation', fontsize=16)
 
             for repeat in range(num_repeats):
 
@@ -1448,7 +1453,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             plt.savefig(savepath)
             plt.show()
 
-    #--------plot 2
+    #--------plot 2 Trace#1 overlapped minden trialre
             # Create figure of overlapped traces with one subplot per repeat
             amplitude_values = sorted([10, 20, 30, 15, 25])  # Adjust if necessary
             amplitude_colors = {10: 'blue', 20: 'orange', 30: 'green', 15: 'red', 25: 'purple'}
@@ -1491,10 +1496,10 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             fig.legend(handles=legend_handles, loc='upper right', fontsize=8, title="Legend", bbox_to_anchor=(0.98, 1))
 
             plt.tight_layout()
-            plt.savefig(os.path.join(expDir, dir, f'overlapping_per_trial_for_roi0.png'))
+            plt.savefig(os.path.join(expDir, dir, f'overlapping_per_trial_for_roi0_05_tif17.png'))
             plt.show()
 
-    # --------plot 3
+    # --------plot 3 Trace#2 overlapped minden amplitudora
 
             #overlap trials by amplitude
             trial_values = [1,2,4,4,5]  # Adjust as needed
@@ -1502,7 +1507,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
             # Create figure with one subplot per amplitude
             fig, axes = plt.subplots(1, len(amplitude_values), figsize=(4 * len(amplitude_values), 4), sharey=True)
-            fig.suptitle(f'Overlapping Trials for Each Amplitude - ROI {roi_idx}', fontsize=16)
+            fig.suptitle(f'Overlapping Trials for Each Amplitude', fontsize=16)
 
             # Define stimulation period for shading (e.g., 1s to 2s after onset)
             stim_start_sec = 1  # Relative to onset (adjust if needed)
@@ -1547,9 +1552,9 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             fig.legend(handles=legend_handles, loc='upper left', fontsize=8, title="Legend", bbox_to_anchor=(0.95, 1))
 
             plt.tight_layout()
-            plt.savefig(os.path.join(expDir, dir, f'overlapping_per_param_for_roi0.png'))
+            plt.savefig(os.path.join(expDir, dir, f'overlapping_per_param_for_roi0_05_tif17.png'))
             plt.show()
-'''
+
 #scratch_1
 def scratch_val(tiff_dir):
     '''

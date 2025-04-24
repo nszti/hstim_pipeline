@@ -92,6 +92,7 @@ def extract_stim_frame(directory, mesc_DATA_file, list_of_file_nums):
 
     fileIds = mesc_data[:, 0]
     frame_nos = mesc_data[:, 1]
+    print(mesc_data)
     triggers = mesc_data[:, 2]
 
     for sublist in list_of_file_nums:
@@ -129,14 +130,15 @@ def extract_stim_frame(directory, mesc_DATA_file, list_of_file_nums):
             #print(f"saved directory : {save_dir}")
             all_frames = []
             all_triggers = []
-            print(save_dir)
+            #print(save_dir)
 
             for num_id in sublist:
-                print("belepett")
+                #print("belepett")
                 #search_frameNumber
                 num_id_str = str(num_id)
                 mask = [fid.split('_')[-1] == num_id_str for fid in fileIds]
                 filtered_frame_nos = frame_nos[mask]
+                #print(triggers)
                 filtered_triggers = triggers[mask]
                 #print(f"num id for frame {num_id}, {filtered_frame_nos}")
                 #print(f"num id for trigger {num_id}, {filtered_triggers} ")

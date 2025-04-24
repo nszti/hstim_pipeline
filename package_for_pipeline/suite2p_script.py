@@ -71,7 +71,7 @@ def run_suite2p(data_path, gcamp):
                               'batch_size': 500,
                               'spatial_scale': 0,
                               'denoise': True,
-                              'threshold_scaling': 0.25,
+                              'threshold_scaling': 0.1,
                               'max_overlap': 0.7,
                               'high_pass': 300
                         })

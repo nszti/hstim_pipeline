@@ -32,7 +32,7 @@ import os
 #------STEPS IN PIPELINE END------
 
 #------VALUES TO CHANGE------
-'''
+
 root_directory = 'c:/Hyperstim/data_analysis/2025-04-01-Amouse-invivo-GCaMP6f/' #
 #root_directory = 'c:/Hyperstim/data_analysis/2023_09_25_GCAMP6F/'
 #root_directory = 'c:/Hyperstim/data_analysis/2025-03-25-Amouse-invivo-GCaMP6f/'
@@ -78,15 +78,15 @@ list_of_file_nums = [
 [57]
 
 ]
-
+'''
 gcamp = 'f' #for GCaMP6s: 's'
 stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
 
 
 RUN_MESC_PREPROCESS = False  #tiff extraction
-RUN_PREPROCESS = True # osszefuz listaban megadott tifeket, it fut le a suite2p is
+RUN_PREPROCESS = False # osszefuz listaban megadott tifeket, it fut le a suite2p is
 RUN_ANALYSIS_PREP = False #F0 savelodik, ha modositod a suite2p barmelyik propertyet, akkor ezt ujra kell futtatni h frissuljon az F0
-PLOTS = False #Analysis plotok, utolso 3 a relevans
+PLOTS = True #Analysis plotok, utolso 3 a relevans
 RUN_FOR_SINGLE_PARAM_EXP = False
 RUN_FOR_ADVANCED_EXP = False
 RUN_CELLREG_PREP = False #cellreghez mat fileokat ment ki

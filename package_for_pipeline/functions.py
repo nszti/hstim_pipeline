@@ -1564,7 +1564,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             sorted_amplitudes = np.array(amplitude_values)[sorted_indices]
             for repeat in range(num_repeats):
                 ax = axes[repeat] if num_repeats > 1 else axes  # Handle case when only 1 repeat
-                for stim_idx, amplitude in zip(sorted_indices), sorted_amplitudes:
+                for stim_idx, amplitude in zip(sorted_indices, sorted_amplitudes):
                     roi_traces = []
                     for roi_idx in cell_indices:
                         F_index = np.where(cell_indices == roi_idx)[0][0]

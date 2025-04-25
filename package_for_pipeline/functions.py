@@ -1555,16 +1555,21 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             plt.savefig(os.path.join(expDir, dir, f'overlapping_per_param_for_roi0_05_tif17.png'))
             plt.show()
 
-            ##---plot 4:  grand average--> Avg trace from all activated rois per amplitude ----##
+    ##------ plot 4:  grand average--> Avg trace from all activated rois per amplitude ------ ##
             fig, axes = plt.subplots(1, num_repeats, figsize=(4 * num_repeats, 4), sharey=True)
             time = np.linspace(-1, 3, total_frames)
             fig.suptitle("Overall average of trials per amplitude", fontsize=16)
 
             for repeat in range(num_repeats):
                 ax = axes[repeat] if num_repeats > 1 else axes
-                for stim_idx, amplitude in enumerate(amplitude_values):
-                    roi_traces = []
 
+                sorted_indices = np.argsort(amplitude_values)
+                sorted_amplitudes = np.array(amplitude_values)[sorted_indices]
+
+                for stim_idx in enumerate(sorted_indices):
+                    amplitude = amplitude_values[stim_idx]
+                    roi_traces = []
+                    # Loop through all activated ROIs for this amplitude
                     for roi_idx in cell_indices:
                         F_index = np.where(cell_indices == roi_idx)[0][0]
                         stim_time = start_timepoints[repeat * num_stims_per_repeat + stim_idx]
@@ -1587,7 +1592,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 ax.grid(True)
                 ax.set_ylim(min_trace_value, max_trace_value)
 
-            handles = [plt.Line2D([0], [0], color=color, lw=2, label=f"{amp} μA") for amp, color in amplitude_colors.items()]
+            handles = [plt.Line2D([0], [0], color=amplitude_colors.get(amp, 'black'), lw=2, label=f"{amp} μA") for amp in sorted_amplitudes]
             fig.legend(handles=handles, loc='upper right', title="Amplitude", bbox_to_anchor=(0.98, 1))
             avg_plot_path = os.path.join(expDir, dir, 'sum_avg_trace_per_amplitude.png')
 

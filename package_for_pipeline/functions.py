@@ -1562,12 +1562,10 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
             sorted_indices = np.argsort(amplitude_values)
             sorted_amplitudes = np.array(amplitude_values)[sorted_indices]
-            for stim_idx in sorted_indices:
-
-                for stim_idx in enumerate(sorted_indices):
-                    amplitude = amplitude_values[stim_idx]
+            for repeat in range(num_repeats):
+                ax = axes[repeat] if num_repeats > 1 else axes  # Handle case when only 1 repeat
+                for stim_idx, amplitude in zip(sorted_indices), sorted_amplitudes:
                     roi_traces = []
-                    # Loop through all activated ROIs for this amplitude
                     for roi_idx in cell_indices:
                         F_index = np.where(cell_indices == roi_idx)[0][0]
                         stim_time = start_timepoints[repeat * num_stims_per_repeat + stim_idx]
@@ -1581,7 +1579,8 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
                     if roi_traces:
                         avg_trace = np.mean(roi_traces, axis=0)
-                        ax.plot(time, avg_trace, label=f"{amplitude} μA", linewidth=2)
+                        color = amplitude_colors.get(amplitude, 'black')
+                        ax.plot(time, avg_trace, label=f"{amplitude} μA", linewidth=2, color=color)
 
                 ax.set_title(f'Trial {repeat + 1}')
                 ax.set_xlabel("Time (s)")

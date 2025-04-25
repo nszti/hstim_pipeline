@@ -1560,11 +1560,9 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             time = np.linspace(-1, 3, total_frames)
             fig.suptitle("Overall average of trials per amplitude", fontsize=16)
 
-            for repeat in range(num_repeats):
-                ax = axes[repeat] if num_repeats > 1 else axes
-
-                sorted_indices = np.argsort(amplitude_values)
-                sorted_amplitudes = np.array(amplitude_values)[sorted_indices]
+            sorted_indices = np.argsort(amplitude_values)
+            sorted_amplitudes = np.array(amplitude_values)[sorted_indices]
+            for stim_idx in sorted_indices:
 
                 for stim_idx in enumerate(sorted_indices):
                     amplitude = amplitude_values[stim_idx]

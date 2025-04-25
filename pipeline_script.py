@@ -32,7 +32,7 @@ import os
 #------STEPS IN PIPELINE END------
 
 #------VALUES TO CHANGE------
-
+'''
 root_directory = 'c:/Hyperstim/data_analysis/2025-04-01-Amouse-invivo-GCaMP6f/' #
 #root_directory = 'c:/Hyperstim/data_analysis/2023_09_25_GCAMP6F/'
 #root_directory = 'c:/Hyperstim/data_analysis/2025-03-25-Amouse-invivo-GCaMP6f/'
@@ -55,28 +55,38 @@ gcamp = 'f' #for GCaMP6s: 's'
 stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
 '''
 
-#root_directory = 'c:/Hyperstim/data_analysis/2025-04-15-Amouse-invivo-GCaMP6f/' #
-root_directory = 'c:/Hyperstim/data_analysis/2025-04-14-Amouse-invivo-GCaMP6f/'
-#tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-15-Amouse-invivo-GCaMP6f/merged_tiffs/'
-tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-14-Amouse-invivo-GCaMP6f/merged_tiffs/'
-#mesc_file_name = '2025-04-15-Amouse-invivo-GCaMP6f'
-mesc_file_name = '2025-04-14-Amouse-invivo-GCaMP6f'
+root_directory = 'c:/Hyperstim/data_analysis/2025-04-15-Amouse-invivo-GCaMP6f/' #
+#root_directory = 'c:/Hyperstim/data_analysis/2025-04-14-Amouse-invivo-GCaMP6f/'
+tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-15-Amouse-invivo-GCaMP6f/merged_tiffs/'
+#tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-14-Amouse-invivo-GCaMP6f/merged_tiffs/'
+mesc_file_name = '2025-04-15-Amouse-invivo-GCaMP6f'
+#mesc_file_name = '2025-04-14-Amouse-invivo-GCaMP6f'
 mesc_DATA_file = 'mesc_data.npy'
 mat_file = 'cellRegistered_20250410_151715.mat'
 postfix = 'activated_5_6/'
 list_of_file_nums = [
-[37]
+[47],
+[48],
+[49],
+[50],
+[51],
+[52],
+[53],
+[54],
+[55],
+[56],
+[57]
 
 ]
-'''
+
 gcamp = 'f' #for GCaMP6s: 's'
 stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
 
 
 RUN_MESC_PREPROCESS = False  #tiff extraction
-RUN_PREPROCESS = False # osszefuz listaban megadott tifeket, it fut le a suite2p is
+RUN_PREPROCESS = True # osszefuz listaban megadott tifeket, it fut le a suite2p is
 RUN_ANALYSIS_PREP = False #F0 savelodik, ha modositod a suite2p barmelyik propertyet, akkor ezt ujra kell futtatni h frissuljon az F0
-PLOTS = True #Analysis plotok, utolso 3 a relevans
+PLOTS = False #Analysis plotok, utolso 3 a relevans
 RUN_FOR_SINGLE_PARAM_EXP = False
 RUN_FOR_ADVANCED_EXP = False
 RUN_CELLREG_PREP = False #cellreghez mat fileokat ment ki
@@ -88,8 +98,8 @@ if RUN_MESC_PREPROCESS:
 
 #-----1.2.step: frequency_to_save, electrode_roi_to_save-->automatization pending-----
 if RUN_PREPROCESS:
-  #mesc_data_handling.tiff_merge(mesc_file_name, list_of_file_nums, root_directory)
-  #mesc_data_handling.extract_stim_frame(root_directory, mesc_DATA_file, list_of_file_nums) #--> saves stimTimes.npy needed for baseline
+  mesc_data_handling.tiff_merge(mesc_file_name, list_of_file_nums, root_directory)
+  mesc_data_handling.extract_stim_frame(root_directory, mesc_DATA_file, list_of_file_nums) #--> saves stimTimes.npy needed for baseline
   suite2p_script.run_suite2p(os.path.join(root_directory,'merged_tiffs/'), gcamp)
 
 #--------------Suite2p manual sorting------------------

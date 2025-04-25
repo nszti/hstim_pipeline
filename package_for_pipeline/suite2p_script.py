@@ -19,7 +19,7 @@ def search_merged_subfolders(data_path):
                   merged_subfolders.append(subfolders)
       return merged_subfolders
 
-def run_suite2p(data_path, gcamp):
+def run_suite2p(tiff_dir, list_of_file_nums, gcamp):
       '''
 
       Parameters
@@ -33,32 +33,46 @@ def run_suite2p(data_path, gcamp):
       predefined set of ops parameters for GCaMP s & f
       '''
       ops = suite2p.default_ops()
-
-      db = {
-            'h5py': [], # a single h5 file path
-            'h5py_key': 'data',
-            'look_one_level_down': False, # whether to look in ALL subfolders when searching for tiffs
-            'data_path': [data_path], # a list of folders with tiffs
-                                                   # (or folder of folders with tiffs if look_one_level_down is True, or subfolders is not empty)
-            'subfolders': [], # choose subfolders of 'data_path' to look in (optional)
-            'reg_tif': False,
-            'neuropil_extract': True,
-            'neucoeff': 0.7,
-            'ratio_neuropil': 6,
-            'allow_overlap': False,
-            'inner_neuropil_radius': 2
-
-          }
-      print(db['data_path'])
       db_list = []
-      merged_subfolders_list = search_merged_subfolders(db['data_path'])
-      print(merged_subfolders_list)
-      for sublist in merged_subfolders_list:
-            print(sublist)
-            for subfolder in sublist:
-                  print(subfolder)
+      base_dir = Path(tiff_dir)
+      filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged') and file.is_dir()]
+
+      for numbers_to_merge in list_of_file_nums:
+            suffix = '_'.join(map(str, numbers_to_merge))
+            matched_file = None
+
+            for dir_name in filenames:
+                  split_name = dir_name.split('MUnit_')
+                  if len(split_name) > 1:
+                        file_suffix = split_name[1].rsplit('.', 1)[0]
+                        if file_suffix == suffix:
+                              matched_file = dir_name
+                              break
+
+            if matched_file:
+                  folder_path = os.path.join(tiff_dir, matched_file)
+                  base_db = {
+                        'h5py': [], # a single h5 file path
+                        'h5py_key': 'data',
+                        'look_one_level_down': False, # whether to look in ALL subfolders when searching for tiffs
+                        'data_path': [folder_path], # a list of folders with tiffs
+                                                               # (or folder of folders with tiffs if look_one_level_down is True, or subfolders is not empty)
+                        'subfolders': [], # choose subfolders of 'data_path' to look in (optional)
+                        'reg_tif': False,
+                        'neuropil_extract': True,
+                        'denoise': True,
+                        'batch_size': 500,
+                        'fs': 30.97,
+                        'neucoeff': 0.7,
+                        'ratio_neuropil': 6,
+                        'allow_overlap': False,
+                        'inner_neuropil_radius': 2,
+                        'high_pass': 300
+
+                      }
+
                   if gcamp == 'f':
-                        db_list.append({
+                        base_db.update({
                               'h5py': [],  # a single h5 file path
                               'h5py_key': 'data',
                               'look_one_level_down': False,  # whether to look in ALL subfolders when searching for tiffs
@@ -67,16 +81,12 @@ def run_suite2p(data_path, gcamp):
                               # (or folder of folders with tiffs if look_one_level_down is True, or subfolders is not empty)
                               'subfolders': [],  # choose subfolders of 'data_path' to look in (optional)
                               'tau': 0.5,
-                              'fs': 30.97,
-                              'batch_size': 500,
                               'spatial_scale': 0,
-                              'denoise': True,
                               'threshold_scaling': 0.1,
-                              'max_overlap': 0.7,
-                              'high_pass': 300
+                              'max_overlap': 0.7
                         })
                   if gcamp == 's':
-                        db_list.append({
+                        base_db.update({
                               'h5py': [],  # a single h5 file path
                               'h5py_key': 'data',
                               'look_one_level_down': False,  # whether to look in ALL subfolders when searching for tiffs
@@ -85,13 +95,11 @@ def run_suite2p(data_path, gcamp):
                               # (or folder of folders with tiffs if look_one_level_down is True, or subfolders is not empty)
                               'subfolders': [],  # choose subfolders of 'data_path' to look in (optional)
                               'tau': 1.25,
-                              'fs': 31.0,
-                              'batch_size': 500,
                               'spatial_scale': 2,
                               'denoise': True,
                               'threshold_scaling': 0.1,
-                              'max_overlap': 0.7,
-                              'high_pass': 300
+                              'max_overlap': 0.7
                         })
+                  db_list.append(base_db)
       for dbi in db_list:
             opsEnd = run_s2p(ops=ops, db=dbi)

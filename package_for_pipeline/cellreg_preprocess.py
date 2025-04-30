@@ -91,13 +91,14 @@ def cellreg_analysis(expDir, mat_file, list_of_file_nums, postfix):
             print(f"Sessions {i+1} & {j+1}: {num_matches} overlapping cells which is {percent_overlap:.2f}% of total cells")
             result_rows.append([f"Session {i + 1}", f"Session {j + 1}", num_matches, f"{percent_overlap:.2f}%"])
 
-    for j in range(1, num_sessions):
-        overlap = np.logical_and(data[0] > 0, data[j] > 0)  #or basic holder method?
-        num_matches = np.sum(overlap)
-        percent_overlap = (num_matches / num_cells) * 100
-        print(
-            f"First session & Session {j + 1}: {num_matches} overlapping cells which is {percent_overlap:.2f}% of total cells")
-        result_rows.append([f"Session 1", f"Session {j + 1}", num_matches, f"{percent_overlap:.2f}% (vs. first)"])
+    cumulative_overlap = np.logical_and(data[0] > 0, data[1] > 0)
+    for session in range(2, num_sessions):
+        cumulative_overlap = np.logical_and(cumulative_overlap, data[session] > 0)
+
+    num_cumulative = np.sum(cumulative_overlap)
+    percent_cumulative = (num_cumulative / num_cells) * 100
+    print(f"Cumulative overlap across sessions: {num_cumulative} cells ({percent_cumulative:.2f}%)")
+    result_rows.append(["_ overlap", f"Sessions 1 to {num_sessions}", num_cumulative, f"{percent_cumulative:.2f}%"])
 
     result_rows.append(["Total cells registered", num_cells])
     csv_path = os.path.join(cell_reg_path_input, 'session_pair_overlap.csv')

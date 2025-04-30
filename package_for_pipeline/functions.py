@@ -10,6 +10,7 @@ import re
 import ast
 
 from sklearn.metrics import euclidean_distances
+from suite2p.gui.io import load_files
 
 
 #stim_dur
@@ -1664,19 +1665,21 @@ def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums ):
         suffix = '_'.join(map(str, numbers_to_merge))
         for dir in filenames:
             if f'MUnit_{suffix}' in dir:
-                matched_dirs.append(os.path.join(root_directory, dir))
+                matched_dirs.append(os.path.join(root_directory, 'merged_tiffs', dir))
                 print(f"Matched directory: {dir}")
     print(matched_dirs)
     # collect traces by amplitude
     traces_by_amplitude = {amp: [] for amp in amplitude_keys}
     for dir_path in matched_dirs:
-        for file in os.listdir(dir_path):
+        sum_avg_subdir = os.path.join(dir_path, 'sum_avg_dir/')
+        for file in os.listdir(sum_avg_subdir):
             match = re.match(r'sum_avg_(\d+)uA\.npy', file)
             if match:
                 amp = match.group(1)
                 print(traces_by_amplitude)
                 if amp in traces_by_amplitude:
-                    trace = np.load(os.path.join(dir_path, file))
+                    trace_path = os.path.join(sum_avg_subdir, file)
+                    trace = np.load(trace_path)
                     traces_by_amplitude[amp].append(trace)
 
     # subplots for amplitude figs

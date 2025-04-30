@@ -1624,6 +1624,8 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     sum_avg = np.mean(roi_traces, axis=0)
                     ax.plot(time, sum_avg, label=f"{amplitude} μA", linewidth=2)
                     sum_avg_per_amplitude[amplitude] = sum_avg
+    # ell .npy
+
 
 
             # ax.axvline(x=0, color='gray', linestyle='--', label='Stim Onset')

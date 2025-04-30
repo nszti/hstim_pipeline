@@ -1706,8 +1706,7 @@ def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums ):
     plt.show()
 
 
-def analyze_merged_activation_and_save(exp_dir, tiff_dir, list_of_file_nums, threshold_value=3.0, stim_dur_frames=30):
-
+def analyze_merged_activation_and_save(exp_dir, tiff_dir, list_of_file_nums, block_len = 2168, stim_times, threshold_value=3.0, stim_dur_frames=30):
     base_dir = Path(tiff_dir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
     cellreg_dir = Path(os.path.join(base_dir,'/cellreg_files'))
@@ -1734,44 +1733,15 @@ def analyze_merged_activation_and_save(exp_dir, tiff_dir, list_of_file_nums, thr
         stat = np.load(os.path.join(suite2p_dir, 'stat.npy'), allow_pickle=True)
         ops = np.load(os.path.join(suite2p_dir, 'ops.npy'), allow_pickle=True).item()
 
-        raw = np.load(mesc_path, allow_pickle=True)
-        # list of rows to df
-        if isinstance(raw, np.ndarray) and raw.ndim == 2 and raw.shape[1] == 3:
-            mesc_df = pd.DataFrame(raw, columns=["FileID", "FrameNo", "Trigger"])
-
         Ly, Lx = ops['Ly'], ops['Lx']
         valid_rois = np.where(iscell[:, 0] == 1)[0]
 
-        file_ids = mesc_df['FileID']
-        frame_nos = mesc_df['FrameNo']
-        triggers = mesc_df['Trigger']
+        F_block = F[:, :block_len]
 
-        total_start = 0
-        block_len = 0
-        block_frame_lengths = []
         stim_block = []
-
-        for file_num in tif:
-            file_label = f"MUnit_{file_num}"
-            indices = np.where(file_ids == file_label)[0]
-            file_frame_nos = frame_nos[indices]
-            file_triggers = triggers[indices]
-
-            frame_count = len(file_frame_nos)
-            block_frame_lengths.append(frame_count)
-
-            stim_block.extend((file_triggers - total_start).tolist())
-            total_start += frame_count
-
-
-        block_len = sum(block_frame_lengths)
-        start = 0
-        for fn in range(tif[0]):
-            file_label = f"MUnit_{fn}"
-            num_frames = len(np.where(file_ids == file_label)[0])
-            start += num_frames
-        end = start + block_len
-        F_block = F[:, start:end]
+        for s in stim_times:
+            if s < block_len:
+                stim_block.append(int(s))
 
         activation_results = {}
         activated_roi_indices = []

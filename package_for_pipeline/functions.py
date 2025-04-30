@@ -1607,7 +1607,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 axes = [axes]
 
             sum_avg_per_amplitude = {}
-
+            all_sum_avgs = []
             for stim_idx, amplitude in enumerate(amplitude_values):
                 roi_traces = []
                 for roi_idx in cell_indices:
@@ -1626,6 +1626,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 # avg across rois
                 if roi_traces:
                     sum_avg = np.mean(roi_traces, axis=0)
+                    all_sum_avgs.append(sum_avg)
 
                     fig, ax = plt.subplots(figsize=(8, 5))
                     ax.plot(time, sum_avg, label=f"{amplitude} μA", linewidth=2)
@@ -1642,12 +1643,16 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     plt.close(fig)
                     np.save(os.path.join(sum_avg_dir, f'sum_avg_{amplitude}uA.npy'), sum_avg)
 
+                    # after the loop (before plotting):
+                    global_min = min(np.min(trace) for trace in all_sum_avgs)
+                    global_max = max(np.max(trace) for trace in all_sum_avgs)
+
                     ax_comb = axes[stim_idx]
                     ax_comb.plot(time, sum_avg, linewidth=2)
                     ax_comb.set_title(f"{amplitude} μA")
                     ax_comb.set_xlabel("Time (s)")
                     ax_comb.grid(True)
-                    ax_comb.set_ylim(min_trace_value, max_trace_value)
+                    ax_comb.set_ylim(global_min, global_max)
                     if stim_idx == 0:
                         ax_comb.set_ylabel("Mean ΔF/F₀")
 

@@ -1706,6 +1706,142 @@ def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums ):
     plt.show()
 
 
+def analyze_merged_activation_and_save(exp_dir, threshold_value=3.0, stim_dur_frames=30):
+
+    exp_dir = Path(exp_dir)
+    suite2p_dir = exp_dir + '/suite2p' + '/plane0'
+    cellreg_dir = exp_dir + '/cellreg_files'
+    cellreg_dir.mkdir(exist_ok=True)
+
+    # Load base data
+    F = np.load(suite2p_dir / 'F0.npy', allow_pickle=True)
+    iscell = np.load(suite2p_dir / 'iscell.npy', allow_pickle=True)
+    stat = np.load(suite2p_dir / 'stat.npy', allow_pickle=True)
+    ops = np.load(suite2p_dir / 'ops.npy', allow_pickle=True).item()
+    frame_blocks = np.load(exp_dir / 'frameNum.npy', allow_pickle=True) #
+    stim_times = np.load(exp_dir / 'stimTimes.npy', allow_pickle=True)
+
+    # Split F and stim times by block
+    blocks = []
+    start = 0
+    stim_cursor = 0 # for stimtimes tracking
+    for block_len in frame_blocks:
+        end = start + block_len
+        F_block = F[:, start:end] # shape should be: (n_rois, block_len)
+        stim_block = []
+        while stim_cursor < len(stim_times) and stim_times[stim_cursor] < end:
+            if stim_times[stim_cursor] >= start:
+                stim_block.append(stim_times[stim_cursor] - start)
+            stim_cursor += 1
+        blocks.append((F_block, np.array(stim_block), start, end))
+        start = end
+
+    valid_rois = np.where(iscell[:, 0] == 1)[0]
+    Ly, Lx = ops['Ly'], ops['Lx']
+
+    # Analyze each block
+    for block_idx, (F_block, stim_block, start_frame, end_frame) in enumerate(blocks):
+        activation_results = {}
+        activated_roi_indices = []
+        masks = []
+        traces = []
+
+        for roi in valid_rois:
+            trace = F_block[roi]
+            if len(stim_block) == 0 or stim_block[0] < 1:
+                continue
+            baseline = trace[:stim_block[0]]
+            baseline_avg = np.mean(baseline)
+            baseline_std = np.std(baseline)
+            threshold = baseline_avg + threshold_value * baseline_std
+
+            activations = []
+            is_active = False
+            for stim_start in stim_block:
+                stim_end = stim_start + stim_dur_frames
+                if stim_end > len(trace):
+                    continue
+                stim_segment = trace[stim_start:stim_end]
+                stim_avg = np.mean(stim_segment)
+                active = int(stim_avg > threshold)
+                activations.append(active)
+                if active:
+                    is_active = True
+
+            if is_active:
+                activation_results[roi] = activations
+                activated_roi_indices.append(roi)
+                traces.append(trace)
+
+                # CellReg mask
+                roi_stat = stat[roi]
+                mask = np.zeros((Ly, Lx), dtype=np.uint8)
+                mask[roi_stat['ypix'], roi_stat['xpix']] = 1
+                masks.append(mask)
+
+        # Save CellReg mask
+        if masks:
+            mask_stack = np.stack(masks, axis=0).astype(np.double)
+            mat_path = cellreg_dir / f'block_{block_idx + 1}_cellreg_input.mat'
+            savemat(mat_path, {'cells_map': mask_stack})
+
+        # Save activation info
+        activation_df = pd.DataFrame({
+            'ROI_Index': activated_roi_indices,
+            'Trace': traces
+        })
+        csv_path = exp_dir / f'block_{block_idx + 1}_activated_neurons.csv'
+        activation_df.to_csv(csv_path, index=False)
+
+
+
+def collect_file_paths_for_blocks(tiff_dir, list_of_file_nums):
+    """
+    For each set of TIFF numbers in list_of_file_nums, find the corresponding merged folder (MUnit_3_4_5 etc)
+    and return paths to key files.
+
+    :param tiff_dir: base directory containing merged TIFF folders
+    :param list_of_file_nums: e.g. [[3,4,5], [6,7,8]]
+    :return: list of dicts with file paths for each matched folder
+    """
+    base_dir = Path(tiff_dir)
+    filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+
+    results = []
+
+    for numbers_to_merge in list_of_file_nums:
+        suffix = '_'.join(map(str, numbers_to_merge))
+        matched_file = None
+        for dir in filenames:
+            num_to_search_split = dir.split('MUnit_')
+            if len(num_to_search_split) > 1:
+                file_suffix = num_to_search_split[1].rsplit('.', 1)[0]
+                if file_suffix == suffix:
+                    matched_file = dir
+                    print(f"Matched: {matched_file}")
+                    break
+        else:
+            continue  # skip to next block if no match found
+
+        if matched_file:
+            folder_path = base_dir / matched_file
+            suite2p_path = folder_path / 'suite2p' / 'plane0'
+            result = {
+                'merged_folder': matched_file,
+                'folder_path': folder_path,
+                'iscell_path': suite2p_path / 'iscell.npy',
+                'stat_path': suite2p_path / 'stat.npy',
+                'ops_path': suite2p_path / 'ops.npy',
+                'electrodeROI_path': folder_path / 'selected_elec_ROI.npy',
+                'csv_file_path': folder_path / 'elec_roi_info.csv',
+                'stimTimes_path': folder_path / 'stimTimes.npy',
+                'frameNum_path': folder_path / 'frameNum.npy'
+            }
+            results.append(result)
+
+    return results
+
+
 #scratch_1
 def scratch_val(tiff_dir):
     '''

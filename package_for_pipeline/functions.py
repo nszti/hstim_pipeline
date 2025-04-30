@@ -1710,7 +1710,7 @@ def analyze_merged_activation_and_save(exp_dir, tiff_dir, list_of_file_nums, thr
 
     base_dir = Path(tiff_dir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
-    cellreg_dir = base_dir + '/cellreg_files'
+    cellreg_dir = Path(os.path.join(base_dir,'/cellreg_files'))
     cellreg_dir.mkdir(exist_ok=True)
 
     for tif in list_of_file_nums:
@@ -1724,30 +1724,46 @@ def analyze_merged_activation_and_save(exp_dir, tiff_dir, list_of_file_nums, thr
             print(f"No matched directory for MUnit_{suffix}")
             continue
 
-        exp_dir = base_dir + '/' + matched_file
-        suite2p_dir = exp_dir / 'suite2p' / 'plane0'
+        exp_dir = os.path.join(base_dir, matched_file)
+        suite2p_dir = os.path.join(exp_dir,'suite2p','plane0')
 
         # Load base data
-        F = np.load(suite2p_dir / 'F0.npy', allow_pickle=True)
-        iscell = np.load(suite2p_dir / 'iscell.npy', allow_pickle=True)
-        stat = np.load(suite2p_dir / 'stat.npy', allow_pickle=True)
-        ops = np.load(suite2p_dir / 'ops.npy', allow_pickle=True).item()
-        frame_blocks = np.load(exp_dir / 'frameNum.npy', allow_pickle=True)
-        stim_times = np.load(exp_dir / 'stimTimes.npy', allow_pickle=True)
+        mesc_path = os.path.join(exp_dir, 'mesc_data.npy')
+        mesc_df = np.load(mesc_path, allow_pickle=True).item()
+        F = np.load(os.path.join(suite2p_dir,'F0.npy'), allow_pickle=True)
+        iscell = np.load(os.path.join(suite2p_dir,'iscell.npy'), allow_pickle=True)
+        stat = np.load(os.path.join(suite2p_dir, 'stat.npy'), allow_pickle=True)
+        ops = np.load(os.path.join(suite2p_dir, 'ops.npy'), allow_pickle=True).item()
 
-        block_frame_lengths = frame_blocks[tif]
-        block_len = int(np.sum(block_frame_lengths))
-        start = 0
-        for idx in range(tif[0]):
-            start += frame_blocks[idx]
+        Ly, Lx = ops['Ly'], ops['Lx']
+        valid_rois = np.where(iscell[:, 0] == 1)[0]
+
+        file_ids = mesc_df['FileID']
+        frame_nos = mesc_df['FrameNo']
+        triggers = mesc_df['Trigger']
+
+        total_start = 0
+        block_len = 0
+        block_frame_lengths = []
+        stim_block = []
+
+        for file_num in tif:
+            indices = np.where(file_ids == file_num)[0]
+            file_frame_nos = frame_nos[indices]
+            file_triggers = triggers[indices]
+
+            frame_count = len(file_frame_nos)
+            block_frame_lengths.append(frame_count)
+
+            stim_block.extend((file_triggers - total_start).tolist())
+            total_start += frame_count
+
+
+        block_len = sum(block_frame_lengths)
+        start = sum([len(np.where(file_ids == filenum)[0]) for filenum in range(tif[0])])
         end = start + block_len
-
         F_block = F[:, start:end]
 
-        #stim times within block
-        stim_block = [int(s - start) for s in stim_times if start <= s < end]
-        valid_rois = np.where(iscell[:, 0] == 1)[0]
-        Ly, Lx = ops['Ly'], ops['Lx']
         activation_results = {}
         activated_roi_indices = []
         masks = []

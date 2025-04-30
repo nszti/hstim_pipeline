@@ -1598,6 +1598,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             plt.show()
     # plot 4.2:
             time = np.linspace(-1, 3, total_frames)
+            dir = dir + '/sum_avg_dir'
             sum_avg_dir = os.path.join(expDir, dir)
             os.makedirs(sum_avg_dir, exist_ok=True)
 
@@ -1628,21 +1629,6 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     sum_avg = np.mean(roi_traces, axis=0)
                     all_sum_avgs.append(sum_avg)
 
-                    fig, ax = plt.subplots(figsize=(8, 5))
-                    ax.plot(time, sum_avg, label=f"{amplitude} μA", linewidth=2)
-                    ax.set_xlabel("Time (s)")
-                    ax.set_ylabel("Mean ΔF/F₀")
-                    ax.set_title(f"Average Trace – {amplitude} μA")
-                    ax.legend()
-                    ax.grid(True)
-                    ax.set_ylim(min_trace_value, max_trace_value)
-                    plt.tight_layout()
-
-                    plot_path = os.path.join(sum_avg_dir, f'sum_avg_trace_{amplitude}uA.png')
-                    plt.savefig(plot_path)
-                    plt.close(fig)
-                    np.save(os.path.join(sum_avg_dir, f'sum_avg_{amplitude}uA.npy'), sum_avg)
-
                     # after the loop (before plotting):
                     global_min = min(np.min(trace) for trace in all_sum_avgs)
                     global_max = max(np.max(trace) for trace in all_sum_avgs)
@@ -1655,6 +1641,9 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     ax_comb.set_ylim(global_min, global_max)
                     if stim_idx == 0:
                         ax_comb.set_ylabel("Mean ΔF/F₀")
+
+                    npy_path = os.path.join(sum_avg_dir, f'sum_avg_{amplitude}uA.npy')
+                    np.save(npy_path, sum_avg)
 
             fig_combined.suptitle("Average Traces per Amplitude", fontsize=16)
             plt.tight_layout(rect=[0, 0, 1, 0.95])

@@ -1601,6 +1601,11 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             sum_avg_dir = os.path.join(expDir, dir)
             os.makedirs(sum_avg_dir, exist_ok=True)
 
+            num_amps = len(amplitude_values)
+            fig_combined, axes = plt.subplots(1, num_amps, figsize=(4 * num_amps, 4), sharey=True)
+            if num_amps == 1:
+                axes = [axes]
+
             sum_avg_per_amplitude = {}
 
             for stim_idx, amplitude in enumerate(amplitude_values):
@@ -1635,9 +1640,22 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     plot_path = os.path.join(sum_avg_dir, f'sum_avg_trace_{amplitude}uA.png')
                     plt.savefig(plot_path)
                     plt.close(fig)
+                    np.save(os.path.join(sum_avg_dir, f'sum_avg_{amplitude}uA.npy'), sum_avg)
 
-                    npy_path = os.path.join(sum_avg_dir, f'sum_avg_{amplitude}uA.npy')
-                    np.save(npy_path, sum_avg)
+                    ax_comb = axes[stim_idx]
+                    ax_comb.plot(time, sum_avg, linewidth=2)
+                    ax_comb.set_title(f"{amplitude} μA")
+                    ax_comb.set_xlabel("Time (s)")
+                    ax_comb.grid(True)
+                    ax_comb.set_ylim(min_trace_value, max_trace_value)
+                    if stim_idx == 0:
+                        ax_comb.set_ylabel("Mean ΔF/F₀")
+
+            fig_combined.suptitle("Average Traces per Amplitude", fontsize=16)
+            plt.tight_layout(rect=[0, 0, 1, 0.95])
+            subplot_plot_path = os.path.join(sum_avg_dir, 'sum_avg_traces_subplot.png')
+            fig_combined.savefig(subplot_plot_path)
+            plt.close(fig_combined)
 
 
 

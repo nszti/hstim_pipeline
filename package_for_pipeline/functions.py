@@ -1651,6 +1651,56 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             fig_combined.savefig(subplot_plot_path)
             plt.close(fig_combined)
 
+def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums ):
+    # Settings
+    amplitude_keys = ['10', '20', '30', '40', '50']  # uA values to expect
+
+    # Step 1: Find matching merged directories
+    base_dir = Path(tiff_dir)
+    filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+    matched_dirs = []
+
+    for numbers_to_merge in list_of_file_nums:
+        suffix = '_'.join(map(str, numbers_to_merge))
+        for dir in filenames:
+            if f'MUnit_{suffix}' in dir:
+                matched_dirs.append(os.path.join(root_directory, dir))
+                print(f"Matched directory: {dir}")
+    print(matched_dirs)
+    # collect traces by amplitude
+    traces_by_amplitude = {amp: [] for amp in amplitude_keys}
+    for dir_path in matched_dirs:
+        for file in os.listdir(dir_path):
+            match = re.match(r'sum_avg_(\d+)uA\.npy', file)
+            if match:
+                amp = match.group(1)
+                print(traces_by_amplitude)
+                if amp in traces_by_amplitude:
+                    trace = np.load(os.path.join(dir_path, file))
+                    traces_by_amplitude[amp].append(trace)
+
+    # subplots for amplitude figs
+    fig, axes = plt.subplots(1, 5, figsize=(20, 4), sharey=True)
+    time = np.linspace(-1, 3, len(next(iter(next(iter(traces_by_amplitude.values()))))))  # case for diff length traces ?? --> total frames method?
+
+    for idx, amp in enumerate(amplitude_keys):
+        ax = axes[idx]
+        traces = traces_by_amplitude[amp]
+        if traces:
+            for trace in traces:
+                ax.plot(time, trace, alpha=0.6, label=f'Merged trace')
+            ax.set_title(f"{amp} μA")
+            ax.set_xlabel("Time (s)")
+            ax.grid(True)
+            if idx == 0:
+                ax.set_ylabel("Mean ΔF/F₀")
+        else:
+            ax.set_title(f"{amp} μA\n(no data)")
+            ax.set_axis_off()
+
+    plt.suptitle("Overlay of sum_avg traces by amplitude across experiments", fontsize=14)
+    plt.tight_layout(rect=[0, 0, 1, 0.93])
+    plt.show()
 
 
 #scratch_1

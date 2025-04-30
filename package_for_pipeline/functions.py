@@ -1706,7 +1706,7 @@ def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums ):
     plt.show()
 
 
-def analyze_merged_activation_and_save(exp_dir, threshold_value=3.0, stim_dur_frames=30):
+def analyze_merged_activation_and_save(exp_dir, list_of_file_nums, threshold_value=3.0, stim_dur_frames=30):
 
     exp_dir = Path(exp_dir)
     suite2p_dir = exp_dir + '/suite2p' + '/plane0'
@@ -1725,15 +1725,21 @@ def analyze_merged_activation_and_save(exp_dir, threshold_value=3.0, stim_dur_fr
     blocks = []
     start = 0
     stim_cursor = 0 # for stimtimes tracking
-    for block_len in frame_blocks:
+    for tif in list_of_file_nums:
+        block_frame_lengths = frame_blocks[tif]
+        block_len = int(np.sum(block_frame_lengths))
         end = start + block_len
-        F_block = F[:, start:end] # shape should be: (n_rois, block_len)
+
+        F_block = F[:, start:end]
+
+        # Extract stim times for this block
         stim_block = []
         while stim_cursor < len(stim_times) and stim_times[stim_cursor] < end:
             if stim_times[stim_cursor] >= start:
                 stim_block.append(stim_times[stim_cursor] - start)
             stim_cursor += 1
-        blocks.append((F_block, np.array(stim_block), start, end))
+
+        blocks.append((F_block, np.array(stim_block), start, end, tif))
         start = end
 
     valid_rois = np.where(iscell[:, 0] == 1)[0]

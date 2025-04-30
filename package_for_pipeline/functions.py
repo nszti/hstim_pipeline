@@ -1597,10 +1597,9 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             plt.savefig(avg_plot_path)
             plt.show()
     # plot 4.2:
-
-            fig, ax = plt.subplots(figsize=(8, 5))
             time = np.linspace(-1, 3, total_frames)
-            fig.suptitle("Overall average of trials per amplitude", fontsize=16)
+            sum_avg_dir = os.path.join(expDir, dir)
+            os.makedirs(sum_avg_dir, exist_ok=True)
 
             sum_avg_per_amplitude = {}
 
@@ -1622,28 +1621,24 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 # avg across rois
                 if roi_traces:
                     sum_avg = np.mean(roi_traces, axis=0)
+
+                    fig, ax = plt.subplots(figsize=(8, 5))
                     ax.plot(time, sum_avg, label=f"{amplitude} μA", linewidth=2)
-                    sum_avg_per_amplitude[amplitude] = sum_avg
-    # ell .npy
+                    ax.set_xlabel("Time (s)")
+                    ax.set_ylabel("Mean ΔF/F₀")
+                    ax.set_title(f"Average Trace – {amplitude} μA")
+                    ax.legend()
+                    ax.grid(True)
+                    ax.set_ylim(min_trace_value, max_trace_value)
+                    plt.tight_layout()
 
+                    plot_path = os.path.join(sum_avg_dir, f'sum_avg_trace_{amplitude}uA.png')
+                    plt.savefig(plot_path)
+                    plt.close(fig)
 
+                    npy_path = os.path.join(sum_avg_dir, f'sum_avg_{amplitude}uA.npy')
+                    np.save(npy_path, sum_avg)
 
-            # ax.axvline(x=0, color='gray', linestyle='--', label='Stim Onset')
-            ax.set_xlabel("Time (s)")
-            ax.set_ylabel("Mean ΔF/F₀")
-            ax.set_title("Averaged across all active rois")
-            ax.legend()
-            ax.grid(True)
-            ax.set_ylim(min_trace_value, max_trace_value)
-
-            avg_plot_path = os.path.join(expDir, dir, 'sum_avg_trace_per_amplitude.png')
-            plt.tight_layout()
-            plt.savefig(avg_plot_path)
-            plt.show()
-
-            # Save the sum_avg data to .npy
-            sum_avg_path = os.path.join(expDir, dir, 'sum_avg_values.npy')
-            np.save(sum_avg_path, sum_avg_per_amplitude)
 
 
 #scratch_1

@@ -1706,47 +1706,48 @@ def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums ):
     plt.show()
 
 
-def analyze_merged_activation_and_save(exp_dir, list_of_file_nums, threshold_value=3.0, stim_dur_frames=30):
+def analyze_merged_activation_and_save(exp_dir, tiff_dir, list_of_file_nums, threshold_value=3.0, stim_dur_frames=30):
 
-    exp_dir = Path(exp_dir)
-    suite2p_dir = exp_dir + '/suite2p' + '/plane0'
-    cellreg_dir = exp_dir + '/cellreg_files'
+    base_dir = Path(tiff_dir)
+    filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+    cellreg_dir = base_dir + '/cellreg_files'
     cellreg_dir.mkdir(exist_ok=True)
 
-    # Load base data
-    F = np.load(suite2p_dir / 'F0.npy', allow_pickle=True)
-    iscell = np.load(suite2p_dir / 'iscell.npy', allow_pickle=True)
-    stat = np.load(suite2p_dir / 'stat.npy', allow_pickle=True)
-    ops = np.load(suite2p_dir / 'ops.npy', allow_pickle=True).item()
-    frame_blocks = np.load(exp_dir / 'frameNum.npy', allow_pickle=True) #
-    stim_times = np.load(exp_dir / 'stimTimes.npy', allow_pickle=True)
-
-    # Split F and stim times by block
-    blocks = []
-    start = 0
-    stim_cursor = 0 # for stimtimes tracking
     for tif in list_of_file_nums:
+        suffix = '_'.join(map(str, tif))
+        matched_file = None
+        for dir in filenames:
+            if f'MUnit_{suffix}' in dir:
+                matched_file = dir
+                break
+        if matched_file is None:
+            print(f"No matched directory for MUnit_{suffix}")
+            continue
+
+        exp_dir = base_dir + '/' + matched_file
+        suite2p_dir = exp_dir / 'suite2p' / 'plane0'
+
+        # Load base data
+        F = np.load(suite2p_dir / 'F0.npy', allow_pickle=True)
+        iscell = np.load(suite2p_dir / 'iscell.npy', allow_pickle=True)
+        stat = np.load(suite2p_dir / 'stat.npy', allow_pickle=True)
+        ops = np.load(suite2p_dir / 'ops.npy', allow_pickle=True).item()
+        frame_blocks = np.load(exp_dir / 'frameNum.npy', allow_pickle=True)
+        stim_times = np.load(exp_dir / 'stimTimes.npy', allow_pickle=True)
+
         block_frame_lengths = frame_blocks[tif]
         block_len = int(np.sum(block_frame_lengths))
+        start = 0
+        for idx in range(tif[0]):
+            start += frame_blocks[idx]
         end = start + block_len
 
         F_block = F[:, start:end]
 
-        # Extract stim times for this block
-        stim_block = []
-        while stim_cursor < len(stim_times) and stim_times[stim_cursor] < end:
-            if stim_times[stim_cursor] >= start:
-                stim_block.append(stim_times[stim_cursor] - start)
-            stim_cursor += 1
-
-        blocks.append((F_block, np.array(stim_block), start, end, tif))
-        start = end
-
-    valid_rois = np.where(iscell[:, 0] == 1)[0]
-    Ly, Lx = ops['Ly'], ops['Lx']
-
-    # Analyze each block
-    for block_idx, (F_block, stim_block, start_frame, end_frame) in enumerate(blocks):
+        #stim times within block
+        stim_block = [int(s - start) for s in stim_times if start <= s < end]
+        valid_rois = np.where(iscell[:, 0] == 1)[0]
+        Ly, Lx = ops['Ly'], ops['Lx']
         activation_results = {}
         activated_roi_indices = []
         masks = []

@@ -1706,7 +1706,7 @@ def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums ):
     plt.show()
 
 
-def analyze_merged_activation_and_save(exp_dir, tiff_dir, list_of_file_nums, block_len = 2168, stim_times, threshold_value=3.0, stim_dur_frames=30):
+def analyze_merged_activation_and_save(exp_dir, tiff_dir, list_of_file_nums, block_len = 2168, stim_times, threshold_value=3.0):
     base_dir = Path(tiff_dir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
     cellreg_dir = Path(os.path.join(base_dir,'/cellreg_files'))
@@ -1736,64 +1736,61 @@ def analyze_merged_activation_and_save(exp_dir, tiff_dir, list_of_file_nums, blo
         Ly, Lx = ops['Ly'], ops['Lx']
         valid_rois = np.where(iscell[:, 0] == 1)[0]
 
-        F_block = F[:, :block_len]
+        num_blocks = F.shape[1] // block_len
+        for block_idx in range(num_blocks):
+            start_frame = block_idx * block_len
+            end_frame = start_frame + block_len
+            F_block = F[valid_rois, start_frame:end_frame]
+            block_stim_time = stim_times[block_idx]
+            block_net = F_block[block_stim_time:start_frame]
+            stim_net = block_len - block_stim_time
 
-        stim_block = []
-        for s in stim_times:
-            if s < block_len:
-                stim_block.append(int(s))
+            activation_results = {}
+            activated_roi_indices = []
+            masks = []
+            traces = []
+            for i, roi in enumerate(valid_rois):
+                trace = F_block[i]
+                baseline = trace[:block_stim_time]
+                baseline_avg = np.mean(baseline)
+                baseline_std = np.std(baseline)
+                threshold = baseline_avg + threshold_value * baseline_std
 
-        activation_results = {}
-        activated_roi_indices = []
-        masks = []
-        traces = []
-
-        for roi in valid_rois:
-            trace = F_block[roi]
-            if len(stim_block) == 0 or stim_block[0] < 1:
-                continue
-            baseline = trace[:stim_block[0]]
-            baseline_avg = np.mean(baseline)
-            baseline_std = np.std(baseline)
-            threshold = baseline_avg + threshold_value * baseline_std
-
-            activations = []
-            is_active = False
-            for stim_start in stim_block:
-                stim_end = stim_start + stim_dur_frames
+                stim_end = end_frame
                 if stim_end > len(trace):
                     continue
-                stim_segment = trace[stim_start:stim_end]
+                stim_segment = trace[stim_net:stim_end]
                 stim_avg = np.mean(stim_segment)
                 active = int(stim_avg > threshold)
-                activations.append(active)
+    
                 if active:
-                    is_active = True
+                    activated_roi_indices.append(roi)
+                    traces.append(trace)
+    
+                    roi_stat = stat[roi]
+                    mask = np.zeros((Ly, Lx), dtype=np.uint8)
+                    mask[roi_stat['ypix'], roi_stat['xpix']] = 1
+                    masks.append(mask)
 
-            if is_active:
-                activation_results[roi] = activations
-                activated_roi_indices.append(roi)
-                traces.append(trace)
+                    # CellReg mask
+                    roi_stat = stat[roi]
+                    mask = np.zeros((Ly, Lx), dtype=np.uint8)
+                    mask[roi_stat['ypix'], roi_stat['xpix']] = 1
+                    masks.append(mask)
 
-                # CellReg mask
-                roi_stat = stat[roi]
-                mask = np.zeros((Ly, Lx), dtype=np.uint8)
-                mask[roi_stat['ypix'], roi_stat['xpix']] = 1
-                masks.append(mask)
+            # Save CellReg mask
+            if masks:
+                mask_stack = np.stack(masks, axis=0).astype(np.double)
+                mat_path = cellreg_dir / f'block_{block_idx + 1}_cellreg_input.mat'
+                savemat(mat_path, {'cells_map': mask_stack})
 
-        # Save CellReg mask
-        if masks:
-            mask_stack = np.stack(masks, axis=0).astype(np.double)
-            mat_path = cellreg_dir / f'block_{block_idx + 1}_cellreg_input.mat'
-            savemat(mat_path, {'cells_map': mask_stack})
-
-        # Save activation info
-        activation_df = pd.DataFrame({
-            'ROI_Index': activated_roi_indices,
-            'Trace': traces
-        })
-        csv_path = exp_dir / f'block_{block_idx + 1}_activated_neurons.csv'
-        activation_df.to_csv(csv_path, index=False)
+            # Save activation info
+            activation_df = pd.DataFrame({
+                'ROI_Index': activated_roi_indices,
+                'Trace': traces
+            })
+            csv_path = exp_dir / f'block_{block_idx + 1}_activated_neurons.csv'
+            activation_df.to_csv(csv_path, index=False)
 
 
 

@@ -1061,6 +1061,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             num_cells = len(cell_indices)
 
 
+
             if roi_idx_og  not in cell_indices:
                 raise ValueError
 
@@ -1075,7 +1076,6 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
             # Storage for traces: Shape (ROIs, repeats, stimulations, frames)
             all_traces = np.zeros((num_repeats, num_stims_per_repeat, total_frames))
-            all_traces_grand_avg = np.zeros((num_repeats, num_stims_per_repeat, total_frames))
             start_timepoints = []
             for repeat in range(num_repeats):
                 for stim_idx in range(num_stims_per_repeat):
@@ -1100,7 +1100,6 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     if trace_segment.shape[0] == 0:
                         trace_segment = np.zeros(total_frames)
                     all_traces[repeat, stim_idx] = trace_segment
-                    all_traces_grand_avg[repeat, stim_idx] = trace_segment
 
             min_trace_value = np.min(all_traces)
             max_trace_value = np.max(all_traces)
@@ -1601,7 +1600,20 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             plt.tight_layout()
             plt.savefig(avg_plot_path)
             plt.show()'''
-    # plot 4.2:
+    # plot 4.2: ROIadik F_index & trace az osszes iscell==1 ROIra
+            num_rois = len(cell_indices)
+            all_traces_grand_avg = np.zeros((num_repeats, num_stims_per_repeat, total_frames))
+            for roi_array_idx, roi_id in enumerate(cell_indices):
+                F_index_for_all = np.where(cell_indices == roi_id)[0][0]
+                for repeat in range(num_repeats):
+                    for stim_idx in range(num_stims_per_repeat):
+                        pre_start = max(0, start_stim - pre_frames)
+                        post_end = min(F.shape[1], start_stim + post_frames)
+                        trace_segment = F[F_index_for_all, pre_start:post_end]
+                        if trace_segment.shape[0] == 0:
+                            trace_segment = np.zeros(total_frames)
+                        all_traces_grand_avg[roi_array_idx, repeat, stim_idx] = trace_segment
+
             time = np.linspace(-1, 3, total_frames)
             # Create output dir
             sum_avg_dir = os.path.join(expDir, dir, 'sum_avg_dir')
@@ -1666,6 +1678,27 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     savemat(out_path, {'cells_map': mask_stack})
                     print(f"saved {mat_filename} file to {out_path} ")
 
+                activation_count[amplitude] = len(active_rois)
+                print(f'for amplitude: {amplitude} active number of roi: {len(active_rois)}')
+
+                # Save ypix and xpix of activated ROIs
+                # Create binary masks for activated ROIs at this amplitude
+                masks = []
+                for roi_idx in active_rois:
+                    roi = stat[roi_idx]
+                    mask = np.zeros((Ly, Lx), dtype=np.uint8)
+                    mask[roi['ypix'], roi['xpix']] = 1
+                    masks.append(mask)
+
+                if masks:
+                    mask_stack = np.stack(masks, axis=0).astype(np.double)  # Shape: [n_active_rois, Ly, Lx]
+                    output_folder = os.path.join(sum_avg_dir, 'activated_roi_masks')
+                    os.makedirs(output_folder, exist_ok=True)
+                    mat_filename = f'activated_mask_{amplitude}uA.mat'
+                    out_path = os.path.join(output_folder, mat_filename)
+                    savemat(out_path, {'cells_map': mask_stack})
+                    print(f"Saved mask for {amplitude}uA to {out_path} with shape {mask_stack.shape}")
+
                 if roi_traces:
                     sum_avg_per_amplitude[amplitude] = np.mean(roi_traces, axis=0)
                     plt.figure()
@@ -1694,6 +1727,9 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     ax_comb.set_ylim(global_min, global_max)
                     if stim_idx == 0:
                         ax_comb.set_ylabel("Mean ΔF/F₀")
+
+            df_counts = pd.DataFrame(list(activation_counts.items()), columns=["Amplitude (μA)", "Num Activated ROIs"])
+            df_counts.to_csv(os.path.join(sum_avg_dir, "activation_counts.csv"), index=False)
 
             fig_combined.suptitle("Average Traces per Amplitude", fontsize=16)
             plt.tight_layout(rect=[0, 0, 1, 0.95])

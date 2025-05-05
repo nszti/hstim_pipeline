@@ -156,6 +156,7 @@ functions.data_analysis_values(stim_type, tiff_directory, list_of_file_nums)
 
 functions.scratch_val(tiff_directory)
 '''
+'''
 sum_avg_path = 'path/to/sum_avg_values.npy'
             sum_avg_per_amplitude = np.load(sum_avg_path, allow_pickle=True).item()
 
@@ -177,3 +178,4 @@ sum_avg_path = 'path/to/sum_avg_values.npy'
             plt.grid(True)
             plt.tight_layout()
             plt.show()
+'''

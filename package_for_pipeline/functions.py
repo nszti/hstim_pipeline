@@ -1353,7 +1353,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             plt.colorbar(label = 'distance from origo')
             plt.title('Activated ROI dist from origo')
             #plt.savefig(os.path.join(expDir, dir, 'roi_map.png'))
-            #plt.show()
+            plt.show()
 
         #Stimulation counts
             stim_activation_counts = []
@@ -1455,7 +1455,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             plt.tight_layout()
             savepath = os.path.join(expDir, dir, 'stim_traces_grid.svg')
             plt.savefig(savepath)
-            #plt.show()
+            plt.show()
 
     #--------plot 2 Trace#1 overlapped minden trialre
             # Create figure of overlapped traces with one subplot per repeat
@@ -1557,7 +1557,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
             plt.tight_layout()
             plt.savefig(os.path.join(expDir, dir, f'overlapping_per_param_for_roi0_05_tif17.png'))
-            #plt.show()
+            plt.show()
 
     ##------ plot 4:  grand average--> Avg trace from all activated rois per amplitude ------ ##
             '''fig, axes = plt.subplots(1, num_repeats, figsize=(4 * num_repeats, 4), sharey=True)
@@ -1652,6 +1652,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 active_rois = []
 
                 for roi_id in cell_indices:
+                    roi_array_idx = np.where(cell_indices == roi_id)[0][0]
                     if any(activation_results[roi_id][repeat][stim_idx] == 1 for repeat in range(num_repeats)):
                         active_count +=1
                         active_rois.append(roi_id)
@@ -1659,10 +1660,12 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
                     if not is_activated_in_any_repeat:
                         continue
+
                     roi_trials = []
                     for repeat in range(num_repeats):
                         if activation_results[roi_id][repeat][stim_idx] == 1:
-                            roi_trials.append(all_traces_grand_avg[roi_id, repeat, stim_idx])
+                            roi_trials.append(all_traces_grand_avg[roi_array_idx, repeat, stim_idx, :])
+
                     if roi_trials:
                         roi_avg_trace = np.mean(roi_trials, axis=0)
                         '''plt.figure()
@@ -1721,13 +1724,17 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     if roi_traces.ndim != 2:
                         print(f"[Warning] roi_traces shape is {roi_traces.shape} — skipping this amplitude.")
                         continue  # or handle it some other way
-                    sum_avg_per_amplitude[amplitude] = np.mean(roi_traces, axis=0)
+                    sum_avg = np.mean(roi_traces, axis =0)
+                    sum_avg_per_amplitude[amplitude] = sum_avg
+                    #sum_avg_per_amplitude[amplitude] = np.mean(roi_traces, axis=0)
                     '''plt.figure()
                     plt.plot(time, sum_avg_per_amplitude[amplitude])
                     plt.show()'''
-                    all_sum_avgs.append(sum_avg_per_amplitude[amplitude])
+                    all_sum_avgs.append(sum_avg)
+                    #all_sum_avgs.append(sum_avg_per_amplitude[amplitude])
                     npy_path = os.path.join(sum_avg_dir, f'sum_avg_{amplitude}uA.npy')
-                    np.save(npy_path, sum_avg_per_amplitude[amplitude])
+                    #np.save(npy_path, sum_avg_per_amplitude[amplitude])
+                    np.save(npy_path, sum_avg)
 
             # Calculate y-limits
             if all_sum_avgs:
@@ -1739,23 +1746,23 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             # Plot
             for stim_idx, amplitude in enumerate(amplitude_values):
                 sum_avg = sum_avg_per_amplitude[amplitude]
-                ax_comb = axes[stim_idx]
+                ax = axes[stim_idx]
                 print(f'shape3:{sum_avg.shape}, {time.shape}')
-                ax_comb.plot(time, sum_avg, linewidth=2)
-                ax_comb.set_title(f"{amplitude} μA")
-                ax_comb.set_xlabel("Time (s)")
-                ax_comb.grid(True)
-                ax_comb.set_ylim(global_min, global_max)
+                ax.plot(time, sum_avg, linewidth=2)
+                ax.set_title(f"{amplitude} μA")
+                ax.set_xlabel("Time (s)")
+                ax.grid(True)
+                ax.set_ylim(global_min, global_max)
                 if stim_idx == 0:
-                    ax_comb.set_ylabel("Mean ΔF/F₀")
+                    ax.set_ylabel("Mean ΔF/F₀")
 
-            df_counts = pd.DataFrame(list(activation_counts.items()), columns=["Amplitude (μA)", "Num Activated ROIs"])
+            df_counts = pd.DataFrame(list(activation_count.items()), columns=["Amplitude (μA)", "Num Activated ROIs"])
             df_counts.to_csv(os.path.join(sum_avg_dir, "activation_counts.csv"), index=False)
 
             fig_combined.suptitle("Average Traces per Amplitude", fontsize=16)
             plt.tight_layout(rect=[0, 0, 1, 0.95])
             subplot_plot_path = os.path.join(sum_avg_dir, 'sum_avg_traces_subplot.png')
-            fig_combined.savefig(subplot_plot_path)
+            plt.savefig(subplot_plot_path)
             plt.show()
 
 def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums, frame_rate ):

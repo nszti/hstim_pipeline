@@ -1607,6 +1607,26 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 F_index_for_all = np.where(cell_indices == roi_id)[0][0]
                 for repeat in range(num_repeats):
                     for stim_idx in range(num_stims_per_repeat):
+                        if stim_idx == 0 and repeat == 0:
+                            start_stim = int(stim_start_times[0][0])
+                            if roi_array_idx == 0:
+                                start_timepoints.append(start_stim)
+                        elif repeat == 0:
+                            start_stim = int(np.round(stim_start_times[0][0] + stim_idx * start_btw_stim_frames))
+                            if roi_array_idx == 0:
+                                start_timepoints.append(start_stim)
+                        else:
+                            offset = (stim_idx * start_btw_stim_frames) + (repeat * (((num_stims_per_repeat - 1) * start_btw_stim_frames) + trial_delay_frames))
+                            start_stim = int(np.round(stim_start_times[0][0] + offset))
+                            if roi_array_idx == 0:
+                                start_timepoints.append(start_stim)
+
+                        pre_start = max(0, start_stim - pre_frames)
+                        post_end = min(F.shape[1], start_stim + post_frames)
+                        trace_segment = F[roi_id, pre_start:post_end]
+
+
+
                         pre_start = max(0, start_stim - pre_frames)
                         post_end = min(F.shape[1], start_stim + post_frames)
                         trace_segment = F[F_index_for_all, pre_start:post_end]

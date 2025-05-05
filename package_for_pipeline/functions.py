@@ -1662,10 +1662,15 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     if not is_activated_in_any_repeat:
                         continue
 
-                    roi_trials = []
+                    '''roi_trials = []
                     for repeat in range(num_repeats):
                         if activation_results[roi_id][repeat][stim_idx] == 1:
-                            roi_trials.append(all_traces_grand_avg[roi_array_idx, repeat, stim_idx, :])
+                            roi_trials.append(all_traces_grand_avg[roi_array_idx, repeat, stim_idx, :])'''
+                    roi_trials = [
+                        all_traces[roi_idx_in_array, repeat, stim_idx, :]
+                        for repeat in range(num_repeats)
+                        if activation_results[roi_id][repeat][stim_idx] == 1
+                    ]
 
                     if roi_trials:
                         roi_avg_trace = np.mean(roi_trials, axis=0)

@@ -1602,7 +1602,8 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             plt.show()'''
     # plot 4.2: ROIadik F_index & trace az osszes iscell==1 ROIra
             num_rois = len(cell_indices)
-            all_traces_grand_avg = np.zeros((num_repeats, num_stims_per_repeat, total_frames))
+            all_traces_grand_avg = np.zeros((num_rois, num_repeats, num_stims_per_repeat, total_frames))
+            print(f'shape1: {all_traces_grand_avg.shape}')
             for roi_array_idx, roi_id in enumerate(cell_indices):
                 F_index_for_all = np.where(cell_indices == roi_id)[0][0]
                 for repeat in range(num_repeats):
@@ -1623,17 +1624,13 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
                         pre_start = max(0, start_stim - pre_frames)
                         post_end = min(F.shape[1], start_stim + post_frames)
-                        trace_segment = F[roi_id, pre_start:post_end]
-
-
-
-                        pre_start = max(0, start_stim - pre_frames)
-                        post_end = min(F.shape[1], start_stim + post_frames)
                         trace_segment = F[F_index_for_all, pre_start:post_end]
+                        print(f'check: {trace_segment.shape}, {total_frames}')
+
                         if trace_segment.shape[0] == 0:
                             trace_segment = np.zeros(total_frames)
                         all_traces_grand_avg[roi_array_idx, repeat, stim_idx] = trace_segment
-
+            print(f'shape2: {all_traces_grand_avg.shape}')
             time = np.linspace(-1, 3, total_frames)
             # Create output dir
             sum_avg_dir = os.path.join(expDir, dir, 'sum_avg_dir')
@@ -1725,9 +1722,9 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                         print(f"[Warning] roi_traces shape is {roi_traces.shape} — skipping this amplitude.")
                         continue  # or handle it some other way
                     sum_avg_per_amplitude[amplitude] = np.mean(roi_traces, axis=0)
-                    plt.figure()
+                    '''plt.figure()
                     plt.plot(time, sum_avg_per_amplitude[amplitude])
-                    plt.show()
+                    plt.show()'''
                     all_sum_avgs.append(sum_avg_per_amplitude[amplitude])
                     npy_path = os.path.join(sum_avg_dir, f'sum_avg_{amplitude}uA.npy')
                     np.save(npy_path, sum_avg_per_amplitude[amplitude])
@@ -1741,16 +1738,16 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
             # Plot
             for stim_idx, amplitude in enumerate(amplitude_values):
-                if amplitude in sum_avg_per_amplitude:
-                    sum_avg = sum_avg_per_amplitude[amplitude]
-                    ax_comb = axes[stim_idx]
-                    ax_comb.plot(time, sum_avg, linewidth=2)
-                    ax_comb.set_title(f"{amplitude} μA")
-                    ax_comb.set_xlabel("Time (s)")
-                    ax_comb.grid(True)
-                    ax_comb.set_ylim(global_min, global_max)
-                    if stim_idx == 0:
-                        ax_comb.set_ylabel("Mean ΔF/F₀")
+                sum_avg = sum_avg_per_amplitude[amplitude]
+                ax_comb = axes[stim_idx]
+                print(f'shape3:{sum_avg.shape}, {time.shape}')
+                ax_comb.plot(time, sum_avg, linewidth=2)
+                ax_comb.set_title(f"{amplitude} μA")
+                ax_comb.set_xlabel("Time (s)")
+                ax_comb.grid(True)
+                ax_comb.set_ylim(global_min, global_max)
+                if stim_idx == 0:
+                    ax_comb.set_ylabel("Mean ΔF/F₀")
 
             df_counts = pd.DataFrame(list(activation_counts.items()), columns=["Amplitude (μA)", "Num Activated ROIs"])
             df_counts.to_csv(os.path.join(sum_avg_dir, "activation_counts.csv"), index=False)

@@ -1628,12 +1628,17 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 # avg across rois
                 if roi_traces:
                     sum_avg = np.mean(roi_traces, axis=0)
+                    sum_avg_per_amplitude[amplitude] = sum_avg
                     all_sum_avgs.append(sum_avg)
+                    npy_path = os.path.join(sum_avg_dir, f'sum_avg_{amplitude}uA.npy')
+                    np.save(npy_path, sum_avg)
+            if all_sum_avgs:
+                global_min = min(np.min(trace) for trace in all_sum_avgs)
+                global_max = max(np.max(trace) for trace in all_sum_avgs)
 
-                    # after the loop (before plotting):
-                    global_min = min(np.min(trace) for trace in all_sum_avgs)
-                    global_max = max(np.max(trace) for trace in all_sum_avgs)
-
+            for stim_idx, amplitude in enumerate(amplitude_values):
+                if amplitude in sum_avg_per_amplitude:
+                    sum_avg = sum_avg_per_amplitude[amplitude]
                     ax_comb = axes[stim_idx]
                     ax_comb.plot(time, sum_avg, linewidth=2)
                     ax_comb.set_title(f"{amplitude} μA")
@@ -1643,14 +1648,11 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     if stim_idx == 0:
                         ax_comb.set_ylabel("Mean ΔF/F₀")
 
-                    npy_path = os.path.join(sum_avg_dir, f'sum_avg_{amplitude}uA.npy')
-                    np.save(npy_path, sum_avg)
-
             fig_combined.suptitle("Average Traces per Amplitude", fontsize=16)
             plt.tight_layout(rect=[0, 0, 1, 0.95])
             subplot_plot_path = os.path.join(sum_avg_dir, 'sum_avg_traces_subplot.png')
             fig_combined.savefig(subplot_plot_path)
-            plt.close(fig_combined)
+            plt.show()
 
 def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums, frame_rate ):
     # Settings
@@ -1831,11 +1833,16 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
             activation_df = pd.DataFrame({
                 'ROI_Index': activated_roi_indices,
                 'Trace': traces,
+
+            })
+            med_val_df = pd.DataFrame({
                 'Y_coord': y_coords,
                 'X_coord': x_coords
             })
             csv_path = os.path.join(tiff_dir, f'activated_neurons_{mesc_file_name}_{list_of_file_nums[0][block_idx]}.csv')
             activation_df.to_csv(csv_path, index=False)
+            med_csv_path = os.path.join(tiff_dir, f'med_of_act_ns_{mesc_file_name}_{list_of_file_nums[0][block_idx]}.csv')
+            med_val_df.to_csv(med_csv_path, index=False)
 
 
 def collect_file_paths_for_blocks(tiff_dir, list_of_file_nums):

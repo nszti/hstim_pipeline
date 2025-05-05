@@ -5,6 +5,7 @@ from pathlib import Path
 import h5py
 import pandas as pd
 
+
 def suite2p_to_cellreg_masks(expDir, list_of_file_nums):
     base_dir = Path(expDir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
@@ -35,7 +36,6 @@ def suite2p_to_cellreg_masks(expDir, list_of_file_nums):
             cell_indices = np.where(iscell[:, 0] == 1)[0]
             stat = [stat[i] for i in cell_indices]
 
-
             filtered_stat = []
             for roi in stat:
                 y, x = roi['med']
@@ -53,7 +53,7 @@ def suite2p_to_cellreg_masks(expDir, list_of_file_nums):
                 mask[ypix, xpix] = 1
                 masks.append(mask)
             if masks:
-                mask_stack = np.stack(masks, axis=-0).astype(np.double)   # [nROIs, Ly, Lx]
+                mask_stack = np.stack(masks, axis=-0).astype(np.double)  # [nROIs, Ly, Lx]
                 print(mask_stack.shape)
                 output_folder = os.path.join(expDir, 'cellreg_files')
                 os.makedirs(output_folder, exist_ok=True)
@@ -62,7 +62,8 @@ def suite2p_to_cellreg_masks(expDir, list_of_file_nums):
                 savemat(out_path, {'cells_map': mask_stack})
                 print(f" Saved: {out_path} with shape {mask_stack.shape}")
 
-def cellreg_analysis(expDir, mat_file, list_of_file_nums, postfix):
+
+def cellreg_analysis(expDir, mat_file, list_of_file_nums, postfix, num_trials):
     base_dir = Path(expDir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
     cell_reg_path = os.path.join(expDir, 'cellreg_files/')
@@ -70,10 +71,10 @@ def cellreg_analysis(expDir, mat_file, list_of_file_nums, postfix):
     input_file = os.path.join(cell_reg_path_input, mat_file)
     with h5py.File(input_file, 'r') as file:
         # List all top-level keys in the .mat file
-        #print(list(file.keys()))
+        # print(list(file.keys()))
         # nested list of cell_to_index_map
         data = file['cell_registered_struct']['cell_to_index_map'][:][:]
-    num_sessions, num_cells  = data.shape
+    num_sessions, num_cells = data.shape
     print(num_cells, num_sessions)
     total_cells_per_session = np.max(data, axis=0)
 
@@ -88,7 +89,8 @@ def cellreg_analysis(expDir, mat_file, list_of_file_nums, postfix):
             num_matches = len(holder)
             percent_overlap = (num_matches / num_cells) * 100
             # Print the number of matches for this session pair
-            print(f"Sessions {i+1} & {j+1}: {num_matches} overlapping cells which is {percent_overlap:.2f}% of total cells")
+            print(
+                f"Sessions {i + 1} & {j + 1}: {num_matches} overlapping cells which is {percent_overlap:.2f}% of total cells")
             result_rows.append([f"Session {i + 1}", f"Session {j + 1}", num_matches, f"{percent_overlap:.2f}%"])
 
     cumulative_overlap = np.logical_and(data[0] > 0, data[1] > 0)
@@ -98,7 +100,7 @@ def cellreg_analysis(expDir, mat_file, list_of_file_nums, postfix):
     num_cumulative = np.sum(cumulative_overlap)
     percent_cumulative = (num_cumulative / num_cells) * 100
     print(f"Cumulative overlap across sessions: {num_cumulative} cells ({percent_cumulative:.2f}%)")
-    result_rows.append(["_ overlap", f"Sessions 1 to {num_sessions}", num_cumulative, f"{percent_cumulative:.2f}%"])
+    result_rows.append(["Sum overlap", f"Sessions 1 to {num_sessions}", num_cumulative, f"{percent_cumulative:.2f}%"])
 
     result_rows.append(["Total cells registered", num_cells])
     csv_path = os.path.join(cell_reg_path_input, 'session_pair_overlap.csv')
@@ -106,7 +108,9 @@ def cellreg_analysis(expDir, mat_file, list_of_file_nums, postfix):
     df.to_csv(csv_path, index=False)
     print("Overlap matrix saved as overlap_matrix.csv")
 
-def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per_repeat, list_of_file_nums, start_btw_stim, stim_dur, threshold_value):
+
+def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per_repeat, list_of_file_nums,
+                            start_btw_stim, stim_dur, threshold_value):
     base_dir = Path(expDir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
     cell_reg_path = os.path.join(expDir, 'cellreg_files/')
@@ -187,7 +191,7 @@ def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per
                     activation_count += 1
             # print(activation_results)
             print(f"Number of activated neurons: {activation_count} out of {num_cells} cells")
-            #===
+            # ===
             Ly, Lx = ops['Ly'], ops['Lx']
             masks = []
             activated_roi_indices = []
@@ -200,7 +204,8 @@ def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per
                     mask = np.zeros((Ly, Lx), dtype=np.uint8)
                     mask[ypix, xpix] = 1
                     masks.append(mask)
-                    activated_roi_indices.append(roi_data)  # for cellreg_to_suite2p bc activated_roi_indices[i] will contain the original stat index
+                    activated_roi_indices.append(
+                        roi_data)  # for cellreg_to_suite2p bc activated_roi_indices[i] will contain the original stat index
                     med_values.append(roi['med'])
             if masks:
                 mask_stack = np.stack(masks, axis=-0).astype(np.double)  # [nROIs, Ly, Lx]
@@ -212,7 +217,7 @@ def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per
                 savemat(out_path, {'cells_map': mask_stack})
                 print(f" Saved: {out_path} with shape {mask_stack.shape}")
 
-            activated_roi_df  = pd.DataFrame({
+            activated_roi_df = pd.DataFrame({
                 'ROI_Index': activated_roi_indices,
                 'Med_Values': med_values
             })
@@ -228,21 +233,21 @@ def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per
 
             # === Match activated ROIs with cellreg data ===
             matched_results = []
-            for i in range(num_sessions-1):
-                for j in range(i+1, num_sessions):
+            for i in range(num_sessions - 1):
+                for j in range(i + 1, num_sessions):
                     for row in range(data.shape[0]):
                         print(row)
-                        roi_i= int(data[row,i])
+                        roi_i = int(data[row, i])
                         roi_j = int(data[row, j])
                         print(i, j, roi_j)
-                        if roi_i >0 and roi_j > 0:
+                        if roi_i > 0 and roi_j > 0:
                             stat_i = all_stats[i][roi_i]
                             stat_j = all_stats[j][roi_j]
                             med_i = tuple(stat_i['med'])
                             med_j = tuple(stat_j['med'])
-                            #print(roi_i, med_i, roi_j, med_j)
+                            # print(roi_i, med_i, roi_j, med_j)
 
-            #for cellreg_idx in data[:,]:
+            # for cellreg_idx in data[:,]:
             '''
                 for i in range(data.shape[cellreg_idx]):
                     roi_i = int(data[cellreg_idx, i])
@@ -258,7 +263,7 @@ def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per
                         y_i, x_i = stat_i['med']
                         y_j, x_j = stat_j['med']
                         #print(f'{data[cellreg_idx]},({y_i, x_i}), ({y_j, x_j})')
-                        
+
                         for idx, row in activated_roi_df.iterrows():
                             print(y_i, x_i,row['Med_Values'])
                             if (y_i, x_i) == row['Med_Values']:
@@ -272,10 +277,9 @@ def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per
                                 })
             '''
 
-
-            #print(matched_results)
+            # print(matched_results)
             results_df = pd.DataFrame(matched_results)
             out_path = os.path.join(cell_reg_path_input, 'matched_cellreg_to_suite2p.csv')
-            #results_df.to_csv(out_path, index=False)
-            #print(f"matched cellreg to suite2p saved to {out_path}")
+            # results_df.to_csv(out_path, index=False)
+            # print(f"matched cellreg to suite2p saved to {out_path}")
 

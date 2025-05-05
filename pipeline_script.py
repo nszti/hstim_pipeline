@@ -32,43 +32,26 @@ import os
 #------STEPS IN PIPELINE END------
 
 #------VALUES TO CHANGE------
-
-root_directory = 'c:/Hyperstim/data_analysis/2025-04-01-Amouse-invivo-GCaMP6f/' #
+'''
+root_directory = 'c:/Hyperstim/data_analysis/2025-04-24-Amouse-invivo-GCaMP6f/'
+#root_directory = 'c:/Hyperstim/data_analysis/2025-04-01-Amouse-invivo-GCaMP6f/' #
 #root_directory = 'c:/Hyperstim/data_analysis/2023_09_25_GCAMP6F/'
 #root_directory = 'c:/Hyperstim/data_analysis/2025-03-25-Amouse-invivo-GCaMP6f/'
 #root_directory = 'c:/Hyperstim/data_analysis/AMouse-2025-03-05-invivo-GCaMP6f/'
-tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-01-Amouse-invivo-GCaMP6f/merged_tiffs/'
+tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-24-Amouse-invivo-GCaMP6f/merged_tiffs/'
+#tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-01-Amouse-invivo-GCaMP6f/merged_tiffs/'
 #tiff_directory = 'c:/Hyperstim/data_analysis/2023_09_25_GCAMP6F/merged_tiffs/'
 #tiff_directory= 'c:/Hyperstim/data_analysis/2025-03-25-Amouse-invivo-GCaMP6f/merged_tiffs/'
 #tiff_directory = 'c:/Hyperstim/data_analysis/AMouse-2025-03-05-invivo-GCaMP6f/merged_tiffs/'
 #mesc_file_name = 'AMouse-2025-03-05-invivo-GCaMP6f-2' '2025-04-01-Amouse-invivo-GCaMP6f-2'
 #mesc_file_name = '2025-03-25-Amouse-invivo-GCaMP6f'
 #mesc_file_name = 'AMouse-2025-03-05-invivo-GCaMP6f-2'
-mesc_file_name = '2025-04-01-Amouse-invivo-GCaMP6f-2'
+#mesc_file_name = '2025-04-01-Amouse-invivo-GCaMP6f-2'
+mesc_file_name ='2025-04-24-Amouse-invivo-GCaMP6f'
 mesc_DATA_file = 'mesc_data.npy' #from mesc_tiff_extract
 mat_file = 'cellRegistered_20250404_115825.mat'
 list_of_file_nums = [
- [8]
-]
-
-gcamp = 'f' #for GCaMP6s: 's'
-stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
-'''
-
-root_directory = 'c:/Hyperstim/data_analysis/2025-04-15-Amouse-invivo-GCaMP6f/' #
-#root_directory = 'c:/Hyperstim/data_analysis/2025-04-14-Amouse-invivo-GCaMP6f/'
-tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-15-Amouse-invivo-GCaMP6f/merged_tiffs/'
-#tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-14-Amouse-invivo-GCaMP6f/merged_tiffs/'
-mesc_file_name = '2025-04-15-Amouse-invivo-GCaMP6f'
-#mesc_file_name = '2025-04-14-Amouse-invivo-GCaMP6f'
-mesc_DATA_file = 'mesc_data.npy'
-mat_file = 'cellRegistered_20250410_151715.mat'
-postfix = 'activated_5_6/'
-list_of_file_nums = [
-[47],
-[48],
-[49],
-[50],
+  [44],
 [51],
 [52],
 [53],
@@ -78,19 +61,42 @@ list_of_file_nums = [
 [57]
 
 ]
+
+gcamp = 'f' #for GCaMP6s: 's'
+stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
 '''
+
+#root_directory = 'c:/Hyperstim/data_analysis/2025-04-15-Amouse-invivo-GCaMP6f/' #
+#root_directory = 'c:/Hyperstim/data_analysis/2025-04-24-Amouse-invivo-GCaMP6f/'
+root_directory = 'c:/Hyperstim/data_analysis/2025-04-29-Amouse-invivo-GCaMP6f/'
+#tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-15-Amouse-invivo-GCaMP6f/merged_tiffs/'
+#tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-24-Amouse-invivo-GCaMP6f/merged_tiffs/'
+tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-29-Amouse-invivo-GCaMP6f/merged_tiffs/'
+mesc_file_name = '2025-04-29-Amouse-invivo-GCaMP6f'
+#mesc_file_name = '2025-04-15-Amouse-invivo-GCaMP6f'
+mesc_DATA_file = 'mesc_data.npy'
+mat_file = 'cellRegistered_20250504_121302.mat'
+postfix = '53_54_55_56_57_58_59_60_61_62_63_64_65_66_ordered'
+
+list_of_file_nums = [
+
+]
+
 gcamp = 'f' #for GCaMP6s: 's'
 stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
 
-
 RUN_MESC_PREPROCESS = False  #tiff extraction
-RUN_PREPROCESS = False # osszefuz listaban megadott tifeket, it fut le a suite2p is
-RUN_ANALYSIS_PREP = False #F0 savelodik, ha modositod a suite2p barmelyik propertyet, akkor ezt ujra kell futtatni h frissuljon az F0
-PLOTS = True #Analysis plotok, utolso 3 a relevans
+RUN_PREPROCESS = False # osszefuz listaban megadott tifeket
+S2P = False #suite2p futtatás
+#--------
+RUN_ANALYSIS_PREP = False  #F0 savelodik, ha modositod a suite2p barmelyik propertyet, akkor ezt ujra kell futtatni h frissuljon az F0
+PLOTS = False #Analysis plotok, utolso 3 a relevans
+PLOT_BTW_EXP = False
 RUN_FOR_SINGLE_PARAM_EXP = False
 RUN_FOR_ADVANCED_EXP = False
 RUN_CELLREG_PREP = False #cellreghez mat fileokat ment ki
 #cellreg hasznalat: CellReg.m run > GUIban load new dataval berakod a mat fileokat & 1.07 micront megadod> Non-rigid alignment futtatas > 12 micronos probabilistc modeling futtatas > a tobbit csak megnyomkodod sorban
+RUN_CELLREG_ANALYSIS = True
 
 #------VALUES TO CHANGE END------
 if RUN_MESC_PREPROCESS:
@@ -98,9 +104,11 @@ if RUN_MESC_PREPROCESS:
 
 #-----1.2.step: frequency_to_save, electrode_roi_to_save-->automatization pending-----
 if RUN_PREPROCESS:
+  #
   mesc_data_handling.tiff_merge(mesc_file_name, list_of_file_nums, root_directory)
   mesc_data_handling.extract_stim_frame(root_directory, mesc_DATA_file, list_of_file_nums) #--> saves stimTimes.npy needed for baseline
-  suite2p_script.run_suite2p(os.path.join(root_directory,'merged_tiffs/'), gcamp)
+if S2P:
+  suite2p_script.run_suite2p(tiff_directory, list_of_file_nums, gcamp)
 
 #--------------Suite2p manual sorting------------------
 
@@ -110,6 +118,7 @@ if RUN_ANALYSIS_PREP:
   functions.dist_vals(tiff_directory, list_of_file_nums)
   functions.stim_dur_val(tiff_directory, list_of_file_nums)'''
   functions.baseline_val(root_directory, tiff_directory, list_of_file_nums) #--> saves F0.npy
+  functions.analyze_merged_activation_and_save(root_directory, mesc_file_name, tiff_directory, list_of_file_nums)
 
 
 #functions.activated_neurons_val(root_directory, tiff_directory, list_of_file_nums, 1)
@@ -117,14 +126,18 @@ if RUN_ANALYSIS_PREP:
 #functions.data_analysis_values(stim_type, tiff_directory, list_of_file_nums)
 #functions_current_steering.plot_stim_traces(tiff_directory, num_repeats=6, num_stims_per_repeat=5)
 if PLOTS:
-  functions.plot_stim_traces(tiff_directory, 30.97, 5, 5, list_of_file_nums, 8, 5.2, 2) #5.165
+  functions.plot_stim_traces(tiff_directory, 30.97, 5, 5, list_of_file_nums, 8, 5.2, 0) #5.165
+if PLOT_BTW_EXP:
+  functions.plot_across_experiments(root_directory, tiff_directory, list_of_file_nums, 30.97)
 
 #overlap.overlap_calc(tiff_directory, list_of_file_nums)
 #overlap.create_roi_map(tiff_directory, list_of_file_nums)
 
 if RUN_CELLREG_PREP:
   cellreg_preprocess.suite2p_to_cellreg_masks(tiff_directory, list_of_file_nums)
-  #cellreg_preprocess.cellreg_analysis(tiff_directory, mat_file, list_of_file_nums, postfix)
+# manual: run cellreg pipeline
+if RUN_CELLREG_ANALYSIS:
+  cellreg_preprocess.cellreg_analysis(tiff_directory, mat_file, list_of_file_nums, postfix, 5)
   #cellreg_preprocess.single_block_activation(tiff_directory,postfix, mat_file,  30.97, 5, list_of_file_nums, 2.4,200, 3 )
 
 '''

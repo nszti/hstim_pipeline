@@ -63,10 +63,9 @@ def suite2p_to_cellreg_masks(expDir, list_of_file_nums):
                 print(f" Saved: {out_path} with shape {mask_stack.shape}")
 
 def cellreg_analysis(expDir, mat_file, list_of_file_nums, postfix):
-    # === Load data ===
-    stat_paths = [os.path.join(expDir, sess_dir, 'suite2p', 'plane0', 'stat.npy') for sess_dir in list_of_file_nums]
-    all_stats = [np.load(p, allow_pickle=True) for p in stat_paths]
-    cell_reg_path = output_folder = os.path.join(expDir, 'cellreg_files/')
+    base_dir = Path(expDir)
+    filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+    cell_reg_path = os.path.join(expDir, 'cellreg_files/')
     cell_reg_path_input = cell_reg_path + postfix
     input_file = os.path.join(cell_reg_path_input, mat_file)
     with h5py.File(input_file, 'r') as file:
@@ -78,7 +77,6 @@ def cellreg_analysis(expDir, mat_file, list_of_file_nums, postfix):
     print(num_cells, num_sessions)
     total_cells_per_session = np.max(data, axis=0)
 
-    '''
     result_rows = []
     for i in range(num_sessions):
         for j in range(i + 1, num_sessions):
@@ -92,45 +90,21 @@ def cellreg_analysis(expDir, mat_file, list_of_file_nums, postfix):
             # Print the number of matches for this session pair
             print(f"Sessions {i+1} & {j+1}: {num_matches} overlapping cells which is {percent_overlap:.2f}% of total cells")
             result_rows.append([f"Session {i + 1}", f"Session {j + 1}", num_matches, f"{percent_overlap:.2f}%"])
+
+    cumulative_overlap = np.logical_and(data[0] > 0, data[1] > 0)
+    for session in range(2, num_sessions):
+        cumulative_overlap = np.logical_and(cumulative_overlap, data[session] > 0)
+
+    num_cumulative = np.sum(cumulative_overlap)
+    percent_cumulative = (num_cumulative / num_cells) * 100
+    print(f"Cumulative overlap across sessions: {num_cumulative} cells ({percent_cumulative:.2f}%)")
+    result_rows.append(["_ overlap", f"Sessions 1 to {num_sessions}", num_cumulative, f"{percent_cumulative:.2f}%"])
+
     result_rows.append(["Total cells registered", num_cells])
-    csv_path = os.path.join(cell_reg_path, 'session_pair_overlap.csv')
+    csv_path = os.path.join(cell_reg_path_input, 'session_pair_overlap.csv')
     df = pd.DataFrame(result_rows, columns=['Session A', 'Session B', 'Number of Overlapping Cells', 'Overlap %'])
     df.to_csv(csv_path, index=False)
     print("Overlap matrix saved as overlap_matrix.csv")
-    '''
-
-    match_pairs = []
-
-    for cellreg_idx in range(data.shape[0]):
-        for i in range(data.shape[1]):
-            roi_i = int(data[cellreg_idx, i])
-            if roi_i <= 0:
-                continue
-            for j in range(i + 1, data.shape[1]):
-                roi_j = int(data[cellreg_idx, j])
-                if roi_j <= 0:
-                    continue
-
-                # med info from stat
-                stat_i = all_stats[i][roi_i]
-                stat_j = all_stats[j][roi_j]
-                y_i, x_i = stat_i['med']
-                y_j, x_j = stat_j['med']
-                print(y_i, x_i)
-                match_pairs.append({
-                    'CellReg Index': cellreg_idx,
-                    'Session A': i + 1,
-                    'Cr ROI A': roi_i,
-                    'med A': [float(y_i), float(x_i)], #(y,x) og suite2p format
-                    'Session B': j + 1,
-                    'Cr ROI B': roi_j,
-                    'med B': [float(y_j), float(x_j)]
-                })
-
-    match_df = pd.DataFrame(match_pairs)
-    csv_out = os.path.join(cell_reg_path, 'cellreg_matched_rois.csv')
-    #match_df.to_csv(csv_out, index=False)
-    #print(f"Matched ROI pairs saved to: {csv_out}")
 
 def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per_repeat, list_of_file_nums, start_btw_stim, stim_dur, threshold_value):
     base_dir = Path(expDir)

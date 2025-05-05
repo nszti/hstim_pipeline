@@ -138,7 +138,29 @@ functions.timecourse_vals(tiff_directory, list_of_file_nums, 5)
 functions.data_analysis_values(stim_type, tiff_directory, list_of_file_nums)
 
 
+
 #TBD
 
 functions.scratch_val(tiff_directory)
 '''
+sum_avg_path = 'path/to/sum_avg_values.npy'
+            sum_avg_per_amplitude = np.load(sum_avg_path, allow_pickle=True).item()
+
+            # kell?
+            sorted_items = sorted(sum_avg_per_amplitude.items())
+
+            # time axis of 4s duration
+            trace_length = len(next(iter(sum_avg_per_amplitude.values())))
+            time = np.linspace(-1, 3, trace_length)
+
+            plt.figure(figsize=(8, 5))
+            for amplitude, trace in sorted_items:
+                plt.plot(time, trace, label=f"{amplitude} μA", linewidth=2)
+
+            plt.title("Sum Avg Traces per Amplitude: .npy mentes ell")
+            plt.xlabel("Time (s)")
+            plt.ylabel("Mean ΔF/F₀")
+            plt.legend()
+            plt.grid(True)
+            plt.tight_layout()
+            plt.show()

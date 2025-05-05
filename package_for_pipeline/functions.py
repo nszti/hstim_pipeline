@@ -1720,6 +1720,10 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     print(f"Saved mask for {amplitude}uA to {out_path} with shape {mask_stack.shape}")
 
                 if roi_traces:
+                    roi_traces = np.array(roi_traces)
+                    if roi_traces.ndim != 2:
+                        print(f"[Warning] roi_traces shape is {roi_traces.shape} — skipping this amplitude.")
+                        continue  # or handle it some other way
                     sum_avg_per_amplitude[amplitude] = np.mean(roi_traces, axis=0)
                     plt.figure()
                     plt.plot(time, sum_avg_per_amplitude[amplitude])

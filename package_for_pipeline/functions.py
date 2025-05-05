@@ -1652,9 +1652,12 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             fig_combined.savefig(subplot_plot_path)
             plt.close(fig_combined)
 
-def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums ):
+def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums, frame_rate ):
     # Settings
-    amplitude_keys = ['10', '20', '30', '40', '50']  # uA values to expect
+    amplitude_keys = ['10', '20', '30','15', '25']  # uA values to expect
+    pre_frames = int(np.round(frame_rate, 0))  # 1 second before
+    post_frames = int(np.round((frame_rate * 3), 0))  # 3 seconds after
+    total_frames = int(np.round((pre_frames + post_frames), 0))
 
     # Step 1: Find matching merged directories
     base_dir = Path(tiff_dir)
@@ -1665,13 +1668,13 @@ def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums ):
         suffix = '_'.join(map(str, numbers_to_merge))
         for dir in filenames:
             if f'MUnit_{suffix}' in dir:
-                matched_dirs.append(os.path.join(root_directory, 'merged_tiffs', dir))
-                print(f"Matched directory: {dir}")
+                matched_dirs.append(os.path.join(root_directory, 'merged_tiffs/', dir))
+                #print(f"Matched directory: {dir}")
     print(matched_dirs)
     # collect traces by amplitude
     traces_by_amplitude = {amp: [] for amp in amplitude_keys}
     for dir_path in matched_dirs:
-        sum_avg_subdir = os.path.join(dir_path, 'sum_avg_dir/')
+        sum_avg_subdir = os.path.join(dir_path, 'sum_avg_dir')
         for file in os.listdir(sum_avg_subdir):
             match = re.match(r'sum_avg_(\d+)uA\.npy', file)
             if match:
@@ -1684,7 +1687,7 @@ def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums ):
 
     # subplots for amplitude figs
     fig, axes = plt.subplots(1, 5, figsize=(20, 4), sharey=True)
-    time = np.linspace(-1, 3, len(next(iter(next(iter(traces_by_amplitude.values()))))))  # case for diff length traces ?? --> total frames method?
+    time = np.linspace(-1, 3, total_frames)
 
     for idx, amp in enumerate(amplitude_keys):
         ax = axes[idx]
@@ -1706,10 +1709,25 @@ def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums ):
     plt.show()
 
 
-def analyze_merged_activation_and_save(exp_dir, tiff_dir, list_of_file_nums, block_len = 2168, stim_times, threshold_value=3.0):
+def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_of_file_nums, block_len=1859, stim_segm = 6 , threshold_value=3.0):
+    #04-29
+    #stim_times = [337, 336, 336, 340, 336, 334, 329, 328, 340, 336, 335, 334, 336]
+    #stim_times = [336, 338, 329, 337, 336, 359, 334, 340, 327, 334, 332, 336, 334, 338]
+    #stim_times = [337,335, 335, 343, 331]
+    #stim_times = [339, 345, 340, 338, 349]
+    #stim_times = [332, 330, 342, 336, 336, 329, 329, 336]
+    #04-29-2
+    #stim_times=[326, 328]
+    #stim_times = [341, 326, 254, 338, 339, 334, 342, 341, 338, 341, 344, 337, 325]
+
+    #04-15
+    stim_times = [323, 326, 331, 332, 329, 333, 432, 331, 330, 321, 332]
+    #stim_times = [321, 323, 325, 328, 320, 321, 323, 323, 335, 322, 322]
+
+
     base_dir = Path(tiff_dir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
-    cellreg_dir = Path(os.path.join(base_dir,'/cellreg_files'))
+    cellreg_dir = Path(os.path.join(base_dir, '/cellreg_files'))
     cellreg_dir.mkdir(exist_ok=True)
 
     for tif in list_of_file_nums:
@@ -1724,12 +1742,12 @@ def analyze_merged_activation_and_save(exp_dir, tiff_dir, list_of_file_nums, blo
             continue
 
         exp_dir = os.path.join(base_dir, matched_file)
-        suite2p_dir = os.path.join(exp_dir,'suite2p','plane0')
+        suite2p_dir = os.path.join(exp_dir, 'suite2p', 'plane0')
 
         # Load base data
         mesc_path = os.path.join(exp_dir, 'mesc_data.npy')
-        F = np.load(os.path.join(suite2p_dir,'F0.npy'), allow_pickle=True)
-        iscell = np.load(os.path.join(suite2p_dir,'iscell.npy'), allow_pickle=True)
+        F = np.load(os.path.join(suite2p_dir, 'F0.npy'), allow_pickle=True)
+        iscell = np.load(os.path.join(suite2p_dir, 'iscell.npy'), allow_pickle=True)
         stat = np.load(os.path.join(suite2p_dir, 'stat.npy'), allow_pickle=True)
         ops = np.load(os.path.join(suite2p_dir, 'ops.npy'), allow_pickle=True).item()
 
@@ -1737,51 +1755,69 @@ def analyze_merged_activation_and_save(exp_dir, tiff_dir, list_of_file_nums, blo
         valid_rois = np.where(iscell[:, 0] == 1)[0]
 
         num_blocks = F.shape[1] // block_len
+        print(num_blocks)
+        #print(num_blocks)
         for block_idx in range(num_blocks):
+            print(block_idx)
             start_frame = block_idx * block_len
             end_frame = start_frame + block_len
-            F_block = F[valid_rois, start_frame:end_frame]
+            #
             block_stim_time = stim_times[block_idx]
-            block_net = F_block[block_stim_time:start_frame]
-            stim_net = block_len - block_stim_time
+            #print(block_stim_time)
+            #block_net = F_block[block_stim_time:start_frame]
+            #stim_net = block_len - block_stim_time
 
             activation_results = {}
             activated_roi_indices = []
             masks = []
             traces = []
             for i, roi in enumerate(valid_rois):
-                trace = F_block[i]
-                baseline = trace[:block_stim_time]
+                F_block = F[i, start_frame:end_frame]
+                block_net = F_block[block_stim_time:end_frame]
+                stim_net = block_len - block_stim_time
+                baseline = F_block[:block_stim_time]
                 baseline_avg = np.mean(baseline)
                 baseline_std = np.std(baseline)
                 threshold = baseline_avg + threshold_value * baseline_std
-
                 stim_end = end_frame
-                if stim_end > len(trace):
-                    continue
-                stim_segment = trace[stim_net:stim_end]
-                stim_avg = np.mean(stim_segment)
-                active = int(stim_avg > threshold)
-    
+                #if stim_end > len(F_block):
+                #    continue
+
+                trialNo = 10
+                trialDur = 4.2
+                frameRate = 30.97
+                trialDurInFrames = int(round(trialDur * frameRate))
+                #print(trialDurInFrames)
+                stim_segments = []
+                for j in range(trialNo):
+                    stim_segment = F_block[block_stim_time + (trialDurInFrames*j): block_stim_time + (trialDurInFrames)*j +stim_segm]
+                    stim_segments.append(stim_segment)
+                #stim_segment = F_block[block_stim_time:block_stim_time+stim_segm]
+                stim_avg = np.mean(stim_segments)
+                active = False
+                activation = 1 if stim_avg > threshold else 0
+                #print(stim_avg, threshold)
+                if activation == 1:
+                    active = True
                 if active:
                     activated_roi_indices.append(roi)
-                    traces.append(trace)
-    
+                    traces.append(F_block)
+
+
                     roi_stat = stat[roi]
                     mask = np.zeros((Ly, Lx), dtype=np.uint8)
                     mask[roi_stat['ypix'], roi_stat['xpix']] = 1
                     masks.append(mask)
 
                     # CellReg mask
-                    roi_stat = stat[roi]
-                    mask = np.zeros((Ly, Lx), dtype=np.uint8)
-                    mask[roi_stat['ypix'], roi_stat['xpix']] = 1
-                    masks.append(mask)
-
+                    #roi_stat = stat[roi]
+                    #mask = np.zeros((Ly, Lx), dtype=np.uint8)
+                    #mask[roi_stat['ypix'], roi_stat['xpix']] = 1
+                    #masks.append(mask)
             # Save CellReg mask
             if masks:
                 mask_stack = np.stack(masks, axis=0).astype(np.double)
-                mat_path = cellreg_dir / f'block_{block_idx + 1}_cellreg_input.mat'
+                mat_path = os.path.join(tiff_dir, f'cellreg_input_{mesc_file_name}_{list_of_file_nums[0][block_idx]}.mat')
                 savemat(mat_path, {'cells_map': mask_stack})
 
             # Save activation info
@@ -1789,9 +1825,8 @@ def analyze_merged_activation_and_save(exp_dir, tiff_dir, list_of_file_nums, blo
                 'ROI_Index': activated_roi_indices,
                 'Trace': traces
             })
-            csv_path = exp_dir / f'block_{block_idx + 1}_activated_neurons.csv'
+            csv_path = os.path.join(tiff_dir, f'activated_neurons_{mesc_file_name}_{list_of_file_nums[0][block_idx]}.csv')
             activation_df.to_csv(csv_path, index=False)
-
 
 
 def collect_file_paths_for_blocks(tiff_dir, list_of_file_nums):

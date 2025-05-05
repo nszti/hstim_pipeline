@@ -1054,7 +1054,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             # NB! AMPLITUDOKAT MODOSITSD HOGY A PLOTOKNAL RENDEZVE LEGYENEK
             stimulation_amplitudes = [10, 20, 30, 15, 25]
             cell_indices = np.where(iscell[:, 0] == 1)[0]  # Get indices of valid ROIs
-            #print(cell_indices)
+            print(f'cells{cell_indices}')
             num_cells = len(cell_indices)
             stimulation_duration_frames = int(round((stim_dur / 1000) * frame_rate,0))
             #print(f" rois of cells: {cell_indices}")
@@ -1073,6 +1073,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
             # Storage for traces: Shape (ROIs, repeats, stimulations, frames)
             all_traces = np.zeros((num_repeats, num_stims_per_repeat, total_frames))
+            all_traces_grand_avg = np.zeros((num_repeats, num_stims_per_repeat, total_frames))
             start_timepoints = []
             for repeat in range(num_repeats):
                 for stim_idx in range(num_stims_per_repeat):
@@ -1097,6 +1098,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     if trace_segment.shape[0] == 0:
                         trace_segment = np.zeros(total_frames)
                     all_traces[repeat, stim_idx] = trace_segment
+                    all_traces_grand_avg[repeat, stim_idx] = trace_segment
 
             min_trace_value = np.min(all_traces)
             max_trace_value = np.max(all_traces)
@@ -1349,8 +1351,8 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             plt.scatter(*artif_o_pix, color='white',  label='artificial origo')
             plt.colorbar(label = 'distance from origo')
             plt.title('Activated ROI dist from origo')
-            plt.savefig(os.path.join(expDir, dir, 'roi_map.png'))
-            plt.show()
+            #plt.savefig(os.path.join(expDir, dir, 'roi_map.png'))
+            #plt.show()
 
         #Stimulation counts
             stim_activation_counts = []
@@ -1410,12 +1412,12 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                             xpix = stat[roi_idx]['xpix'][~stat[roi_idx]['overlap']]
                             im[ypix, xpix] = 1
 
-                    ax.imshow(im, cmap='hot', interpolation='nearest')
+                    ax.imshow(im *5, cmap='hot', interpolation='nearest')
                     ax.set_title(f'Repeat {repeat + 1}, Stim {sorted_amplitudes[stim_idx]}uA')
                     ax.axis('off')
 
             plt.tight_layout()
-            plt.savefig(os.path.join(expDir, dir, 'roi_map_per_stim.png'))
+            plt.savefig(os.path.join(expDir, dir, 'roi_map_per_stim.svg'))
             plt.show()
 
 
@@ -1557,7 +1559,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             plt.show()
 
     ##------ plot 4:  grand average--> Avg trace from all activated rois per amplitude ------ ##
-            fig, axes = plt.subplots(1, num_repeats, figsize=(4 * num_repeats, 4), sharey=True)
+            '''fig, axes = plt.subplots(1, num_repeats, figsize=(4 * num_repeats, 4), sharey=True)
             time = np.linspace(-1, 3, total_frames)
             fig.suptitle("Overall average of trials per amplitude", fontsize=16)
 
@@ -1596,7 +1598,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
             plt.tight_layout()
             plt.savefig(avg_plot_path)
-            plt.show()
+            plt.show()'''
     # plot 4.2:
             time = np.linspace(-1, 3, total_frames)
             # Create output dir
@@ -1610,25 +1612,45 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
             sum_avg_per_amplitude = {}
             all_sum_avgs = []
-
+            activation_count = {}
             # Compute average traces per amplitude
             for stim_idx, amplitude in enumerate(amplitude_values):
+                print(f'stimidx {stim_idx}, ampl {amplitude}')
                 roi_traces = []
+                active_count = 0
+                active_rois = []
+
                 for roi_idx in cell_indices:
+                    if any(activation_results[roi_idx][repeat][stim_idx] == 1 for repeat in range(num_repeats)):
+                        active_count +=1
+                        active_rois.append(roi_idx)
                     is_activated_in_any_repeat = any(activation_results[roi_idx][repeat][stim_idx] == 1 for repeat in range(num_repeats))
+
                     if not is_activated_in_any_repeat:
                         continue
                     roi_trials = []
                     for repeat in range(num_repeats):
                         if activation_results[roi_idx][repeat][stim_idx] == 1:
-                            roi_trials.append(all_traces[repeat, stim_idx])
+                            roi_trials.append(all_traces_grand_avg[repeat, stim_idx])
                     if roi_trials:
                         roi_avg_trace = np.mean(roi_trials, axis=0)
                         roi_traces.append(roi_avg_trace)
+                    print(f'active roi for amp {amplitude} : {active_count}')
+                    print(f'{roi_idx}: {len(roi_trials)} for {amplitude}')
+                activation_count[amplitude] = len(active_rois)
+                print(f'for amplitude: {amplitude} active number of roi: {len(active_rois)}')
+
+                df_counts = pd.DataFrame(list(activation_count.items()), columns = ["amplitude (ua)", "num of activated rois"])
+                df_counts.to_csv(os.path.join(sum_avg_dir, "activation_counts.csv"), index = False)
+
                 if roi_traces:
                     sum_avg = np.mean(roi_traces, axis=0)
                     sum_avg_per_amplitude[amplitude] = sum_avg
                     all_sum_avgs.append(sum_avg)
+
+                    '''plt.figure()
+                    plt.plot(time, sum_avg)
+                    plt.show()'''
 
                     npy_path = os.path.join(sum_avg_dir, f'sum_avg_{amplitude}uA.npy')
                     np.save(npy_path, sum_avg)
@@ -1713,7 +1735,7 @@ def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums, frame_r
 
     plt.suptitle("Overlay of sum_avg traces by amplitude across experiments", fontsize=14)
     plt.tight_layout(rect=[0, 0, 1, 0.93])
-    plt.show()
+    #plt.show()
 
 
 def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_of_file_nums, block_len=1859, stim_segm = 6 , threshold_value=3.0):

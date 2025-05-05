@@ -70,34 +70,43 @@ def run_suite2p(tiff_dir, list_of_file_nums, gcamp):
                         'high_pass': 300
 
                       }
-
+                  #base params
                   if gcamp == 'f':
                         base_db.update({
-                              'h5py': [],  # a single h5 file path
-                              'h5py_key': 'data',
-                              'look_one_level_down': False,  # whether to look in ALL subfolders when searching for tiffs
-                              'data_path': [subfolder],
-                              # a list of folders with tiffs
-                              # (or folder of folders with tiffs if look_one_level_down is True, or subfolders is not empty)
-                              'subfolders': [],  # choose subfolders of 'data_path' to look in (optional)
                               'tau': 0.5,
                               'spatial_scale': 0,
-                              'threshold_scaling': 0.1,
-                              'max_overlap': 0.7
+                              'threshold_scaling': 0.45,
+                              'max_overlap': 0.75
                         })
+                  #04.29
+                  '''if gcamp == 'f':
+                        base_db.update({
+                              'tau': 0.5,
+                              'spatial_scale': 2,
+                              'threshold_scaling': 0.46,
+                              'max_overlap': 0.75
+                        })'''
+                  #04.14
+                  '''if gcamp == 'f':
+                        base_db.update({
+                              'tau': 0.5,
+                              'spatial_scale': 0,
+                              'threshold_scaling': 0.45,
+                              'max_overlap': 0.75
+                        })'''
+                  #04.15
+                  '''if gcamp == 'f':
+                        base_db.update({
+                              'tau': 0.5,
+                              'spatial_scale': 0,
+                              'threshold_scaling': 0.32,
+                              'max_overlap': 0.75
+                        })'''
                   if gcamp == 's':
                         base_db.update({
-                              'h5py': [],  # a single h5 file path
-                              'h5py_key': 'data',
-                              'look_one_level_down': False,  # whether to look in ALL subfolders when searching for tiffs
-                              'data_path': [subfolder],
-                              # a list of folders with tiffs
-                              # (or folder of folders with tiffs if look_one_level_down is True, or subfolders is not empty)
-                              'subfolders': [],  # choose subfolders of 'data_path' to look in (optional)
                               'tau': 1.25,
                               'spatial_scale': 2,
-                              'denoise': True,
-                              'threshold_scaling': 0.1,
+                              'threshold_scaling': 0.26,
                               'max_overlap': 0.7
                         })
                   db_list.append(base_db)

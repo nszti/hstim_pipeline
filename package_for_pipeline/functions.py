@@ -1771,6 +1771,8 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
             activated_roi_indices = []
             masks = []
             traces = []
+            y_coords = []
+            x_coords = []
             for i, roi in enumerate(valid_rois):
                 F_block = F[i, start_frame:end_frame]
                 block_net = F_block[block_stim_time:end_frame]
@@ -1802,6 +1804,11 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                 if active:
                     activated_roi_indices.append(roi)
                     traces.append(F_block)
+                    #centroid coords:
+                    y_med = np.median(roi_stat['ypix'])
+                    x_med = np.median(roi_stat['xpix'])
+                    y_coords.append(y_med)
+                    x_coords.append(x_med)
 
 
                     roi_stat = stat[roi]
@@ -1823,7 +1830,9 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
             # Save activation info
             activation_df = pd.DataFrame({
                 'ROI_Index': activated_roi_indices,
-                'Trace': traces
+                'Trace': traces,
+                'Y_coord': y_coords,
+                'X_coord': x_coords
             })
             csv_path = os.path.join(tiff_dir, f'activated_neurons_{mesc_file_name}_{list_of_file_nums[0][block_idx]}.csv')
             activation_df.to_csv(csv_path, index=False)

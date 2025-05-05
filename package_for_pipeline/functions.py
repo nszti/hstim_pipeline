@@ -1603,6 +1603,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
     # plot 4.2: ROIadik F_index & trace az osszes iscell==1 ROIra
             num_rois = len(cell_indices)
             all_traces_grand_avg = np.zeros((num_rois, num_repeats, num_stims_per_repeat, total_frames))
+            start_timepoints = []
             print(f'shape1: {all_traces_grand_avg.shape}')
             for roi_array_idx, roi_id in enumerate(cell_indices):
                 F_index_for_all = np.where(cell_indices == roi_id)[0][0]
@@ -1629,7 +1630,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
                         if trace_segment.shape[0] == 0:
                             trace_segment = np.zeros(total_frames)
-                        all_traces_grand_avg[roi_array_idx, repeat, stim_idx] = trace_segment
+                        all_traces_grand_avg[roi_array_idx, repeat, stim_idx, :] = trace_segment
             print(f'shape2: {all_traces_grand_avg.shape}')
             time = np.linspace(-1, 3, total_frames)
             # Create output dir

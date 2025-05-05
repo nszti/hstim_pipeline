@@ -1599,8 +1599,8 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             plt.show()
     # plot 4.2:
             time = np.linspace(-1, 3, total_frames)
-            dir = dir + '/sum_avg_dir'
-            sum_avg_dir = os.path.join(expDir, dir)
+            # Create output dir
+            sum_avg_dir = os.path.join(expDir, dir, 'sum_avg_dir')
             os.makedirs(sum_avg_dir, exist_ok=True)
 
             num_amps = len(amplitude_values)
@@ -1610,32 +1610,37 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
             sum_avg_per_amplitude = {}
             all_sum_avgs = []
+
+            # Compute average traces per amplitude
             for stim_idx, amplitude in enumerate(amplitude_values):
                 roi_traces = []
                 for roi_idx in cell_indices:
-                    is_activated_in_any_repeat = any(
-                        activation_results[roi_idx][repeat][stim_idx] == 1 for repeat in range(num_repeats))
+                    is_activated_in_any_repeat = any(activation_results[roi_idx][repeat][stim_idx] == 1 for repeat in range(num_repeats))
                     if not is_activated_in_any_repeat:
                         continue
                     roi_trials = []
                     for repeat in range(num_repeats):
                         if activation_results[roi_idx][repeat][stim_idx] == 1:
                             roi_trials.append(all_traces[repeat, stim_idx])
-                    # avg across trials
                     if roi_trials:
                         roi_avg_trace = np.mean(roi_trials, axis=0)
                         roi_traces.append(roi_avg_trace)
-                # avg across rois
                 if roi_traces:
                     sum_avg = np.mean(roi_traces, axis=0)
                     sum_avg_per_amplitude[amplitude] = sum_avg
                     all_sum_avgs.append(sum_avg)
+
                     npy_path = os.path.join(sum_avg_dir, f'sum_avg_{amplitude}uA.npy')
                     np.save(npy_path, sum_avg)
+
+            # Calculate y-limits
             if all_sum_avgs:
                 global_min = min(np.min(trace) for trace in all_sum_avgs)
                 global_max = max(np.max(trace) for trace in all_sum_avgs)
+            '''else:
+                global_min, global_max = 0, 1  '''
 
+            # Plot
             for stim_idx, amplitude in enumerate(amplitude_values):
                 if amplitude in sum_avg_per_amplitude:
                     sum_avg = sum_avg_per_amplitude[amplitude]

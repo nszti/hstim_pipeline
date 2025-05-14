@@ -75,7 +75,7 @@ def run_suite2p(tiff_dir, list_of_file_nums, gcamp):
                         base_db.update({
                               'tau': 0.5,
                               'spatial_scale': 0,
-                              'threshold_scaling': 0.45,
+                              'threshold_scaling': 0.55,
                               'max_overlap': 0.75
                         })
                   #04.29

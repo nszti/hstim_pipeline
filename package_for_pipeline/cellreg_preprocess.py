@@ -9,10 +9,13 @@ import pandas as pd
 def suite2p_to_cellreg_masks(expDir, list_of_file_nums):
     base_dir = Path(expDir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+    print(filenames)
     for numbers_to_merge in list_of_file_nums:
+        #print(numbers_to_merge)
         suffix = '_'.join(map(str, numbers_to_merge))
         num_to_search = []
         for dir in filenames:
+            print(dir)
             num_to_search_split = dir.split('MUnit_')
             # print(num_to_search_split)
             if len(num_to_search_split) > 1:
@@ -57,6 +60,7 @@ def suite2p_to_cellreg_masks(expDir, list_of_file_nums):
                 print(mask_stack.shape)
                 output_folder = os.path.join(expDir, 'cellreg_files')
                 os.makedirs(output_folder, exist_ok=True)
+                print(matched_file)
                 out_name = f'{matched_file}.mat'
                 out_path = os.path.join(output_folder, out_name)
                 savemat(out_path, {'cells_map': mask_stack})
@@ -233,6 +237,7 @@ def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per
                 'ROI_Index': activated_roi_indices,
                 'Med_Values': med_values
             })
+            cell_reg_path_input  =  expDir + '/cellreg_files'
             activated_roi_df.to_csv(os.path.join(cell_reg_path_input, 'activation_summary.csv'), index=False)
             print(f"Activation summary saved to: {os.path.join(cell_reg_path_input, 'activation_summary.csv')}")
 
@@ -245,6 +250,7 @@ def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per
 
             # === Match activated ROIs with cellreg data ===
             matched_results = []
+            num_sessions = 1
             for i in range(num_sessions - 1):
                 for j in range(i + 1, num_sessions):
                     for row in range(data.shape[0]):

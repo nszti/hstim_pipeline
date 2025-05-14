@@ -60,26 +60,43 @@ gcamp = 'f' #for GCaMP6s: 's'
 stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
 '''
 #root_directory = 'c:/Hyperstim/data_analysis/2025-04-15-Amouse-invivo-GCaMP6f/' #
-root_directory = 'c:/Hyperstim/data_analysis/2025-04-24-Amouse-invivo-GCaMP6f/'
+#root_directory = 'c:/Hyperstim/data_analysis/2025-04-24-Amouse-invivo-GCaMP6f/'
+root_directory = 'e:/2025-05-08-Amouse-invivo-GCaMP6f/'
 #root_directory = 'c:/Hyperstim/data_analysis/2025-04-29-Amouse-invivo-GCaMP6f/'
 #tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-15-Amouse-invivo-GCaMP6f/merged_tiffs/'
-tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-24-Amouse-invivo-GCaMP6f/merged_tiffs/'
+tiff_directory = 'e:/2025-05-08-Amouse-invivo-GCaMP6f/merged_tiffs/'
 #tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-29-Amouse-invivo-GCaMP6f/merged_tiffs/'
-mesc_file_name = '2025-04-29-Amouse-invivo-GCaMP6f'
+mesc_file_name = '2025-05-08-Amouse-invivo-GCaMP6f'
 #mesc_file_name = '2025-04-15-Amouse-invivo-GCaMP6f'
 mesc_DATA_file = 'mesc_data.npy'
 mat_file = 'cellRegistered_20250504_121302.mat'
 #postfix = '53_54_55_56_57_58_59_60_61_62_63_64_65_66_ordered'
 postfix = ''
-list_of_file_nums = [
-[44]
-]
+'''
 
+[38,39,40,41,42,43,44,45,46,47,48,49,50,51],
+[54,55,56,57,58,59,60],
+  [61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76],
+  [78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93]
+  [38,39,40,41,42,43,44,45,46,47,48,49,50,51],
+[54,55,56,57,58,59,60]
+[98,99,100,101,102,103,104],
+[146,147,148,149,150,151,152,153,154,155,156,157],
+ [158,159,160,161,162,163],
+   [166,167,168,169,170,171,172,173,174,175,176,177],
+     [178,179,180,181,182,183]
+'''
+list_of_file_nums = [
+[22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 38,39,40,41,42]
+
+
+]
+''''''
 gcamp = 'f' #for GCaMP6s: 's'
 stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
 
-RUN_MESC_PREPROCESS = True  #tiff extraction
-RUN_PREPROCESS = False # osszefuz listaban megadott tifeket
+RUN_MESC_PREPROCESS = False  #tiff extraction
+RUN_PREPROCESS = True # osszefuz listaban megadott tifeket
 S2P = False #suite2p futtatás
 #--------
 RUN_ANALYSIS_PREP = False  #F0 savelodik, ha modositod a suite2p barmelyik propertyet, akkor ezt ujra kell futtatni h frissuljon az F0
@@ -93,13 +110,13 @@ RUN_CELLREG_ANALYSIS = False
 
 #------VALUES TO CHANGE END------
 if RUN_MESC_PREPROCESS:
-  #mesc_tiff_extract.analyse_mesc_file(Path(root_directory)/mesc_file_name, root_directory, print_all_attributes=True, plot_curves = True)
-  frequency_to_save.frequency_to_save(root_directory,tiff_directory)
+  mesc_tiff_extract.analyse_mesc_file(Path(root_directory)/mesc_file_name, root_directory, print_all_attributes=True, plot_curves = True)
+
 #-----1.2.step: frequency_to_save, electrode_roi_to_save-->automatization pending-----
 if RUN_PREPROCESS:
-  #
+  #frequency_to_save.frequency_electrodeRoi_to_save(root_directory, tiff_directory)
   mesc_data_handling.tiff_merge(mesc_file_name, list_of_file_nums, root_directory)
-  mesc_data_handling.extract_stim_frame(root_directory, mesc_DATA_file, list_of_file_nums) #--> saves stimTimes.npy needed for baseline
+  #mesc_data_handling.extract_stim_frame(root_directory, mesc_DATA_file, list_of_file_nums) #--> saves stimTimes.npy needed for baseline
 if S2P:
   suite2p_script.run_suite2p(tiff_directory, list_of_file_nums, gcamp)
 
@@ -110,7 +127,7 @@ if RUN_ANALYSIS_PREP:
   functions.electROI_val(tiff_directory, list_of_file_nums)
   functions.dist_vals(tiff_directory, list_of_file_nums)
   functions.stim_dur_val(tiff_directory, list_of_file_nums)'''
-  #functions.baseline_val(root_directory, tiff_directory, list_of_file_nums) #--> saves F0.npy
+  functions.baseline_val(root_directory, tiff_directory, list_of_file_nums) #--> saves F0.npy : if suite2p files changes make sure to rerun
   functions.analyze_merged_activation_and_save(root_directory, mesc_file_name, tiff_directory, list_of_file_nums)
 
 

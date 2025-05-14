@@ -54,7 +54,7 @@ def frequency_electrodeRoi_to_save(root_directory, tiff_directory):
         frequency = np.array(frequency)
 
     else:
-        raise ValueError("Invalid choice.")
+        raise ValueError("Invalid choice. Try again")
 
     # Save and print
     save_path_e = output_path + '/electrode_rois.npy'

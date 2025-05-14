@@ -1848,19 +1848,11 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
     #stim_times = [341, 326, 254, 338, 339, 334, 342, 341, 338, 341, 344, 337, 325]
 
     #04-15
-    stim_times = [323, 326, 331, 332, 329, 333, 432, 331, 330, 321, 332]
+    #stim_times = [323, 326, 331, 332, 329, 333, 432, 331, 330, 321, 332]
     #stim_times = [321, 323, 325, 328, 320, 321, 323, 323, 335, 322, 322]
 
     fileId_path = os.path.join(exp_dir, 'fileId.txt')
     trigger_path = os.path.join(exp_dir, 'trigger.txt')
-    # Extract unit numbers as integers
-    with open(fileId_path, 'r') as f:
-        file_ids = [int(line.strip().replace('MUnit_', '')) for line in f]
-    # Read triggers (same order as file_ids)
-    with open(trigger_path, 'r') as f:
-        triggers = [int(line.strip()) for line in f]
-    # Create mapping: unit_number → trigger_frame
-    fileid_to_trigger = dict(zip(file_ids, triggers))
 
     file_ids = []
     triggers = []
@@ -1973,7 +1965,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
 
                     #centroid coords:
                     roi_stat = stat[roi]
-                    print(roi_stat)
+                    #print(roi_stat)
                     x_coords.append(stat[roi]['med'][1])
                     y_coords.append(stat[roi]['med'][0])
 
@@ -1988,8 +1980,9 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                     #masks.append(mask)
             # Save CellReg mask
             if masks:
+                output=os.path.join(tiff_dir, matched_file)
                 mask_stack = np.stack(masks, axis=0).astype(np.double)
-                mat_path = os.path.join(tiff_dir, f'cellreg_input_{mesc_file_name}_{list_of_file_nums[0][block_idx]}.mat')
+                mat_path = os.path.join(output, f'cellreg_input_{mesc_file_name}_{list_of_file_nums[0][block_idx]}.mat')
                 savemat(mat_path, {'cells_map': mask_stack})
 
             # Save activation info
@@ -2005,10 +1998,10 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                 'Y_coord': y_coords,
                 'X_coord': x_coords
             })
-            print(med_val_df)
+            #print(med_val_df)
             '''csv_path = os.path.join(tiff_dir, f'activated_neurons_{mesc_file_name}_{list_of_file_nums[0][block_idx]}.csv')
             activation_df.to_csv(csv_path, index=False)'''
-            print(block_idx)
+            #print(block_idx)
             med_csv_path = os.path.join(tiff_dir, f'med_of_act_ns_{mesc_file_name}_{list_of_file_nums[0][block_idx]}.csv')
             #med_val_df.to_csv(med_csv_path, index=False)
 

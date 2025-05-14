@@ -66,61 +66,73 @@ def suite2p_to_cellreg_masks(expDir, list_of_file_nums):
 def cellreg_analysis(expDir, mat_file, list_of_file_nums, postfix, num_trials):
     base_dir = Path(expDir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
-    cell_reg_path = os.path.join(expDir, 'cellreg_files/')
-    cell_reg_path_input = cell_reg_path + postfix
-    input_file = os.path.join(cell_reg_path_input, mat_file)
-    with h5py.File(input_file, 'r') as file:
-        # List all top-level keys in the .mat file
-        # print(list(file.keys()))
-        # nested list of cell_to_index_map
-        data = file['cell_registered_struct']['cell_to_index_map'][:][:]
-    num_sessions, num_cells = data.shape
-    print(num_cells, num_sessions)
-    total_cells_per_session = np.max(data, axis=0)
+    for numbers_to_merge in list_of_file_nums:
+        suffix = '_'.join(map(str, numbers_to_merge))
+        num_to_search = []
+        for dir in filenames:
+            num_to_search_split = dir.split('MUnit_')
+            # print(num_to_search_split)
+            if len(num_to_search_split) > 1:
+                file_suffix = num_to_search_split[1].rsplit('.', 1)[0]
+                if file_suffix == suffix:
+                    matched_file = dir
+                    print(f'Found file: {matched_file}')
+                    # print(matched_file)
+                    break
+        else:
+            continue
+        matched_file = matched_file + '/'
+        found_file = os.path.join(expDir, matched_file)
+        #cell_reg_path = os.path.join(found_file, 'cellreg_files/')
+        #print(cell_reg_path)
+        cell_reg_path = found_file
+        cell_reg_path_input = cell_reg_path + postfix
+        input_file = os.path.join(cell_reg_path_input, mat_file)
+        print(input_file)
+        with h5py.File(input_file, 'r') as file:
+            # List all top-level keys in the .mat file
+            # print(list(file.keys()))
+            # nested list of cell_to_index_map
+            data = file['cell_registered_struct']['cell_to_index_map'][:][:]
+        num_sessions, num_cells = data.shape
+        print(num_cells, num_sessions)
+        total_cells_per_session = np.max(data, axis=0)
 
-    result_rows = []
-    for i in range(num_sessions):
-        for j in range(i + 1, num_sessions):
-            holder = []
-            for row in range(num_cells):
-                if data[i][row] > 0 and data[j][row] > 0:
-                    holder.append(True)
-            # Count how many matches were found for this session pair
-            num_matches = len(holder)
-            percent_overlap = (num_matches / num_cells) * 100
-            # Print the number of matches for this session pair
-            print(
-                f"Sessions {i + 1} & {j + 1}: {num_matches} overlapping cells which is {percent_overlap:.2f}% of total cells")
-            result_rows.append([f"Session {i + 1}", f"Session {j + 1}", num_matches, f"{percent_overlap:.2f}%"])
+        result_rows = []
+        for i in range(num_sessions):
+            for j in range(i + 1, num_sessions):
+                holder = []
+                for row in range(num_cells):
+                    if data[i][row] > 0 and data[j][row] > 0:
+                        holder.append(True)
+                # Count how many matches were found for this session pair
+                num_matches = len(holder)
+                percent_overlap = (num_matches / num_cells) * 100
+                # Print the number of matches for this session pair
+                print(
+                    f"Sessions {i + 1} & {j + 1}: {num_matches} overlapping cells which is {percent_overlap:.2f}% of total cells")
+                result_rows.append([f"Session {i + 1}", f"Session {j + 1}", num_matches, f"{percent_overlap:.2f}%"])
 
-    cumulative_overlap = np.logical_and(data[0] > 0, data[1] > 0)
-    for session in range(2, num_sessions):
-        cumulative_overlap = np.logical_and(cumulative_overlap, data[session] > 0)
+        cumulative_overlap = np.logical_and(data[0] > 0, data[1] > 0)
+        for session in range(2, num_sessions):
+            cumulative_overlap = np.logical_and(cumulative_overlap, data[session] > 0)
 
-    num_cumulative = np.sum(cumulative_overlap)
-    percent_cumulative = (num_cumulative / num_cells) * 100
-    print(f"Cumulative overlap across sessions: {num_cumulative} cells ({percent_cumulative:.2f}%)")
-    result_rows.append(["Sum overlap", f"Sessions 1 to {num_sessions}", num_cumulative, f"{percent_cumulative:.2f}%"])
+        num_cumulative = np.sum(cumulative_overlap)
+        percent_cumulative = (num_cumulative / num_cells) * 100
+        print(f"Cumulative overlap across sessions: {num_cumulative} cells ({percent_cumulative:.2f}%)")
+        result_rows.append(["Sum overlap", f"Sessions 1 to {num_sessions}", num_cumulative, f"{percent_cumulative:.2f}%"])
 
-    result_rows.append(["Total cells registered", num_cells])
-    csv_path = os.path.join(cell_reg_path_input, 'session_pair_overlap.csv')
-    df = pd.DataFrame(result_rows, columns=['Session A', 'Session B', 'Number of Overlapping Cells', 'Overlap %'])
-    df.to_csv(csv_path, index=False)
-    print("Overlap matrix saved as overlap_matrix.csv")
+        result_rows.append(["Total cells registered", num_cells])
+        csv_path = os.path.join(cell_reg_path_input, 'session_pair_overlap.csv')
+        df = pd.DataFrame(result_rows, columns=['Session A', 'Session B', 'Number of Overlapping Cells', 'Overlap %'])
+        df.to_csv(csv_path, index=False)
+        print("Overlap matrix saved as overlap_matrix.csv")
 
 
 def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per_repeat, list_of_file_nums,
                             start_btw_stim, stim_dur, threshold_value):
     base_dir = Path(expDir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
-    cell_reg_path = os.path.join(expDir, 'cellreg_files/')
-    cell_reg_path_input = cell_reg_path + postfix
-    input_file = os.path.join(cell_reg_path_input, mat_file)
-    with h5py.File(input_file, 'r') as file:
-        data = file['cell_registered_struct']['cell_to_index_map'][:][:]
-        data = data.T  # transpose to [cell_reg_idx, session]
-    num_cells, num_sessions = data.shape
-    print(f"{num_cells} registered cells across {num_sessions} sessions")
 
     all_stats = {}
     session_idx = 0

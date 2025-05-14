@@ -38,7 +38,7 @@ def tiff_merge(mesc_file_name, list_of_file_nums, output_root_directory):
 
         tiff_files_li = [os.path.join(output_root_directory, f"{base_filename}{num}.tif") for num in numbers_to_merge]
         for file in tiff_files_li:
-            #print(file)
+            print(file)
             if not os.path.isfile(file):
                 print(f"Error: File {file} does not exist:(")
                 exit(1)

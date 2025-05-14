@@ -13,7 +13,7 @@ from package_for_pipeline import overlap
 from package_for_pipeline import cellreg_preprocess
 import matplotlib.pyplot as plt
 import os
-
+from package_for_pipeline import frequency_to_save
 #------STEPS IN PIPELINE------
 '''
  0.: modify values in the 'values to change' section. NB! gcamp & stim_type are to be changes also,params for them can be modifited in 'suite2p_script.py' & 'functions.data_analysis_values()' respectively
@@ -32,7 +32,7 @@ import os
 #------STEPS IN PIPELINE END------
 
 #------VALUES TO CHANGE------
-
+'''
 #root_directory = 'c:/Hyperstim/data_analysis/2025-04-24-Amouse-invivo-GCaMP6f/'
 #root_directory = 'c:/Hyperstim/data_analysis/2025-04-01-Amouse-invivo-GCaMP6f/' #
 #root_directory = 'c:/Hyperstim/data_analysis/2023_09_25_GCAMP6F/'
@@ -49,7 +49,8 @@ tiff_directory= 'c:/Hyperstim/data_analysis/2025-03-25-Amouse-invivo-GCaMP6f/mer
 #mesc_file_name = '2025-04-01-Amouse-invivo-GCaMP6f-2'
 mesc_file_name ='2025-04-24-Amouse-invivo-GCaMP6f'
 mesc_DATA_file = 'mesc_data.npy' #from mesc_tiff_extract
-mat_file = 'cellRegistered_20250404_115825.mat'
+mat_file = 'cellRegistered_20250505_175342.mat'
+postfix = 'sum_avg_dir/activated_roi_masks/'
 list_of_file_nums = [
   [15]
 
@@ -58,32 +59,31 @@ list_of_file_nums = [
 gcamp = 'f' #for GCaMP6s: 's'
 stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
 '''
-
 #root_directory = 'c:/Hyperstim/data_analysis/2025-04-15-Amouse-invivo-GCaMP6f/' #
-#root_directory = 'c:/Hyperstim/data_analysis/2025-04-24-Amouse-invivo-GCaMP6f/'
-root_directory = 'c:/Hyperstim/data_analysis/2025-04-29-Amouse-invivo-GCaMP6f/'
+root_directory = 'c:/Hyperstim/data_analysis/2025-04-24-Amouse-invivo-GCaMP6f/'
+#root_directory = 'c:/Hyperstim/data_analysis/2025-04-29-Amouse-invivo-GCaMP6f/'
 #tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-15-Amouse-invivo-GCaMP6f/merged_tiffs/'
-#tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-24-Amouse-invivo-GCaMP6f/merged_tiffs/'
-tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-29-Amouse-invivo-GCaMP6f/merged_tiffs/'
+tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-24-Amouse-invivo-GCaMP6f/merged_tiffs/'
+#tiff_directory = 'c:/Hyperstim/data_analysis/2025-04-29-Amouse-invivo-GCaMP6f/merged_tiffs/'
 mesc_file_name = '2025-04-29-Amouse-invivo-GCaMP6f'
 #mesc_file_name = '2025-04-15-Amouse-invivo-GCaMP6f'
 mesc_DATA_file = 'mesc_data.npy'
 mat_file = 'cellRegistered_20250504_121302.mat'
-postfix = '53_54_55_56_57_58_59_60_61_62_63_64_65_66_ordered'
-
+#postfix = '53_54_55_56_57_58_59_60_61_62_63_64_65_66_ordered'
+postfix = ''
 list_of_file_nums = [
-
+[44]
 ]
-'''
+
 gcamp = 'f' #for GCaMP6s: 's'
 stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
 
-RUN_MESC_PREPROCESS = False  #tiff extraction
+RUN_MESC_PREPROCESS = True  #tiff extraction
 RUN_PREPROCESS = False # osszefuz listaban megadott tifeket
 S2P = False #suite2p futtatás
 #--------
 RUN_ANALYSIS_PREP = False  #F0 savelodik, ha modositod a suite2p barmelyik propertyet, akkor ezt ujra kell futtatni h frissuljon az F0
-PLOTS = True #Analysis plotok, utolso 3 a relevans
+PLOTS = False #Analysis plotok, utolso 3 a relevans
 PLOT_BTW_EXP = False
 RUN_FOR_SINGLE_PARAM_EXP = False
 RUN_FOR_ADVANCED_EXP = False
@@ -93,8 +93,8 @@ RUN_CELLREG_ANALYSIS = False
 
 #------VALUES TO CHANGE END------
 if RUN_MESC_PREPROCESS:
-  mesc_tiff_extract.analyse_mesc_file(Path(root_directory)/mesc_file_name, root_directory, print_all_attributes=True, plot_curves = True)
-
+  #mesc_tiff_extract.analyse_mesc_file(Path(root_directory)/mesc_file_name, root_directory, print_all_attributes=True, plot_curves = True)
+  frequency_to_save.frequency_to_save(root_directory,tiff_directory)
 #-----1.2.step: frequency_to_save, electrode_roi_to_save-->automatization pending-----
 if RUN_PREPROCESS:
   #
@@ -110,7 +110,7 @@ if RUN_ANALYSIS_PREP:
   functions.electROI_val(tiff_directory, list_of_file_nums)
   functions.dist_vals(tiff_directory, list_of_file_nums)
   functions.stim_dur_val(tiff_directory, list_of_file_nums)'''
-  functions.baseline_val(root_directory, tiff_directory, list_of_file_nums) #--> saves F0.npy
+  #functions.baseline_val(root_directory, tiff_directory, list_of_file_nums) #--> saves F0.npy
   functions.analyze_merged_activation_and_save(root_directory, mesc_file_name, tiff_directory, list_of_file_nums)
 
 
@@ -119,7 +119,7 @@ if RUN_ANALYSIS_PREP:
 #functions.data_analysis_values(stim_type, tiff_directory, list_of_file_nums)
 #functions_current_steering.plot_stim_traces(tiff_directory, num_repeats=6, num_stims_per_repeat=5)
 if PLOTS:
-  functions.plot_stim_traces(tiff_directory, 30.97, 6, 5, list_of_file_nums, 8, 5.2, 0) #5.165
+  functions.plot_stim_traces(tiff_directory, 30.97, 6, 5, list_of_file_nums, 8, 5.2, 2) #5.165
 if PLOT_BTW_EXP:
   functions.plot_across_experiments(root_directory, tiff_directory, list_of_file_nums, 30.97)
 
@@ -130,8 +130,8 @@ if RUN_CELLREG_PREP:
   cellreg_preprocess.suite2p_to_cellreg_masks(tiff_directory, list_of_file_nums)
 # manual: run cellreg pipeline
 if RUN_CELLREG_ANALYSIS:
-  cellreg_preprocess.cellreg_analysis(tiff_directory, mat_file, list_of_file_nums, postfix, 5)
-  #cellreg_preprocess.single_block_activation(tiff_directory,postfix, mat_file,  30.97, 5, list_of_file_nums, 2.4,200, 3 )
+  #cellreg_preprocess.cellreg_analysis(tiff_directory, mat_file, list_of_file_nums, postfix, 5)
+  cellreg_preprocess.single_block_activation(tiff_directory,postfix, mat_file,  30.97, 10, list_of_file_nums, 2.4,200, 3 )
 
 '''
 functions.stim_dur_val(tiff_directory, list_of_file_nums)

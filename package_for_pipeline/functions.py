@@ -1879,7 +1879,12 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
     # Get stim times
     stim_times = []
 
-    for file_group in list_of_file_nums:
+    base_dir = Path(tiff_dir)
+    filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+    cellreg_dir = Path(os.path.join(base_dir, '/cellreg_files'))
+    cellreg_dir.mkdir(exist_ok=True)
+
+    for group_idx, file_group in enumerate(list_of_file_nums):
         group_stims = []
         for file_num in file_group:
             if file_num in fileid_to_trigger:
@@ -1888,14 +1893,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                 print(f"FileID {file_num} not found or had no valid trigger")
         stim_times.append(group_stims)
 
-
-    base_dir = Path(tiff_dir)
-    filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
-    cellreg_dir = Path(os.path.join(base_dir, '/cellreg_files'))
-    cellreg_dir.mkdir(exist_ok=True)
-
-    for tif in list_of_file_nums:
-        suffix = '_'.join(map(str, tif))
+        suffix = '_'.join(map(str, file_group))
         matched_file = None
         for dir in filenames:
             if f'MUnit_{suffix}' in dir:

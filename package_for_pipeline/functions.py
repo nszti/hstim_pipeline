@@ -8,6 +8,7 @@ from scipy.io import savemat
 import h5py
 import re
 import ast
+from pprint import pprint
 
 from sklearn.metrics import euclidean_distances
 from suite2p.gui.io import load_files
@@ -1836,7 +1837,8 @@ def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums, frame_r
     #plt.show()
 
 
-def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_of_file_nums, block_len=1859, stim_segm = 6 , threshold_value=3.0):
+def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_of_file_nums,  stim_segm = 6 , threshold_value=3.0):
+    #block_len = 1859
     #04-29
     #stim_times = [337, 336, 336, 340, 336, 334, 329, 328, 340, 336, 335, 334, 336]
     #stim_times = [336, 338, 329, 337, 336, 359, 334, 340, 327, 334, 332, 336, 334, 338]
@@ -1853,31 +1855,33 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
 
     fileId_path = os.path.join(exp_dir, 'fileId.txt')
     trigger_path = os.path.join(exp_dir, 'trigger.txt')
-    # Extract unit numbers as integers
-    with open(fileId_path, 'r') as f:
-        file_ids = [int(line.strip().replace('MUnit_', '')) for line in f]
-    # Read triggers (same order as file_ids)
-    with open(trigger_path, 'r') as f:
-        triggers = [int(line.strip()) for line in f]
-    # Create mapping: unit_number → trigger_frame
-    fileid_to_trigger = dict(zip(file_ids, triggers))
+    frameNo_path = os.path.join(exp_dir, 'frameNo.txt')
 
     file_ids = []
     triggers = []
+    frame_lens = []
 
-    with open(fileId_path, 'r') as f_ids, open(trigger_path, 'r') as f_triggers:
-        for id_line, trig_line in zip(f_ids, f_triggers):
+    with open(fileId_path, 'r') as f_ids, open(trigger_path, 'r') as f_triggers, open(frameNo_path, 'r') as f_frames:
+        for id_line, trig_line, frame_line in zip(f_ids, f_triggers, f_frames):
             trig_line = trig_line.strip()
-            if trig_line.lower() == 'none' or trig_line == '':
-                print(f" Skipping invalid trigger: {trig_line}")
+            frame_line = frame_line.strip()
+            if trig_line.lower() == 'none' or trig_line == '' or frame_line == '':
+                print(f" Skipping invalid line: trigger={trig_line}, frame={frame_line}")
                 continue
-            file_ids.append(int(id_line.strip().replace('MUnit_', '')))
-            triggers.append(int(trig_line))
+            unit_id = int(id_line.strip().replace('MUnit_', ''))
+            trigger_val = int(trig_line)
+            frame_len = int(frame_line)
 
-    fileid_to_trigger = dict(zip(file_ids, triggers))
+            file_ids.append(unit_id)
+            triggers.append(trigger_val)
+            frame_lens.append(frame_len)
 
-    # Get stim times
-    stim_times = []
+    # unit_number --> (trigger, block_len)
+    fileid_to_info = {
+        file_id: {'trigger': trig, 'block_len': frame_len}
+        for file_id, trig, frame_len in zip(file_ids, triggers, frame_lens)
+    }
+    pprint(fileid_to_info)
 
     base_dir = Path(tiff_dir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
@@ -1885,13 +1889,9 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
     cellreg_dir.mkdir(exist_ok=True)
 
     for group_idx, file_group in enumerate(list_of_file_nums):
-        group_stims = []
-        for file_num in file_group:
-            if file_num in fileid_to_trigger:
-                group_stims.append(fileid_to_trigger[file_num])
-            else:
-                print(f"FileID {file_num} not found or had no valid trigger")
-        stim_times.append(group_stims)
+        for block_idx in range(len(file_group)):
+            file_num = file_group[block_idx]
+            block_len = fileid_to_info[file_num]['block_len']
 
         suffix = '_'.join(map(str, file_group))
         matched_file = None
@@ -1916,16 +1916,15 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         Ly, Lx = ops['Ly'], ops['Lx']
         valid_rois = np.where(iscell[:, 0] == 1)[0]
 
-        num_blocks = F.shape[1] // block_len
-        #print(num_blocks)
-        #print(num_blocks)
-        for block_idx in range(num_blocks):
-            #print(block_idx)
+        for block_idx in range(len(file_group)):
+            file_num = file_group[block_idx]
+            block_stim_time = fileid_to_info[file_num]['trigger']
+            block_len = fileid_to_info[file_num]['block_len']
+
             start_frame = block_idx * block_len
             end_frame = start_frame + block_len
-            #
             #block_stim_time = stim_times[block_idx]
-            block_stim_time = stim_times[group_idx][block_idx]
+            #block_stim_time = stim_times[group_idx][block_idx]
             #print(block_stim_time)
             #block_net = F_block[block_stim_time:start_frame]
             #stim_net = block_len - block_stim_time

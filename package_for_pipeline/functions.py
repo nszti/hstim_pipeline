@@ -1851,6 +1851,22 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
     stim_times = [323, 326, 331, 332, 329, 333, 432, 331, 330, 321, 332]
     #stim_times = [321, 323, 325, 328, 320, 321, 323, 323, 335, 322, 322]
 
+    fileId_path = os.path.join(exp_dir, 'fileId.txt')
+    trigger_path = os.path.join(exp_dir, 'trigger.txt')
+    # Extract unit numbers as integers
+    with open(fileId_path, 'r') as f:
+        file_ids = [int(line.strip().replace('MUnit_', '')) for line in f]
+    # Read triggers (same order as file_ids)
+    with open(trigger_path, 'r') as f:
+        triggers = [int(line.strip()) for line in f]
+    # Create mapping: unit_number → trigger_frame
+    fileid_to_trigger = dict(zip(file_ids, triggers))
+    # Get stim times
+    stim_times = []
+    for file_group in list_of_file_nums:
+        for file_num in file_group:
+            if file_num in fileid_to_trigger:
+                stim_times.append(fileid_to_trigger[file_num])
 
     base_dir = Path(tiff_dir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]

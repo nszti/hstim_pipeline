@@ -1848,8 +1848,19 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
     #stim_times = [341, 326, 254, 338, 339, 334, 342, 341, 338, 341, 344, 337, 325]
 
     #04-15
-    #stim_times = [323, 326, 331, 332, 329, 333, 432, 331, 330, 321, 332]
+    stim_times = [323, 326, 331, 332, 329, 333, 432, 331, 330, 321, 332]
     #stim_times = [321, 323, 325, 328, 320, 321, 323, 323, 335, 322, 322]
+
+    fileId_path = os.path.join(exp_dir, 'fileId.txt')
+    trigger_path = os.path.join(exp_dir, 'trigger.txt')
+    # Extract unit numbers as integers
+    with open(fileId_path, 'r') as f:
+        file_ids = [int(line.strip().replace('MUnit_', '')) for line in f]
+    # Read triggers (same order as file_ids)
+    with open(trigger_path, 'r') as f:
+        triggers = [int(line.strip()) for line in f]
+    # Create mapping: unit_number → trigger_frame
+    fileid_to_trigger = dict(zip(file_ids, triggers))
 
     file_ids = []
     triggers = []
@@ -1872,6 +1883,18 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         for file_num in file_group:
             if file_num in fileid_to_trigger:
                 stim_times.append(fileid_to_trigger[file_num])
+
+    for group_idx, file_group in enumerate(list_of_file_nums):
+        # Get stim_times just for this file_group
+        stim_times = []
+        for file_num in file_group:
+            if file_num in fileid_to_trigger:
+                stim_times.append(fileid_to_trigger[file_num])
+            else:
+                print(f"fileID {file_num} not found or had no valid trigger")
+
+        # Now use `stim_times` for just this group
+        print(f"Stim times for group {group_idx}: {stim_times}")
 
 
 

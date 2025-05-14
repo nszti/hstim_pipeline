@@ -14,7 +14,7 @@ print(frequency)
 
 import numpy as np
 import os
-def frequency_to_save(root_directory, tiff_directory):
+def frequency_electrodeRoi_to_save(root_directory, tiff_directory):
     # Set the output directory
     output_path = tiff_directory
     file_id_path = root_directory + '/fileID.txt'
@@ -25,6 +25,8 @@ def frequency_to_save(root_directory, tiff_directory):
     with open(file_id_path, 'r') as f:
         num_files = sum(1 for _ in f)
     print(f'Number of values to save: {num_files}')
+    # Create an array to hold the electrode ROI values
+    electrodeROI = np.zeros((num_files,), dtype=int)
 
     print(f"Detected {num_files} TIFF files.")
     print("Choose input method for frequencies:")
@@ -55,7 +57,11 @@ def frequency_to_save(root_directory, tiff_directory):
         raise ValueError("Invalid choice.")
 
     # Save and print
-    save_path = output_path + '/frequencies.npy'
-    np.save(save_path, frequency)
+    save_path_e = output_path + '/electrode_rois.npy'
+    np.save(save_path_e, electrodeROI)
+    print("Saved electrode rois:")
+    print(electrodeROI)
+    save_path_f = output_path + '/frequencies.npy'
+    np.save(save_path_f, frequency)
     print("Saved frequencies:")
     print(frequency)

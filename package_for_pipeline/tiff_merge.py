@@ -33,8 +33,19 @@ def tiff_merge(mesc_file_name, numbers_to_merge, output_root_directory):
     output_filename = 'merged_' + base_filename + '_'.join(map(str, numbers_to_merge)) + '.tif'
     output_fpath = os.path.join(output_filepath, output_filename)
 
-    tifftools.tiff_concat(tiff_files_li, output_fpath, overwrite=False)
-    print(f"files {tiff_files_li} merged into {output_filepath}")
+    '''tifftools.tiff_concat(tiff_files_li, output_fpath, overwrite=False)
+    print(f"files {tiff_files_li} merged into {output_filepath}")'''
+
+    all_pages = []
+    for file in tiff_files_li:
+        with tifffile.TiffFile(file) as tif:
+            all_pages.append(tif.asarray())
+
+    merged_stack = np.concatenate(all_pages, axis=0)
+    tifffile.imwrite(output_fpath, merged_stack.astype(np.uint16))
+    print(f"files {tiff_files_li} merged into {output_fpath}")
+
+
 '''
 suffix = '_MUnit_'
 #MESc file név csere!

@@ -1876,28 +1876,17 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
 
     fileid_to_trigger = dict(zip(file_ids, triggers))
 
-
     # Get stim times
     stim_times = []
+
     for file_group in list_of_file_nums:
+        group_stims = []
         for file_num in file_group:
             if file_num in fileid_to_trigger:
-                stim_times.append(fileid_to_trigger[file_num])
-
-    for group_idx, file_group in enumerate(list_of_file_nums):
-        # Get stim_times just for this file_group
-        stim_times = []
-        for file_num in file_group:
-            if file_num in fileid_to_trigger:
-                stim_times.append(fileid_to_trigger[file_num])
+                group_stims.append(fileid_to_trigger[file_num])
             else:
-                print(f"fileID {file_num} not found or had no valid trigger")
-
-        # Now use `stim_times` for just this group
-        print(f"Stim times for group {group_idx}: {stim_times}")
-
-
-
+                print(f"FileID {file_num} not found or had no valid trigger")
+        stim_times.append(group_stims)
 
 
     base_dir = Path(tiff_dir)
@@ -1937,7 +1926,8 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
             start_frame = block_idx * block_len
             end_frame = start_frame + block_len
             #
-            block_stim_time = stim_times[block_idx]
+            #block_stim_time = stim_times[block_idx]
+            block_stim_time = stim_times[group_idx][block_idx]
             #print(block_stim_time)
             #block_net = F_block[block_stim_time:start_frame]
             #stim_net = block_len - block_stim_time

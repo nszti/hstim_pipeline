@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import pickle
 from pathlib import Path
 import suite2p
 from suite2p import run_s2p
@@ -19,7 +20,7 @@ def search_merged_subfolders(data_path):
                   merged_subfolders.append(subfolders)
       return merged_subfolders
 
-def run_suite2p(tiff_dir, list_of_file_nums, gcamp):
+def run_suite2p(tiff_dir, list_of_file_nums, gcamp, reused_params = False):
       '''
 
       Parameters
@@ -71,6 +72,12 @@ def run_suite2p(tiff_dir, list_of_file_nums, gcamp):
 
                       }
                   #base params
+                  # nedd to spec params path
+                  if reused_params:
+                        with open('path/to/suite2p_params.pkl', 'r') as f:
+                              db = pickle.load(f)
+                        ops = suite2p.default_ops()
+                        opsEnd = run_s2p(ops=ops, db=base_db)
                   if gcamp == 'f':
                         base_db.update({
                               'tau': 0.5,
@@ -109,6 +116,12 @@ def run_suite2p(tiff_dir, list_of_file_nums, gcamp):
                               'threshold_scaling': 0.26,
                               'max_overlap': 0.7
                         })
+
+                  save_path = os.path.join(folder_path, 'suite2p_params.pkl')
+                  with open(save_path, 'wb') as f:
+                        pickle.dump(base_db, f)
                   db_list.append(base_db)
       for dbi in db_list:
             opsEnd = run_s2p(ops=ops, db=dbi)
+
+

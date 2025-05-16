@@ -20,7 +20,7 @@ def search_merged_subfolders(data_path):
                   merged_subfolders.append(subfolders)
       return merged_subfolders
 
-def run_suite2p(tiff_dir, list_of_file_nums, gcamp, reused_params = False):
+def run_suite2p(tiff_dir, list_of_file_nums, reused_params, gcamp):
       '''
 
       Parameters
@@ -76,40 +76,41 @@ def run_suite2p(tiff_dir, list_of_file_nums, gcamp, reused_params = False):
                   if reused_params:
                         with open('path/to/suite2p_params.pkl', 'r') as f:
                               db = pickle.load(f)
+                              #base_db.update?
                         ops = suite2p.default_ops()
                         opsEnd = run_s2p(ops=ops, db=base_db)
-                  if gcamp == 'f':
+                  elif gcamp == 'f':
                         base_db.update({
                               'tau': 0.5,
                               'spatial_scale': 0,
                               'threshold_scaling': 0.55,
                               'max_overlap': 0.75
                         })
-                  #04.29
-                  '''if gcamp == 'f':
-                        base_db.update({
-                              'tau': 0.5,
-                              'spatial_scale': 2,
-                              'threshold_scaling': 0.46,
-                              'max_overlap': 0.75
-                        })'''
-                  #04.14
-                  '''if gcamp == 'f':
-                        base_db.update({
-                              'tau': 0.5,
-                              'spatial_scale': 0,
-                              'threshold_scaling': 0.45,
-                              'max_overlap': 0.75
-                        })'''
-                  #04.15
-                  '''if gcamp == 'f':
-                        base_db.update({
-                              'tau': 0.5,
-                              'spatial_scale': 0,
-                              'threshold_scaling': 0.32,
-                              'max_overlap': 0.75
-                        })'''
-                  if gcamp == 's':
+                        #04.29
+                        '''if gcamp == 'f':
+                              base_db.update({
+                                    'tau': 0.5,
+                                    'spatial_scale': 2,
+                                    'threshold_scaling': 0.46,
+                                    'max_overlap': 0.75
+                              })'''
+                        #04.14
+                        '''if gcamp == 'f':
+                              base_db.update({
+                                    'tau': 0.5,
+                                    'spatial_scale': 0,
+                                    'threshold_scaling': 0.45,
+                                    'max_overlap': 0.75
+                              })'''
+                        #04.15
+                        '''if gcamp == 'f':
+                              base_db.update({
+                                    'tau': 0.5,
+                                    'spatial_scale': 0,
+                                    'threshold_scaling': 0.32,
+                                    'max_overlap': 0.75
+                              })'''
+                  elif gcamp == 's':
                         base_db.update({
                               'tau': 1.25,
                               'spatial_scale': 2,

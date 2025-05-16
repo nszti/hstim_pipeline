@@ -74,54 +74,58 @@ def run_suite2p(tiff_dir, list_of_file_nums, reused_params, gcamp):
                   #base params
                   # nedd to spec params path
                   if reused_params:
-                        with open('path/to/suite2p_params.pkl', 'r') as f:
-                              db = pickle.load(f)
-                              #base_db.update?
-                        ops = suite2p.default_ops()
-                        opsEnd = run_s2p(ops=ops, db=base_db)
-                  elif gcamp == 'f':
-                        base_db.update({
-                              'tau': 0.5,
-                              'spatial_scale': 0,
-                              'threshold_scaling': 0.55,
-                              'max_overlap': 0.75
-                        })
-                        #04.29
-                        '''if gcamp == 'f':
+                        params_path = os.path.join(folder_path, 'suite2p_params.pkl')
+                        if os.path.exists(params_path):
+                              with open(params_path, 'rb') as f:
+                                    saved_params = pickle.load(f)
+                              base_db.update(saved_params)
+                        else:
+                              raise FileNotFoundError(f"Parameter file not found at {params_path}")
+                        db_list.append(base_db)
+                  else:
+                        if gcamp == 'f':
                               base_db.update({
                                     'tau': 0.5,
+                                    'spatial_scale': 0,
+                                    'threshold_scaling': 0.55,
+                                    'max_overlap': 0.75
+                              })
+                              #04.29
+                              '''if gcamp == 'f':
+                                    base_db.update({
+                                          'tau': 0.5,
+                                          'spatial_scale': 2,
+                                          'threshold_scaling': 0.46,
+                                          'max_overlap': 0.75
+                                    })'''
+                              #04.14
+                              '''if gcamp == 'f':
+                                    base_db.update({
+                                          'tau': 0.5,
+                                          'spatial_scale': 0,
+                                          'threshold_scaling': 0.45,
+                                          'max_overlap': 0.75
+                                    })'''
+                              #04.15
+                              '''if gcamp == 'f':
+                                    base_db.update({
+                                          'tau': 0.5,
+                                          'spatial_scale': 0,
+                                          'threshold_scaling': 0.32,
+                                          'max_overlap': 0.75
+                                    })'''
+                        elif gcamp == 's':
+                              base_db.update({
+                                    'tau': 1.25,
                                     'spatial_scale': 2,
-                                    'threshold_scaling': 0.46,
-                                    'max_overlap': 0.75
-                              })'''
-                        #04.14
-                        '''if gcamp == 'f':
-                              base_db.update({
-                                    'tau': 0.5,
-                                    'spatial_scale': 0,
-                                    'threshold_scaling': 0.45,
-                                    'max_overlap': 0.75
-                              })'''
-                        #04.15
-                        '''if gcamp == 'f':
-                              base_db.update({
-                                    'tau': 0.5,
-                                    'spatial_scale': 0,
-                                    'threshold_scaling': 0.32,
-                                    'max_overlap': 0.75
-                              })'''
-                  elif gcamp == 's':
-                        base_db.update({
-                              'tau': 1.25,
-                              'spatial_scale': 2,
-                              'threshold_scaling': 0.26,
-                              'max_overlap': 0.7
-                        })
+                                    'threshold_scaling': 0.26,
+                                    'max_overlap': 0.7
+                              })
 
-                  save_path = os.path.join(folder_path, 'suite2p_params.pkl')
-                  with open(save_path, 'wb') as f:
-                        pickle.dump(base_db, f)
-                  db_list.append(base_db)
+                        save_path = os.path.join(folder_path, 'suite2p_params.pkl')
+                        with open(save_path, 'wb') as f:
+                              pickle.dump(base_db, f)
+                        db_list.append(base_db)
       for dbi in db_list:
             opsEnd = run_s2p(ops=ops, db=dbi)
 

@@ -1,6 +1,9 @@
 import numpy as np
 import h5py
+import subprocess
+import os
 from scipy import io
+import matlab.engine
 
 def cellreg_analysis(expDir, mat_file):
     # === Load data ===
@@ -33,6 +36,18 @@ def cellreg_analysis(expDir, mat_file):
     df.to_csv(csv_path)
     print("Overlap matrix saved as overlap_matrix.csv")
 
-
+def run_cellreg_matlab(tiff_directory):
+    cellreg_dir = tiff_directory + 'cellreg_files'
+    cellreg_dir_string = f"{cellreg_dir}"
+    print(cellreg_dir_string)
+    eng = matlab.engine.start_matlab()
+    eng.eval("disp('Connected to matlab!')", nargout=0)
+    eng.workspace['data_path'] = cellreg_dir_string
+    eng.workspace['microns_per_pixel'] = 1.07
+    eng.workspace['alignment_type'] = r'Non-rigid'
+    print("matlab data path:", eng.workspace['data_path'])
+    eng.cd(r'c:\Hyperstim\hstim_pipeline')
+    eng.demo_2P(nargout=0)
+    eng.quit()
 
 

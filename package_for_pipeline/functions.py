@@ -12,6 +12,8 @@ from pprint import pprint
 
 from sklearn.metrics import euclidean_distances
 from suite2p.gui.io import load_files
+import subprocess
+
 
 
 #stim_dur
@@ -1837,21 +1839,8 @@ def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums, frame_r
     #plt.show()
 
 
-def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_of_file_nums,  stim_segm = 6 , threshold_value=3.0):
-    #block_len = 1859
-    #04-29
-    #stim_times = [337, 336, 336, 340, 336, 334, 329, 328, 340, 336, 335, 334, 336]
-    #stim_times = [336, 338, 329, 337, 336, 359, 334, 340, 327, 334, 332, 336, 334, 338]
-    #stim_times = [337,335, 335, 343, 331]
-    #stim_times = [339, 345, 340, 338, 349]
-    #stim_times = [332, 330, 342, 336, 336, 329, 329, 336]
-    #04-29-2
-    #stim_times=[326, 328]
-    #stim_times = [341, 326, 254, 338, 339, 334, 342, 341, 338, 341, 344, 337, 325]
+def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_of_file_nums,  stim_segm = 6 , threshold_value=3.0, trialNo = 10,trialDur = 4.2, frameRate = 30.97):
 
-    #04-15
-    stim_times = [323, 326, 331, 332, 329, 333, 432, 331, 330, 321, 332]
-    #stim_times = [321, 323, 325, 328, 320, 321, 323, 323, 335, 322, 322]
 
     fileId_path = os.path.join(exp_dir, 'fileId.txt')
     trigger_path = os.path.join(exp_dir, 'trigger.txt')
@@ -1866,7 +1855,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
             trig_line = trig_line.strip()
             frame_line = frame_line.strip()
             if trig_line.lower() == 'none' or trig_line == '' or frame_line == '':
-                print(f" Skipping invalid line: trigger={trig_line}, frame={frame_line}")
+                #print(f" Skipping invalid line: trigger={trig_line}, frame={frame_line}")
                 continue
             unit_id = int(id_line.strip().replace('MUnit_', ''))
             trigger_val = int(trig_line)
@@ -1881,7 +1870,8 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         file_id: {'trigger': trig, 'block_len': frame_len}
         for file_id, trig, frame_len in zip(file_ids, triggers, frame_lens)
     }
-    pprint(fileid_to_info)
+    #dictionary print
+    #pprint(fileid_to_info)
 
     base_dir = Path(tiff_dir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
@@ -1905,7 +1895,6 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         print(matched_file)
         exp_dir = os.path.join(base_dir, matched_file)
         suite2p_dir = os.path.join(exp_dir, 'suite2p', 'plane0')
-
         # Load base data
         mesc_path = os.path.join(exp_dir, 'mesc_data.npy')
         F = np.load(os.path.join(suite2p_dir, 'F0.npy'), allow_pickle=True)
@@ -1946,10 +1935,6 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                 stim_end = end_frame
                 #if stim_end > len(F_block):
                 #    continue
-
-                trialNo = 10
-                trialDur = 4.2
-                frameRate = 30.97
                 trialDurInFrames = int(round(trialDur * frameRate))
                 #print(trialDurInFrames)
                 stim_segments = []
@@ -1960,7 +1945,6 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                 #print(len(stim_segments))
                 stim_avg = np.mean(stim_segments)
                 active = False
-                #print(stim_avg, threshold)
                 activation = 1 if stim_avg > threshold else 0
                 #print(activation)
                 #print(stim_avg, threshold)
@@ -1972,7 +1956,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
 
                     #centroid coords:
                     roi_stat = stat[roi]
-                    print(roi_stat)
+                    #print(roi_stat)
                     x_coords.append(stat[roi]['med'][1])
                     y_coords.append(stat[roi]['med'][0])
 
@@ -1980,15 +1964,12 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                     mask[roi_stat['ypix'], roi_stat['xpix']] = 1
                     masks.append(mask)
 
-                    # CellReg mask
-                    #roi_stat = stat[roi]
-                    #mask = np.zeros((Ly, Lx), dtype=np.uint8)
-                    #mask[roi_stat['ypix'], roi_stat['xpix']] = 1
-                    #masks.append(mask)
+
             # Save CellReg mask
             if masks:
+                out = os.path.join(tiff_dir, matched_file)
                 mask_stack = np.stack(masks, axis=0).astype(np.double)
-                mat_path = os.path.join(tiff_dir, f'cellreg_input_{mesc_file_name}_{list_of_file_nums[0][block_idx]}.mat')
+                mat_path = os.path.join(out, f'cellreg_input_{mesc_file_name}_{file_num}.mat')
                 savemat(mat_path, {'cells_map': mask_stack})
 
             # Save activation info
@@ -2004,11 +1985,11 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                 'Y_coord': y_coords,
                 'X_coord': x_coords
             })
-            print(med_val_df)
+            #print(med_val_df)
             '''csv_path = os.path.join(tiff_dir, f'activated_neurons_{mesc_file_name}_{list_of_file_nums[0][block_idx]}.csv')
             activation_df.to_csv(csv_path, index=False)'''
-            print(block_idx)
-            med_csv_path = os.path.join(tiff_dir, f'med_of_act_ns_{mesc_file_name}_{list_of_file_nums[0][block_idx]}.csv')
+            #print(block_idx)
+            #med_csv_path = os.path.join(tiff_dir, f'med_of_act_ns_{mesc_file_name}_{list_of_file_nums[0][block_idx]}.csv')
             #med_val_df.to_csv(med_csv_path, index=False)
 
 

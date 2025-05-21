@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import pickle
+import pprint
 from pathlib import Path
 import suite2p
 from suite2p import run_s2p
@@ -79,6 +80,7 @@ def run_suite2p(tiff_dir, list_of_file_nums, reused_params, gcamp):
                               with open(params_path, 'rb') as f:
                                     saved_params = pickle.load(f)
                               base_db.update(saved_params)
+                              print(f'Reusing saved parameters at {params_path}')
                         else:
                               raise FileNotFoundError(f"Parameter file not found at {params_path}")
                         db_list.append(base_db)
@@ -90,6 +92,7 @@ def run_suite2p(tiff_dir, list_of_file_nums, reused_params, gcamp):
                                     'threshold_scaling': 0.55,
                                     'max_overlap': 0.75
                               })
+                              print(f'Using parameters given for GCaMP6f')
                               #04.29
                               '''if gcamp == 'f':
                                     base_db.update({
@@ -121,10 +124,16 @@ def run_suite2p(tiff_dir, list_of_file_nums, reused_params, gcamp):
                                     'threshold_scaling': 0.26,
                                     'max_overlap': 0.7
                               })
+                              print(f'Using parameters given for GCaMP6s')
 
                         save_path = os.path.join(folder_path, 'suite2p_params.pkl')
                         with open(save_path, 'wb') as f:
                               pickle.dump(base_db, f)
+
+                        txt_path = os.path.join(folder_path, 'suite2p_params.txt')
+                        with open(txt_path, 'w') as f:
+                              pprint.pprint(base_db, stream = f)
+
                         db_list.append(base_db)
       for dbi in db_list:
             opsEnd = run_s2p(ops=ops, db=dbi)

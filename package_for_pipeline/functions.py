@@ -320,11 +320,12 @@ def spontaneous_baseline_val(tiff_dir, list_of_file_nums, list_of_roi_nums, fram
                     if plot_end_frame is not None:
                         print(plot_start_frame, plot_end_frame)
                         trace = trace[plot_start_frame:plot_end_frame]
-
+                    trace = (trace- np.min(trace)) / (np.max(trace) - np.min(trace))
                     plt.figure()
                     plt.plot(trace)
                     plt.title(f'Normalized Trace for ROI {roi_index}')
                     plt.xlabel('Time (frames)')
+                    plt.ylim(-2, 3)
                     plt.ylabel('ΔF/F0')
                     plt.tight_layout()
                     plt.savefig(plot_path)

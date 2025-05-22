@@ -267,7 +267,7 @@ def dist_vals (tiff_dir, list_of_file_nums):
             # np.save(expDir + '/' + dir + '/suite2p/plane0/ROI_numbers.npy', roi_numbers)
 
 
-def spontaneous_baseline_val(tiff_dir, list_of_file_nums, list_of_roi_nums = [1,2,3], frame_rate = 30.97, baseline_frame=3, plot_frame_count=None ):
+def spontaneous_baseline_val(tiff_dir, list_of_file_nums, list_of_roi_nums, frame_rate = 30.97, baseline_frame=3, plot_start_frame = 0, plot_end_frame=None ):
     base_dir = Path(tiff_dir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
     print(filenames)
@@ -290,6 +290,7 @@ def spontaneous_baseline_val(tiff_dir, list_of_file_nums, list_of_roi_nums = [1,
         if matched_file:
             F_path = tiff_dir + dir + '/suite2p/plane0/F.npy'
             F = np.load(F_path, allow_pickle=True)  # shape: (n_rois, n_timepoints)
+            dir_path = os.path.join(tiff_dir, dir)
 
             baseline_frames = max(baseline_frame, int(10 / 1000 * frame_rate))  # ~10ms
 
@@ -311,10 +312,14 @@ def spontaneous_baseline_val(tiff_dir, list_of_file_nums, list_of_roi_nums = [1,
 
             # Plot selected ROI traces
             for roi_index in list_of_roi_nums:
+                plot_path = os.path.join(dir_path, f'/roi_{roi_index}.svg')
+                print(plot_path)
                 if roi_index < len(all_norm_traces):
                     trace = all_norm_traces[roi_index]
-                    if plot_frame_count is not None:
-                        trace = trace[:plot_frame_count]
+                    trace = trace[plot_start_frame:]
+                    if plot_end_frame is not None:
+                        print(plot_start_frame, plot_end_frame)
+                        trace = trace[plot_start_frame:plot_end_frame]
 
                     plt.figure()
                     plt.plot(trace)
@@ -322,6 +327,7 @@ def spontaneous_baseline_val(tiff_dir, list_of_file_nums, list_of_roi_nums = [1,
                     plt.xlabel('Time (frames)')
                     plt.ylabel('ΔF/F0')
                     plt.tight_layout()
+                    plt.savefig(plot_path)
                     plt.show()
                 else:
                     print(f"ROI {roi_index} is out of bounds. Max index: {len(all_norm_traces) - 1}")

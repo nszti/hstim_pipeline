@@ -50,4 +50,3 @@ def run_cellreg_matlab(tiff_directory):
     eng.demo_2P(nargout=0)
     eng.quit()
 
-

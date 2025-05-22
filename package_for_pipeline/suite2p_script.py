@@ -21,6 +21,20 @@ def search_merged_subfolders(data_path):
                   merged_subfolders.append(subfolders)
       return merged_subfolders
 
+def convert_to_plain_types(d):
+    plain_dict = {}
+    for k, v in d.items():
+        if isinstance(v, Path):
+            plain_dict[k] = str(v)
+        elif hasattr(v, 'tolist'):  # handles numpy arrays
+            plain_dict[k] = v.tolist()
+        else:
+            plain_dict[k] = v
+    return plain_dict
+
+plain_base_db = convert_to_plain_types(base_db)
+
+txt_path = os.path.join(folder_path, 'suite2p_params.txt')
 def run_suite2p(tiff_dir, list_of_file_nums, reused_params, gcamp):
       '''
 

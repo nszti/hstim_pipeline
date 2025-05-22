@@ -266,6 +266,66 @@ def dist_vals (tiff_dir, list_of_file_nums):
             # np.save(expDir + '/' + dir + '/suite2p/plane0/distances.npy', distances)
             # np.save(expDir + '/' + dir + '/suite2p/plane0/ROI_numbers.npy', roi_numbers)
 
+
+def spontaneous_baseline_val(tiff_dir, list_of_file_nums, list_of_roi_nums = [1,2,3], frame_rate = 30.97, baseline_frame=3, plot_frame_count=None ):
+    base_dir = Path(tiff_dir)
+    filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+    print(filenames)
+    for numbers_to_merge in list_of_file_nums:
+        # print(numbers_to_merge)
+        suffix = '_'.join(map(str, numbers_to_merge))
+        for dir in filenames:
+            print(dir)
+            num_to_search_split = dir.split('MUnit_')
+            if len(num_to_search_split) > 1:
+                file_suffix = num_to_search_split[1].rsplit('.', 1)[0]
+                if file_suffix == suffix:
+                    matched_file = dir
+                    print(f'Found file: {matched_file}')
+                    # print(matched_file)
+                    break
+        else:
+            continue
+
+        if matched_file:
+            F_path = tiff_dir + dir + '/suite2p/plane0/F.npy'
+            F = np.load(F_path, allow_pickle=True)  # shape: (n_rois, n_timepoints)
+
+            baseline_frames = max(baseline_frame, int(10 / 1000 * frame_rate))  # ~10ms
+
+            all_norm_traces = []
+
+            for roi_trace in F:
+                baseline_value = np.mean(roi_trace[:baseline_frames])
+                norm_trace = (roi_trace - baseline_value) / baseline_value
+                all_norm_traces.append(norm_trace)
+
+            all_norm_traces = np.array(all_norm_traces)
+
+            # Save normalized traces
+            s2p_path = tiff_dir + dir + '/suite2p/plane0'
+            out_path = os.path.join(s2p_path, 'F0.npy')
+            np.save(out_path, all_norm_traces)
+            print(f"Normalized traces saved to: {out_path}")
+            print(f"Shape of normalized trace array: {all_norm_traces.shape}")
+
+            # Plot selected ROI traces
+            for roi_index in list_of_roi_nums:
+                if roi_index < len(all_norm_traces):
+                    trace = all_norm_traces[roi_index]
+                    if plot_frame_count is not None:
+                        trace = trace[:plot_frame_count]
+
+                    plt.figure()
+                    plt.plot(trace)
+                    plt.title(f'Normalized Trace for ROI {roi_index}')
+                    plt.xlabel('Time (frames)')
+                    plt.ylabel('ΔF/F0')
+                    plt.tight_layout()
+                    plt.show()
+                else:
+                    print(f"ROI {roi_index} is out of bounds. Max index: {len(all_norm_traces) - 1}")
+
 def baseline_val(root_directory,tiff_dir, list_of_file_nums ):
     '''
     :return: saves all_norm_traces, prints shape of all_norm_traces, output: F0.npy (baseline corrected fluorescence trace)
@@ -1789,7 +1849,6 @@ def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums, frame_r
     post_frames = int(np.round((frame_rate * 3), 0))  # 3 seconds after
     total_frames = int(np.round((pre_frames + post_frames), 0))
 
-    # Step 1: Find matching merged directories
     base_dir = Path(tiff_dir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
     matched_dirs = []

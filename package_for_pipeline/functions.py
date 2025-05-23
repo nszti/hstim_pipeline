@@ -325,12 +325,12 @@ def spontaneous_baseline_val(tiff_dir, list_of_file_nums, list_of_roi_nums, fram
                     plt.plot(trace)
                     plt.title(f'Normalized Trace for ROI {roi_index}')
                     plt.xlabel('Time (frames)')
-                    plt.ylim(-0.2, 0.5)
+                    plt.ylim(-0.3, 1.8)
                     plt.ylabel('ΔF/F0')
                     plt.tight_layout()
                     print(plot_path)
                     plt.savefig(plot_path)
-                    plt.show()
+                    #plt.show()
                 else:
                     print(f"ROI {roi_index} is out of bounds. Max index: {len(all_norm_traces) - 1}")
 

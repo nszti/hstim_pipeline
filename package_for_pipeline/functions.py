@@ -288,6 +288,7 @@ def spontaneous_baseline_val(tiff_dir, list_of_file_nums, list_of_roi_nums, fram
             continue
 
         if matched_file:
+            print(matched_file)
             F_path = tiff_dir + dir + '/suite2p/plane0/F.npy'
             F = np.load(F_path, allow_pickle=True)  # shape: (n_rois, n_timepoints)
             dir_path = os.path.join(tiff_dir, dir)
@@ -313,21 +314,21 @@ def spontaneous_baseline_val(tiff_dir, list_of_file_nums, list_of_roi_nums, fram
             # Plot selected ROI traces
             for roi_index in list_of_roi_nums:
                 plot_path = os.path.join(dir_path, f'/roi_{roi_index}.svg')
-                print(plot_path)
                 if roi_index < len(all_norm_traces):
                     trace = all_norm_traces[roi_index]
                     trace = trace[plot_start_frame:]
                     if plot_end_frame is not None:
                         print(plot_start_frame, plot_end_frame)
                         trace = trace[plot_start_frame:plot_end_frame]
-                    trace = (trace- np.min(trace)) / (np.max(trace) - np.min(trace))
+                    #trace = (trace- np.min(trace)) / (np.max(trace) - np.min(trace))
                     plt.figure()
                     plt.plot(trace)
                     plt.title(f'Normalized Trace for ROI {roi_index}')
                     plt.xlabel('Time (frames)')
-                    plt.ylim(-2, 3)
+                    plt.ylim(-0.2, 0.5)
                     plt.ylabel('ΔF/F0')
                     plt.tight_layout()
+                    print(plot_path)
                     plt.savefig(plot_path)
                     plt.show()
                 else:
@@ -1906,7 +1907,7 @@ def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums, frame_r
 
 
 def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_of_file_nums,  stim_segm = 6 , threshold_value=3.0, trialNo = 10,trialDur = 4.2, frameRate = 30.97):
-
+#stim_segm: frame num for stim_avg
 
     fileId_path = os.path.join(exp_dir, 'fileId.txt')
     trigger_path = os.path.join(exp_dir, 'trigger.txt')
@@ -2035,9 +2036,9 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
             if masks:
                 out = os.path.join(tiff_dir, matched_file)
                 mask_stack = np.stack(masks, axis=0).astype(np.double)
-                mat_path = os.path.join(out, f'cellreg_input_{mesc_file_name}_{file_num}.mat')
+                '''mat_path = os.path.join(out, f'cellreg_input_{mesc_file_name}_{file_num}.mat')
                 savemat(mat_path, {'cells_map': mask_stack})
-
+                '''
             # Save activation info
             activation_df = pd.DataFrame({
                 'ROI_Index': activated_roi_indices,
@@ -2055,8 +2056,8 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
             '''csv_path = os.path.join(tiff_dir, f'activated_neurons_{mesc_file_name}_{list_of_file_nums[0][block_idx]}.csv')
             activation_df.to_csv(csv_path, index=False)'''
             #print(block_idx)
-            #med_csv_path = os.path.join(tiff_dir, f'med_of_act_ns_{mesc_file_name}_{list_of_file_nums[0][block_idx]}.csv')
-            #med_val_df.to_csv(med_csv_path, index=False)
+            med_csv_path = os.path.join(tiff_dir, f'med_of_act_ns_{mesc_file_name}_{list_of_file_nums[0][block_idx]}.csv')
+            med_val_df.to_csv(med_csv_path, index=False)
 
 
 def collect_file_paths_for_blocks(tiff_dir, list_of_file_nums):

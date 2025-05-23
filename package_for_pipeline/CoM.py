@@ -202,13 +202,13 @@ print(f"1: Weighted Center of Mass w center(0,0): ({x_cm}, {y_cm})")
 
 #================
 
-# Step 1: Calculate the mean center of the given coordinates (simple average of X and Y coordinates)
+# 1: Calculate the mean center of the given coordinates (simple average of X and Y coordinates)
 mean_center = np.mean(coords, axis=0)
 mean_x, mean_y = mean_center
 #print(f"2: Mean center of mass (average of coordinates): ({mean_x}, {mean_y})")
 
 
-# Step 2: Calculate the inverse distance weighted center of mass using the mean center as reference
+# 2: Calculate the inverse distance weighted center of mass using the mean center as reference
 def inverse_distance_weighted_center_of_mass(coords, center_of_mass, alpha=2):
     x0, y0 = center_of_mass
     # Calculate distances from each point to the center (mean center in this case)
@@ -230,7 +230,7 @@ def inverse_distance_weighted_center_of_mass(coords, center_of_mass, alpha=2):
     return x_cm, y_cm
 
 
-# Step 3: Use the mean center to calculate the weighted center of mass
+# 3: Use the mean center to calculate the weighted center of mass
 x_cm, y_cm = inverse_distance_weighted_center_of_mass(coords, mean_center)
 print(f"2: Weighted Center of Mass: ({x_cm}, {y_cm})")
 
@@ -238,9 +238,6 @@ print(f"2: Weighted Center of Mass: ({x_cm}, {y_cm})")
 #================
 
 '''
-# Placeholder for loading your actual coordinate data from files
-# Replace with actual loading code for your files (e.g., pandas, numpy, or manual input)
-# Each file would contain a set of 3 coordinate types (mean, type1 CoM, type2 CoM)
 
 '''files_data = [
     {'mean': [295.692307692307, 150.384615384615], 'type1': [246.6300,	107.5317891], 'type2': [283.560931,	144.6394872]},  # File 36
@@ -259,17 +256,17 @@ print(f"2: Weighted Center of Mass: ({x_cm}, {y_cm})")
 ]'''
 in_um = 1.07
 files_data = [
-    {'type2': [283.560931*in_um,	144.6394872*in_um]},  # File 36
-{'type2': [273.9856*in_um,	142.3939*in_um]},  # File 42
-{'type2': [281.1639*in_um,	171.8521*in_um]},  # File 40
-{'type2': [322.2270*in_um,	181.6071*in_um]},  # File 38
-{'type2': [309.90374383921676*in_um, 146.45366662440972*in_um]},  # File 46
-{'type2': [303.9162*in_um,	173.3317*in_um]},  # File 39
-{'type2': [233.95092565028241*in_um, 211.08493761258342*in_um]},  # File 43
-{'type2': [228.50063902899498*in_um, 249.87156922669328*in_um]}, # File 45
-{'type2': [248.8401*in_um,	280.1693*in_um]},  # File 41
-    {'type2': [237.5335*in_um,	301.8662*in_um]},  # File 37
-    {'type2': [231.8473226253097*in_um, 278.11331512394787*in_um]}  # File 44/11
+    {'type2': [283.560931*in_um,	144.6394872*in_um]},
+{'type2': [273.9856*in_um,	142.3939*in_um]},
+{'type2': [281.1639*in_um,	171.8521*in_um]},
+{'type2': [322.2270*in_um,	181.6071*in_um]},
+{'type2': [309.90374383921676*in_um, 146.45366662440972*in_um]},
+{'type2': [303.9162*in_um,	173.3317*in_um]},
+{'type2': [233.95092565028241*in_um, 211.08493761258342*in_um]},
+{'type2': [228.50063902899498*in_um, 249.87156922669328*in_um]},
+{'type2': [248.8401*in_um,	280.1693*in_um]},
+    {'type2': [237.5335*in_um,	301.8662*in_um]},
+    {'type2': [231.8473226253097*in_um, 278.11331512394787*in_um]}
 ]
 # Create a figure to hold the plot
 plt.figure(figsize=(8, 8))

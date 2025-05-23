@@ -254,7 +254,8 @@ print(f"2: Weighted Center of Mass: ({x_cm}, {y_cm})")
 
 
 ]'''
-in_um = 1.07
+'''in_um = 1.07
+
 files_data = [
     {'type2': [283.560931*in_um,	144.6394872*in_um]},
 {'type2': [273.9856*in_um,	142.3939*in_um]},
@@ -307,4 +308,43 @@ plt.legend()
 # Show plot
 
 plt.savefig(os.path.join('c:/Hyperstim/data_analysis/2025-04-15-Amouse-invivo-GCaMP6f/merged_tiffs/cellreg_files/36_37_38_39_40_41_42_43_44_45_46_ordered/', f'CoM_mean_weighted.svg'))
+plt.show()'''
+
+###
+coords_list = [
+    np.array([]),       # File 1
+    np.array([]),       # File 2
+]
+# For example [2, 0, 1] means: plot File 3 first, then File 1, then File 2 --> give the index of the file in the coord_list
+plot_order = [2, 0, 1]
+coords_um = coords * in_um
+
+
+# === Plotting ===
+plt.figure(figsize=(8, 8))
+
+
+for file_idx_in_plot, original_file_idx in enumerate(plot_order):
+    coords = coords_list[original_file_idx]
+    coords_um = coords * in_um
+    for point_idx, (x_um, y_um) in enumerate(coords_um):
+        plt.scatter(x_um, y_um, color='red', marker='^')
+        plt.text(x_um, y_um + 5, f'File {original_file_idx + 1}',
+                 color='black', fontsize=9, ha='center')
+
+# Plot limits (for 512x512 FOV)
+plt.xlim(0, 512 * in_um)
+plt.ylim(0, 512 * in_um)
+
+# Title, labels, formatting
+plt.title("CoM Coordinates")
+plt.xlabel("X Coordinate (µm)")
+plt.ylabel("Y Coordinate (µm)")
+plt.grid(True)
+plt.gca().invert_yaxis()
+plt.legend()
+
+# Save and show
+output_path = 'c:/Hyperstim/data_analysis/2025-04-15-Amouse-invivo-GCaMP6f/merged_tiffs/cellreg_files/multi_file_coords.svg'
+plt.savefig(output_path)
 plt.show()

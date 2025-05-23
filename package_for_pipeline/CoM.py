@@ -177,6 +177,7 @@ coords = np.array([
 mean_center = np.mean(coords, axis=0)
 mean_x, mean_y = mean_center
 print(f"2: Mean center of mass (average of coordinates): ({mean_x}, {mean_y})")
+'''
 # Define a function for inverse distance weighting
 def inverse_distance_weighted_center_of_mass(coords, alpha=2, center_of_mass=(0, 0)):
     x0, y0 = center_of_mass
@@ -199,7 +200,7 @@ def inverse_distance_weighted_center_of_mass(coords, alpha=2, center_of_mass=(0,
 # Calculate the weighted center of mass using the inverse distance weighting
 x_cm, y_cm = inverse_distance_weighted_center_of_mass(coords)
 print(f"1: Weighted Center of Mass w center(0,0): ({x_cm}, {y_cm})")
-
+'''
 #================
 
 # 1: Calculate the mean center of the given coordinates (simple average of X and Y coordinates)
@@ -380,19 +381,18 @@ in_um = 1.07
 # For example [2, 0, 1] means: plot File 3 first, then File 1, then File 2 --> give the index of the file in the coord_list
 plot_order = [5,6,8,2,10,9,3,1,7,4,0]
 
+com_list = [inverse_distance_weighted_center_of_mass(coords) for coords in coords_list]
 
+com_list_um = np.array(com_list) * in_um
 
-# === Plotting ===
+#plot
 plt.figure(figsize=(8, 8))
 
-
-for file_idx_in_plot, original_file_idx in enumerate(plot_order):
-    coords = coords_list[original_file_idx]
-    coords_um = coords * in_um
-    for point_idx, ( y_um, x_um) in enumerate(coords_um):
-        plt.scatter(y_um, x_um, color='red', marker='^')
-        plt.text(y_um, x_um -10 , f'File {original_file_idx + 1}',
-                 color='black', fontsize=9, ha='center')
+for i, file_idx in enumerate(plot_order):
+    x_um, y_um = com_list_um[file_idx]
+    plt.scatter(x_um, y_um, color='red', marker='^')
+    # Place label above marker (in image coordinate system)
+    plt.text(x_um, y_um - 10, f'File {file_idx + 1}', color='black', fontsize=9, ha='center')
 
 # Plot limits (for 512x512 FOV)
 plt.xlim(0, 512 * in_um)
@@ -407,6 +407,6 @@ plt.gca().invert_yaxis()
 #plt.legend()
 
 # Save and show
-output_path = 'c:/Hyperstim/data_analysis/2025-05-20-Amouse-invivo-GCaMP6f\merged_tiffs/merged_2025-05-20-Amouse-invivo-GCaMP6f_MUnit_8_9_10_11_12_13_14_15_16_17_18/multi_file_coords.svg'
+output_path = 'c:/Hyperstim/data_analysis/2025-05-20-Amouse-invivo-GCaMP6f/merged_tiffs/merged_2025-05-20-Amouse-invivo-GCaMP6f_MUnit_8_9_10_11_12_13_14_15_16_17_18/multi_file_coords.svg'
 plt.savefig(output_path)
 plt.show()

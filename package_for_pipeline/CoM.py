@@ -388,11 +388,10 @@ com_list_um = np.array(com_list) * in_um
 #plot
 plt.figure(figsize=(8, 8))
 
-for i, file_idx in enumerate(plot_order):
+for order_position, file_idx in enumerate(plot_order):
     x_um, y_um = com_list_um[file_idx]
     plt.scatter(x_um, y_um, color='red', marker='^')
-    # Place label above marker (in image coordinate system)
-    plt.text(x_um, y_um - 10, f'File {file_idx + 1}', color='black', fontsize=9, ha='center')
+    plt.text(x_um, y_um - 10, f'File{order_position + 1}', color='black', fontsize=9, ha='center')
 
 # Plot limits (for 512x512 FOV)
 plt.xlim(0, 512 * in_um)

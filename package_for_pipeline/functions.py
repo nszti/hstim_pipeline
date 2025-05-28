@@ -2106,7 +2106,7 @@ def collect_file_paths_for_blocks(tiff_dir, list_of_file_nums):
 
     return results
 
-def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15, threshold_value=3.0, block_order=[5,6,8,2,10,9,3,1,7,4,0]):
+def get_stim_frames_to_video(exp_dir, mesc_file_name, tiff_dir, list_of_file_nums, stim_segm=15, threshold_value=3.0, block_order=[5,6,8,2,10,9,3,1,7,4,0]):
     import cv2
     fileId_path = os.path.join(exp_dir, 'fileId.txt')
     trigger_path = os.path.join(exp_dir, 'trigger.txt')
@@ -2178,8 +2178,10 @@ def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15,
             end_frame = start_frame + frame_len
 
             for roi in valid_rois:
-                print(roi, F.shape)
                 F_block = F[roi, start_frame:end_frame]
+                if block_stim_time + stim_segm > len(F_block):
+                    continue  # Skip if not enough frames after trigger
+
                 stim_segment = F_block[trigger:trigger + stim_segm]
                 baseline = F_block[:trigger]
                 threshold = np.mean(baseline) + threshold_value * np.std(baseline)

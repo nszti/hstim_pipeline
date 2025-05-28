@@ -2228,6 +2228,67 @@ def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15,
     print(f"Saved video to: {out_path}")
 
 
+def create_video_from_mesc_tiffs(mesc_dir, output_video_name='first_stim_video.avi', stim_segm=15,block_order=None):
+    # Load metadata
+    file_ids = []
+    triggers = []
+    frame_lens = []
+
+    with open(os.path.join(mesc_dir, 'fileId.txt'), 'r') as f_ids, \
+         open(os.path.join(mesc_dir, 'trigger.txt'), 'r') as f_trigs, \
+         open(os.path.join(mesc_dir, 'frameNo.txt'), 'r') as f_lens:
+        for id_line, trig_line, len_line in zip(f_ids, f_trigs, f_lens):
+            file_ids.append(int(id_line.strip().replace('MUnit_', '')))
+            triggers.append(int(trig_line.strip()))
+            frame_lens.append(int(len_line.strip()))
+
+    blocks = list(zip(file_ids, triggers, frame_lens))
+
+    if block_order:
+        try:
+            blocks = [blocks[i] for i in block_order]
+        except IndexError:
+            raise ValueError(f"Invalid block_order: {block_order}")
+
+    all_frames = []
+
+    for file_id, trigger, frame_len in blocks:
+        tiff_path = os.path.join(mesc_dir, f'{Path(mesc_dir).stem}_{file_id}.tif')
+        if not os.path.exists(tiff_path):
+            print(f"tiff not found: {tiff_path}")
+            continue
+
+        if trigger + stim_segm > frame_len:
+            print(f"Skipping file {file_id}, stim window exceeds recording length.")
+            continue
+
+        print(f"Loading {tiff_path} (frames {trigger}–{trigger+stim_segm})")
+        tiff_stack = tifffile.imread(tiff_path)
+
+        # Extract 15 frames from trigger
+        stim_segment = tiff_stack[trigger:trigger + stim_segm]
+
+        for frame in stim_segment:
+            norm_frame = cv2.normalize(frame, None, 0, 255, cv2.NORM_MINMAX)
+            norm_frame = norm_frame.astype(np.uint8)
+            color_frame = cv2.cvtColor(norm_frame, cv2.COLOR_GRAY2BGR)
+            all_frames.append(color_frame)
+
+    if not all_frames:
+        print("No frames collected.")
+        return
+
+    height, width, _ = all_frames[0].shape
+    out_path = os.path.join(mesc_dir, output_video_name)
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    out = cv2.VideoWriter(out_path, fourcc, 5, (width, height), isColor=True)
+
+    for frame in all_frames:
+        out.write(frame)
+
+    out.release()
+    print(f"\n Saved video to: {out_path}")
+
 
 #scratch_1
 def scratch_val(tiff_dir):

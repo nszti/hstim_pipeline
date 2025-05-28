@@ -2188,19 +2188,26 @@ def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15,
                 print(f"Skipping block {file_id} due to invalid trigger.")
                 continue
 
+            masks = []
+            for roi in valid_rois:
+                mask = np.zeros((Ly, Lx), dtype=np.uint8)
+                stat_roi = stat[roi]
+                mask[stat_roi['ypix'], stat_roi['xpix']] = 1
+                masks.append(mask)
+
+            # For 15 frames after trigger
             for frame_idx in range(stim_segm):
-                frame_image = np.zeros((Ly, Lx), dtype=np.float32)
+                composite = np.zeros((Ly, Lx), dtype=np.float32)
 
                 for i, roi in enumerate(valid_rois):
-                    roi_stat = stat[roi]
-                    val = F[i, trigger + frame_idx]
-                    frame_image[roi_stat['ypix'], roi_stat['xpix']] += val
+                    value = F[roi, trigger + frame_idx]
+                    composite += masks[i] * value
 
-                # Normalize and convert to 8-bit
-                if np.max(frame_image) > 0:
-                    frame_image = 255 * (frame_image / np.max(frame_image))
-                frame_image = frame_image.astype(np.uint8)
-                bgr_frame = cv2.cvtColor(frame_image, cv2.COLOR_GRAY2BGR)
+                # Normalize and convert
+                if np.max(composite) > 0:
+                    composite = 255 * (composite / np.max(composite))
+                composite = composite.astype(np.uint8)
+                bgr_frame = cv2.cvtColor(composite, cv2.COLOR_GRAY2BGR)
                 all_frames.append(bgr_frame)
 
     height, width, _ = all_frames[0].shape

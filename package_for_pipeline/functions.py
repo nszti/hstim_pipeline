@@ -2212,7 +2212,7 @@ def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15,
 
     height, width = all_frames[0].shape
     out_path = os.path.join(tiff_dir, output_video_name)
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fourcc = fourcc = cv2.VideoWriter_fourcc(*'avc1')
     out = cv2.VideoWriter(out_path, fourcc, 5, (width, height), isColor=False)
 
     if not out.isOpened():

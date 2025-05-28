@@ -2200,8 +2200,12 @@ def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15,
                 composite = np.zeros((Ly, Lx), dtype=np.float32)
 
                 for i, roi in enumerate(valid_rois):
-                    value = F[roi, trigger + frame_idx]
-                    composite += masks[i] * value
+                    trace = F[roi]
+                    if trigger < 10: continue  # skip edge cases
+                    baseline = np.mean(trace[trigger - 10:trigger])
+                    deltaF = trace[trigger + frame_idx] - baseline
+                    deltaF = max(deltaF, 0)
+                    composite += masks[i] * deltaF
 
                 # Normalize and convert
                 if np.max(composite) > 0:

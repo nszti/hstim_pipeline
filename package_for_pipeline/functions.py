@@ -2188,30 +2188,19 @@ def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15,
                 print(f"Skipping block {file_id} due to invalid trigger.")
                 continue
 
-            absolute_trigger = trigger
-            print(f"Block {file_id}: absolute_trigger = {absolute_trigger}")
-            mask_stack = np.zeros((len(valid_rois), Ly, Lx), dtype=np.uint8)
-            for i, roi in enumerate(valid_rois):
-                roi_stat = stat[roi]
-                mask = np.zeros((Ly, Lx), dtype=np.uint8)
-                mask[roi_stat['ypix'], roi_stat['xpix']] = 1
-                mask_stack[i] = mask
-
-            F_block = F[[i for i in range(len(valid_rois))], :]  # all ROI traces
             for frame_idx in range(stim_segm):
-                composite_frame = np.zeros((Ly, Lx), dtype=np.float32)
+                frame_image = np.zeros((Ly, Lx), dtype=np.float32)
 
                 for i, roi in enumerate(valid_rois):
-                    F_trace = F[i]
-                    stim_val = F_trace[trigger + frame_idx]
-                    composite_frame += mask_stack[i] * stim_val
+                    roi_stat = stat[roi]
+                    val = F[i, trigger + frame_idx]
+                    frame_image[roi_stat['ypix'], roi_stat['xpix']] += val
 
-                # Normalize and convert to 8-bit for visualization
-                norm_frame = composite_frame
-                if np.max(norm_frame) > 0:
-                    norm_frame = 255 * (norm_frame / np.max(norm_frame))
-                norm_frame = norm_frame.astype(np.uint8)
-                bgr_frame = cv2.cvtColor(norm_frame, cv2.COLOR_GRAY2BGR)
+                # Normalize and convert to 8-bit
+                if np.max(frame_image) > 0:
+                    frame_image = 255 * (frame_image / np.max(frame_image))
+                frame_image = frame_image.astype(np.uint8)
+                bgr_frame = cv2.cvtColor(frame_image, cv2.COLOR_GRAY2BGR)
                 all_frames.append(bgr_frame)
 
     height, width, _ = all_frames[0].shape

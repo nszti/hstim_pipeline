@@ -2177,11 +2177,8 @@ def get_stim_frames_to_video(exp_dir, mesc_file_name, tiff_dir, list_of_file_num
                 continue
             end_frame = start_frame + frame_len
 
-            for roi in valid_rois:
-                F_block = F[roi, start_frame:end_frame]
-                if block_stim_time + stim_segm > len(F_block):
-                    continue  # Skip if not enough frames after trigger
-
+            for i, roi in enumerate(valid_rois):
+                F_block = F[i, start_frame:end_frame]
                 stim_segment = F_block[trigger:trigger + stim_segm]
                 baseline = F_block[:trigger]
                 threshold = np.mean(baseline) + threshold_value * np.std(baseline)

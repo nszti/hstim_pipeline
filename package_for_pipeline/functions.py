@@ -2106,7 +2106,7 @@ def collect_file_paths_for_blocks(tiff_dir, list_of_file_nums):
 
     return results
 
-def get_stim_frames_to_video(exp_dir, mesc_file_name, tiff_dir, list_of_file_nums, stim_segm=15, threshold_value=3.0, block_order=[5,6,8,2,10,9,3,1,7,4,0]):
+def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15, threshold_value=3.0, block_order=[5,6,8,2,10,9,3,1,7,4,0]):
     import cv2
     fileId_path = os.path.join(exp_dir, 'fileId.txt')
     trigger_path = os.path.join(exp_dir, 'trigger.txt')
@@ -2131,6 +2131,7 @@ def get_stim_frames_to_video(exp_dir, mesc_file_name, tiff_dir, list_of_file_num
 
     with open(fileId_path, 'r') as f:
         file_ids = [int(line.strip().replace('MUnit_', '')) for line in f]
+        print(file_ids)
 
     with open(trigger_path, 'r') as f:
         triggers = [int(line.strip()) if line.strip().lower() != 'none' and line.strip() else None for line in f]
@@ -2154,34 +2155,34 @@ def get_stim_frames_to_video(exp_dir, mesc_file_name, tiff_dir, list_of_file_num
     iscell = np.load(os.path.join(merged_dir, 'iscell.npy'), allow_pickle=True)
     stat = np.load(os.path.join(merged_dir, 'stat.npy'), allow_pickle=True)
     ops = np.load(os.path.join(merged_dir, 'ops.npy'), allow_pickle=True).item()
-        Ly, Lx = ops['Ly'], ops['Lx']
-        valid_rois = np.where(iscell[:, 0] == 1)[0]
-        all_frames = []
+    Ly, Lx = ops['Ly'], ops['Lx']
+    valid_rois = np.where(iscell[:, 0] == 1)[0]
+    all_frames = []
 
-        for idx in block_order:
-            file_id, trigger, frame_len, block_start = block_info[idx]
-            if trigger is None or trigger + stim_segm > frame_len:
-                print(f"Skipping block {file_id}, invalid trigger.")
-                continue
-            absolute_trigger = block_start + trigger
-            print(f"Block {file_id}: abs_trig: {absolute_trigger}, trig: {trigger}")
-            for i, roi in enumerate(valid_rois):
-                F_trace = F[i]
-                stim_segment = F_trace[absolute_trigger : absolute_trigger + stim_segm]
-                baseline = F_trace[block_start : block_start + trigger]
-                threshold = np.mean(baseline) + threshold_value * np.std(baseline)
-                if np.mean(stim_segment) > threshold:
-                    roi_stat = stat[roi]
-                    mask = np.zeros((Ly, Lx), dtype=np.uint8)
-                    mask[roi_stat['ypix'], roi_stat['xpix']] = 1
+    for idx in block_order:
+        file_id, trigger, frame_len, block_start = block_info[idx]
+        if trigger is None or trigger + stim_segm > frame_len:
+            print(f"Skipping block {file_id}, invalid trigger.")
+            continue
+        absolute_trigger = block_start + trigger
+        print(f"Block {file_id}: abs_trig: {absolute_trigger}, trig: {trigger}")
+        for i, roi in enumerate(valid_rois):
+            F_trace = F[i]
+            stim_segment = F_trace[absolute_trigger : absolute_trigger + stim_segm]
+            baseline = F_trace[block_start : block_start + trigger]
+            threshold = np.mean(baseline) + threshold_value * np.std(baseline)
+            if np.mean(stim_segment) > threshold:
+                roi_stat = stat[roi]
+                mask = np.zeros((Ly, Lx), dtype=np.uint8)
+                mask[roi_stat['ypix'], roi_stat['xpix']] = 1
 
-                    for i in range(stim_segm):
-                        frame = mask * stim_segment[i]
-                        if np.max(frame) > 0:
-                            frame = (255 * frame / np.max(frame)).astype(np.uint8)
-                        else:
-                            frame = frame.astype(np.uint8)
-                        all_frames.append(frame)
+                for i in range(stim_segm):
+                    frame = mask * stim_segment[i]
+                    if np.max(frame) > 0:
+                        frame = (255 * frame / np.max(frame)).astype(np.uint8)
+                    else:
+                        frame = frame.astype(np.uint8)
+                    all_frames.append(frame)
     height, width = all_frames[0].shape
     out_path = os.path.join(tiff_dir, output_video_name)
     fourcc = cv2.VideoWriter_fourcc(*'XVID')

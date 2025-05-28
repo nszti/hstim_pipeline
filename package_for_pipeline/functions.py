@@ -2228,7 +2228,7 @@ def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15,
     print(f"Saved video to: {out_path}")
 
 
-def create_video_from_mesc_tiffs(mesc_dir, output_video_name='first_stim_video.avi', stim_segm=15,block_order=None):
+def create_video_from_mesc_tiffs(mesc_dir, list_of_file_nums, output_video_name='first_stim_video.avi', stim_segm=15,block_order=None):
     # Load metadata
     file_ids = []
     triggers = []
@@ -2242,7 +2242,9 @@ def create_video_from_mesc_tiffs(mesc_dir, output_video_name='first_stim_video.a
             triggers.append(int(trig_line.strip()))
             frame_lens.append(int(len_line.strip()))
 
-    blocks = list(zip(file_ids, triggers, frame_lens))
+    file_nums_flat = [item for sublist in list_of_file_nums for item in sublist]
+    all_blocks = list(zip(file_ids, triggers, frame_lens))
+    blocks = [b for b in all_blocks if b[0] in file_nums_flat]
 
     if block_order:
         try:
@@ -2253,7 +2255,8 @@ def create_video_from_mesc_tiffs(mesc_dir, output_video_name='first_stim_video.a
     all_frames = []
 
     for file_id, trigger, frame_len in blocks:
-        tiff_path = os.path.join(mesc_dir, f'{Path(mesc_dir).stem}_{file_id}.tif')
+        tiff_filename = f"{Path(mesc_dir).stem}_MUnit_{file_id}.tif"
+        tiff_path = os.path.join(mesc_dir, tiff_filename)
         if not os.path.exists(tiff_path):
             print(f"tiff not found: {tiff_path}")
             continue

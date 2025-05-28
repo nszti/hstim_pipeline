@@ -2190,24 +2190,29 @@ def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15,
 
             absolute_trigger = block_start + trigger
             print(f"Block {file_id}: absolute_trigger = {absolute_trigger}")
-
+            mask_stack = np.zeros((len(valid_rois), Ly, Lx), dtype=np.uint8)
             for i, roi in enumerate(valid_rois):
-                F_trace = F[i]
-                stim_segment = F_trace[absolute_trigger: absolute_trigger + stim_segm]
-                baseline = F_trace[block_start: block_start + trigger]
-                threshold = np.mean(baseline) + threshold_value * np.std(baseline)
+                roi_stat = stat[roi]
+                mask = np.zeros((Ly, Lx), dtype=np.uint8)
+                mask[roi_stat['ypix'], roi_stat['xpix']] = 1
+                mask_stack[i] = mask
 
-                if np.mean(stim_segment) > threshold:
-                    roi_stat = stat[roi]
-                    mask = np.zeros((Ly, Lx), dtype=np.uint8)
-                    mask[roi_stat['ypix'], roi_stat['xpix']] = 1
+            F_block = F[[i for i in range(len(valid_rois))], :]  # all ROI traces
+            for frame_idx in range(stim_segm):
+                composite_frame = np.zeros((Ly, Lx), dtype=np.float32)
 
-                    for j in range(stim_segm):
-                        frame = mask * stim_segment[j]
-                        frame = (255 * frame / np.max(frame)) if np.max(frame) > 0 else frame
-                        frame = frame.astype(np.uint8)
-                        bgr_frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
-                        all_frames.append(bgr_frame)
+                for i, roi in enumerate(valid_rois):
+                    F_trace = F[i]
+                    stim_val = F_trace[absolute_trigger + frame_idx]
+                    composite_frame += mask_stack[i] * stim_val
+
+                # Normalize and convert to 8-bit for visualization
+                norm_frame = composite_frame
+                if np.max(norm_frame) > 0:
+                    norm_frame = 255 * (norm_frame / np.max(norm_frame))
+                norm_frame = norm_frame.astype(np.uint8)
+                bgr_frame = cv2.cvtColor(norm_frame, cv2.COLOR_GRAY2BGR)
+                all_frames.append(bgr_frame)
 
     height, width = all_frames[0].shape
     out_path = os.path.join(tiff_dir, output_video_name)

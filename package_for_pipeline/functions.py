@@ -2108,10 +2108,7 @@ def collect_file_paths_for_blocks(tiff_dir, list_of_file_nums):
 
 def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15, threshold_value=3.0, block_order=[5,6,8,2,10,9,3,1,7,4,0]):
     import cv2
-    fileId_path = os.path.join(exp_dir, 'fileId.txt')
-    trigger_path = os.path.join(exp_dir, 'trigger.txt')
-    frameNo_path = os.path.join(exp_dir, 'frameNo.txt')
-    output_video_name = 'stim_activation_frames.avi'
+    output_video_name = 'stim_activation_frames.mp4'
 
     '''file_ids, triggers, frame_lens = [], [], []
 
@@ -2129,37 +2126,24 @@ def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15,
         for file_id, trig, frame_len in zip(file_ids, triggers, frame_lens)
     }'''
 
-    with open(fileId_path, 'r') as f:
-        file_ids = [int(line.strip().replace('MUnit_', '')) for line in f]
-        print(file_ids)
-
-    with open(trigger_path, 'r') as f:
-        triggers = [int(line.strip()) if line.strip().lower() != 'none' and line.strip() else None for line in f]
-
-    with open(frameNo_path, 'r') as f:
-        frame_lens = [int(line.strip()) for line in f if line.strip()]
-
-    block_start_frames = np.cumsum([0] + frame_lens[:-1])
-    block_info = list(zip(file_ids, triggers, frame_lens, block_start_frames))
 
     base_dir = Path(tiff_dir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
-
     all_frames = []
 
     for group_idx, file_group in enumerate(list_of_file_nums):
         suffix = '_'.join(map(str, file_group))
-        matched_file = None
-        for dir in filenames:
-            if f'MUnit_{suffix}' in dir:
-                matched_file = dir
-                break
+        matched_file = next((f for f in filenames if f'MUnit_{suffix}' in f), None)
+        fileId_path = os.path.join(exp_dir, 'fileId.txt')
+        trigger_path = os.path.join(exp_dir, 'trigger.txt')
+        frameNo_path = os.path.join(exp_dir, 'frameNo.txt')
         if matched_file is None:
             print(f"No matched directory for MUnit_{suffix}")
             continue
 
         print(f"Processing group: {matched_file}")
-        suite2p_dir = os.path.join(base_dir, matched_file, 'suite2p', 'plane0')
+        exp_dir_merged = os.path.join(base_dir, matched_file)
+        suite2p_dir = os.path.join(exp_dir_merged, 'suite2p', 'plane0')
 
         F = np.load(os.path.join(suite2p_dir, 'F.npy'), allow_pickle=True)
         iscell = np.load(os.path.join(suite2p_dir, 'iscell.npy'), allow_pickle=True)
@@ -2168,18 +2152,44 @@ def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15,
         Ly, Lx = ops['Ly'], ops['Lx']
         valid_rois = np.where(iscell[:, 0] == 1)[0]
 
-        # find block indices that match the files in the group
-        block_indices = [i for i, info in enumerate(block_info) if info[0] in file_group]
-        if block_order:
-            block_indices = [block_indices[i] for i in block_order]
+        with open(fileId_path, 'r') as f:
+            file_ids = [int(line.strip().replace('MUnit_', '')) for line in f]
+            print(file_ids)
 
-        for block_idx in block_indices:
-            file_id, trigger, frame_len, block_start = block_info[block_idx]
+        with open(trigger_path, 'r') as f:
+            triggers = [int(line.strip()) if line.strip().lower() != 'none' and line.strip() else None for line in f]
+
+        with open(frameNo_path, 'r') as f:
+            frame_lens = [int(line.strip()) for line in f if line.strip()]
+
+        local_start_frames = np.cumsum([0] + local_frame_lens[:-1])
+        local_block_info = list(zip(local_file_ids, local_triggers, local_frame_lens, local_start_frames))
+
+        if block_order:
+            try:
+                ordered_file_ids = [file_group[i] for i in block_order]
+            except IndexError:
+                raise ValueError(f"Invalid block_order {block_order} for file_group {file_group}")
+        else:
+            ordered_file_ids = file_group
+        ordered_block_info = []
+        for file_id in ordered_file_ids:
+            matched = False
+            for block in local_block_info:
+                if block[0] == file_id:
+                    ordered_block_info.append(block)
+                    matched = True
+                    break
+            if not matched:
+                print(f"Warning: file_id {file_id} not found in merged block.")
+
+        for file_id, trigger, frame_len, block_start in ordered_block_info:
             if trigger is None or trigger + stim_segm > frame_len:
-                print(f"Skipping block {file_id}, invalid trigger.")
+                print(f"Skipping block {file_id} due to invalid trigger.")
                 continue
+
             absolute_trigger = block_start + trigger
-            print(f"Block {file_id}: abs_trig = {absolute_trigger}")
+            print(f"Block {file_id}: absolute_trigger = {absolute_trigger}")
 
             for i, roi in enumerate(valid_rois):
                 F_trace = F[i]

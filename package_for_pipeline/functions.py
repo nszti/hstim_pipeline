@@ -2106,6 +2106,107 @@ def collect_file_paths_for_blocks(tiff_dir, list_of_file_nums):
 
     return results
 
+def get_stim_frames_to_video(exp_dir, mesc_file_name, tiff_dir, list_of_file_nums, stim_segm=15, threshold_value=3.0, block_order=[5,6,8,2,10,9,3,1,7,4,0]):
+    import cv2
+    fileId_path = os.path.join(exp_dir, 'fileId.txt')
+    trigger_path = os.path.join(exp_dir, 'trigger.txt')
+    frameNo_path = os.path.join(exp_dir, 'frameNo.txt')
+    output_video_name = 'stim_activation_frames.avi'
+
+    '''file_ids, triggers, frame_lens = [], [], []
+
+    with open(fileId_path, 'r') as f_ids, open(trigger_path, 'r') as f_triggers, open(frameNo_path, 'r') as f_frames:
+        for id_line, trig_line, frame_line in zip(f_ids, f_triggers, f_frames):
+            trig_line, frame_line = trig_line.strip(), frame_line.strip()
+            if trig_line.lower() == 'none' or not trig_line or not frame_line:
+                continue
+            file_ids.append(int(id_line.strip().replace('MUnit_', '')))
+            triggers.append(int(trig_line))
+            frame_lens.append(int(frame_line))
+
+    fileid_to_info = {
+        file_id: {'trigger': trig, 'block_len': frame_len}
+        for file_id, trig, frame_len in zip(file_ids, triggers, frame_lens)
+    }'''
+
+    with open(fileId_path, 'r') as f:
+        file_ids = [int(line.strip().replace('MUnit_', '')) for line in f]
+
+    with open(trigger_path, 'r') as f:
+        triggers = [int(line.strip()) if line.strip().lower() != 'none' and line.strip() else None for line in f]
+
+    with open(frameNo_path, 'r') as f:
+        frame_lens = [int(line.strip()) for line in f if line.strip()]
+
+    block_start_frames = np.cumsum([0] + frame_lens[:-1])
+    block_info = list(zip(file_ids, triggers, frame_lens, block_start_frames))
+
+    if block_order is None:
+        block_order = list(range(len(block_info)))
+
+
+    base_dir = Path(tiff_dir)
+    filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+    all_frames = []
+
+    for file_group in list_of_file_nums:
+        suffix = '_'.join(map(str, file_group))
+        matched_file = next((f for f in filenames if f'MUnit_{suffix}' in f), None)
+        if not matched_file:
+            print(f"No matched directory for MUnit_{suffix}")
+            continue
+
+        print(f"Processing: {matched_file}")
+        exp_dir = os.path.join(base_dir, matched_file)
+        suite2p_dir = os.path.join(exp_dir, 'suite2p', 'plane0')
+
+        F = np.load(os.path.join(suite2p_dir, 'F0.npy'), allow_pickle=True)
+        iscell = np.load(os.path.join(suite2p_dir, 'iscell.npy'), allow_pickle=True)
+        stat = np.load(os.path.join(suite2p_dir, 'stat.npy'), allow_pickle=True)
+        ops = np.load(os.path.join(suite2p_dir, 'ops.npy'), allow_pickle=True).item()
+        Ly, Lx = ops['Ly'], ops['Lx']
+        valid_rois = np.where(iscell[:, 0] == 1)[0]
+        all_frames = []
+
+        #block_indices = block_order if block_order else list(range(len(file_group)))
+
+        for idx in block_order:
+            file_id, trigger, frame_len, start_frame = block_info[idx]
+            if trigger is None or trigger + stim_segm > frame_len:
+                print(f"Skipping block {file_id}, invalid trigger.")
+                continue
+            end_frame = start_frame + frame_len
+
+            for roi in valid_rois:
+                F_block = F[roi, start_frame:end_frame]
+                if block_stim_time + stim_segm > len(F_block):
+                    continue  # Skip if not enough frames after trigger
+
+                stim_segment = F_block[trigger:trigger + stim_segm]
+                baseline = F_block[:trigger]
+                threshold = np.mean(baseline) + threshold_value * np.std(baseline)
+                if np.mean(stim_segment) > threshold:
+                    roi_stat = stat[roi]
+                    mask = np.zeros((Ly, Lx), dtype=np.uint8)
+                    mask[roi_stat['ypix'], roi_stat['xpix']] = 1
+
+                    for i in range(stim_segm):
+                        frame = mask * stim_segment[i]
+                        if np.max(frame) > 0:
+                            frame = (255 * frame / np.max(frame)).astype(np.uint8)
+                        else:
+                            frame = frame.astype(np.uint8)
+                        all_frames.append(frame)
+    height, width = all_frames[0].shape
+    out_path = os.path.join(tiff_dir, output_video_name)
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    out = cv2.VideoWriter(out_path, fourcc, 5, (width, height), isColor=False)
+    for frame in all_frames:
+        out.write(cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR))  # convert to 3-channel for OpenCV
+    out.release()
+    print(f"Saved video to: {out_path}")
+
+
 
 #scratch_1
 def scratch_val(tiff_dir):

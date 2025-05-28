@@ -2188,7 +2188,7 @@ def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15,
                 print(f"Skipping block {file_id} due to invalid trigger.")
                 continue
 
-            absolute_trigger = block_start + trigger
+            absolute_trigger = trigger
             print(f"Block {file_id}: absolute_trigger = {absolute_trigger}")
             mask_stack = np.zeros((len(valid_rois), Ly, Lx), dtype=np.uint8)
             for i, roi in enumerate(valid_rois):
@@ -2203,7 +2203,7 @@ def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15,
 
                 for i, roi in enumerate(valid_rois):
                     F_trace = F[i]
-                    stim_val = F_trace[absolute_trigger + frame_idx]
+                    stim_val = F_trace[trigger + frame_idx]
                     composite_frame += mask_stack[i] * stim_val
 
                 # Normalize and convert to 8-bit for visualization
@@ -2214,7 +2214,7 @@ def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15,
                 bgr_frame = cv2.cvtColor(norm_frame, cv2.COLOR_GRAY2BGR)
                 all_frames.append(bgr_frame)
 
-    height, width = all_frames[0].shape
+    height, width, _ = all_frames[0].shape
     out_path = os.path.join(tiff_dir, output_video_name)
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
     out = cv2.VideoWriter(out_path, fourcc, 5, (width, height), isColor=True)

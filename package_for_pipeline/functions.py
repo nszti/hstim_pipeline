@@ -2108,7 +2108,7 @@ def collect_file_paths_for_blocks(tiff_dir, list_of_file_nums):
 
 def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15, threshold_value=3.0, block_order=[5,6,8,2,10,9,3,1,7,4,0]):
     import cv2
-    output_video_name = 'stim_activation_frames.mp4'
+    output_video_name = 'stim_activation_frames.avi'
 
     '''file_ids, triggers, frame_lens = [], [], []
 
@@ -2162,8 +2162,8 @@ def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15,
         with open(frameNo_path, 'r') as f:
             frame_lens = [int(line.strip()) for line in f if line.strip()]
 
-        local_start_frames = np.cumsum([0] + local_frame_lens[:-1])
-        local_block_info = list(zip(local_file_ids, local_triggers, local_frame_lens, local_start_frames))
+        local_start_frames = np.cumsum([0] + frame_lens[:-1])
+        local_block_info = list(zip(file_ids, triggers, frame_lens, local_start_frames))
 
         if block_order:
             try:
@@ -2212,7 +2212,7 @@ def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15,
 
     height, width = all_frames[0].shape
     out_path = os.path.join(tiff_dir, output_video_name)
-    fourcc = fourcc = cv2.VideoWriter_fourcc(*'avc1')
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
     out = cv2.VideoWriter(out_path, fourcc, 5, (width, height), isColor=False)
 
     if not out.isOpened():
@@ -2242,4 +2242,33 @@ def scratch_val(tiff_dir):
         plt.hist(distanceValues, bins=30, color='skyblue', edgecolor='black')
         plt.plot(F0[48,:])
         plt.show()
+def speed_up():
+    import cv2
 
+    cap = cv2.VideoCapture('C:/Users/NP/Documents/Hyperstim_Eszter/opencv_test/M20240311_0005.avi')
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    i = 0  # frame counter
+    frameTime = 1  # time of each frame in ms, you can add logic to change this value.
+    width = cap.get(3)
+    heigth = cap.get(4)
+    size = (width, heigth)
+    frame_rate = cap.get(5)
+    # frame_num_to_cut =
+    # cut_frames = (frame_num_to_cut*(1/frame_rate)*1000)
+    output = cv2.VideoWriter('C:/Users/NP/Documents/Hyperstim_Eszter/opencv_test/M20240311_0005_10x.avi', fourcc,
+                             frame_rate, (int(width), int(heigth)))
+    # cap.set(cv2.CAP_PROP_POS_MSEC, cut_frames)
+    while (cap.isOpened()):
+        ret = cap.grab()  # grab frame
+        i = i + 1  # increment counter
+        # if i > cut_frames:
+        if i % 10 == 0:  # display only one third of the frames, you can change this parameter according to your needs
+            ret, frame = cap.retrieve()  # decode frame
+            cv2.imshow('frame', frame)
+            output.write(frame)
+            if cv2.waitKey(frameTime) & 0xFF == ord('q'):
+                break
+        # print(ret, frame)
+    cap.release()
+    output.release()
+    cv2.destroyAllWindows()

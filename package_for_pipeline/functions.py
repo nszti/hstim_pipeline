@@ -2168,22 +2168,17 @@ def get_stim_frames_to_video(exp_dir, mesc_file_name, tiff_dir, list_of_file_num
         valid_rois = np.where(iscell[:, 0] == 1)[0]
         all_frames = []
 
-        #block_indices = block_order if block_order else list(range(len(file_group)))
-
         for idx in block_order:
-            file_id, trigger, frame_len, start_frame = block_info[idx]
+            file_id, trigger, frame_len, block_start = block_info[idx]
             if trigger is None or trigger + stim_segm > frame_len:
                 print(f"Skipping block {file_id}, invalid trigger.")
                 continue
-            end_frame = start_frame + frame_len
-
-            for roi in valid_rois:
-                F_block = F[roi, start_frame:end_frame]
-                if block_stim_time + stim_segm > len(F_block):
-                    continue  # Skip if not enough frames after trigger
-
-                stim_segment = F_block[trigger:trigger + stim_segm]
-                baseline = F_block[:trigger]
+            absolute_trigger = block_start + trigger
+            print(f"Block {file_id}: abs_trig: {absolute_trigger}, trig: {trigger}")
+            for i, roi in enumerate(valid_rois):
+                F_trace = F[i]
+                stim_segment = F_trace[absolute_trigger : absolute_trigger + stim_segm]
+                baseline = F_trace[block_start : block_start + trigger]
                 threshold = np.mean(baseline) + threshold_value * np.std(baseline)
                 if np.mean(stim_segment) > threshold:
                     roi_stat = stat[roi]

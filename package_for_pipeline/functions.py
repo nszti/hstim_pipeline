@@ -2141,58 +2141,75 @@ def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15,
 
     block_start_frames = np.cumsum([0] + frame_lens[:-1])
     block_info = list(zip(file_ids, triggers, frame_lens, block_start_frames))
-    searched_blocks = [info for info in block_info if info[0] in list_of_file_nums]
-
-    if block_order is None:
-        block_order = list(range(len(searched_blocks)))
-    else:
-        if sorted(block_order) != list(range(len(searched_blocks))):
-            raise ValueError("block_order must contain all indices of searched_blocks in any order.")
 
     base_dir = Path(tiff_dir)
-    merged_dirs = [f for f in base_dir.iterdir() if f.name.startswith('merged')]
-    if not merged_dirs:
-        raise FileNotFoundError("No 'merged' directory found.")
-    merged_dir = os.path.join(base_dir, merged_dirs[0], 'suite2p', 'plane0')
+    filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
 
-    F = np.load(os.path.join(merged_dir, 'F.npy'), allow_pickle=True)
-    iscell = np.load(os.path.join(merged_dir, 'iscell.npy'), allow_pickle=True)
-    stat = np.load(os.path.join(merged_dir, 'stat.npy'), allow_pickle=True)
-    ops = np.load(os.path.join(merged_dir, 'ops.npy'), allow_pickle=True).item()
-    Ly, Lx = ops['Ly'], ops['Lx']
-    valid_rois = np.where(iscell[:, 0] == 1)[0]
     all_frames = []
 
-    for idx in block_order:
-        file_id, trigger, frame_len, block_start = searched_blocks[idx]
-        if trigger is None or trigger + stim_segm > frame_len:
-            print(f"Skipping block {file_id}, invalid trigger.")
+    for group_idx, file_group in enumerate(list_of_file_nums):
+        suffix = '_'.join(map(str, file_group))
+        matched_file = None
+        for dir in filenames:
+            if f'MUnit_{suffix}' in dir:
+                matched_file = dir
+                break
+        if matched_file is None:
+            print(f"No matched directory for MUnit_{suffix}")
             continue
-        absolute_trigger = block_start + trigger
-        print(f"Block {file_id}: abs_trig: {absolute_trigger}, trig: {trigger}")
-        for i, roi in enumerate(valid_rois):
-            F_trace = F[i]
-            stim_segment = F_trace[absolute_trigger : absolute_trigger + stim_segm]
-            baseline = F_trace[block_start : block_start + trigger]
-            threshold = np.mean(baseline) + threshold_value * np.std(baseline)
-            if np.mean(stim_segment) > threshold:
-                roi_stat = stat[roi]
-                mask = np.zeros((Ly, Lx), dtype=np.uint8)
-                mask[roi_stat['ypix'], roi_stat['xpix']] = 1
 
-                for i in range(stim_segm):
-                    frame = mask * stim_segment[i]
-                    if np.max(frame) > 0:
-                        frame = (255 * frame / np.max(frame)).astype(np.uint8)
-                    else:
-                        frame = frame.astype(np.uint8)
-                    all_frames.append(frame)
+        print(f"Processing group: {matched_file}")
+        suite2p_dir = os.path.join(base_dir, matched_file, 'suite2p', 'plane0')
+
+        F = np.load(os.path.join(suite2p_dir, 'F.npy'), allow_pickle=True)
+        iscell = np.load(os.path.join(suite2p_dir, 'iscell.npy'), allow_pickle=True)
+        stat = np.load(os.path.join(suite2p_dir, 'stat.npy'), allow_pickle=True)
+        ops = np.load(os.path.join(suite2p_dir, 'ops.npy'), allow_pickle=True).item()
+        Ly, Lx = ops['Ly'], ops['Lx']
+        valid_rois = np.where(iscell[:, 0] == 1)[0]
+
+        # find block indices that match the files in the group
+        block_indices = [i for i, info in enumerate(block_info) if info[0] in file_group]
+        if block_order:
+            block_indices = [block_indices[i] for i in block_order]
+
+        for block_idx in block_indices:
+            file_id, trigger, frame_len, block_start = block_info[block_idx]
+            if trigger is None or trigger + stim_segm > frame_len:
+                print(f"Skipping block {file_id}, invalid trigger.")
+                continue
+            absolute_trigger = block_start + trigger
+            print(f"Block {file_id}: abs_trig = {absolute_trigger}")
+
+            for i, roi in enumerate(valid_rois):
+                F_trace = F[i]
+                stim_segment = F_trace[absolute_trigger: absolute_trigger + stim_segm]
+                baseline = F_trace[block_start: block_start + trigger]
+                threshold = np.mean(baseline) + threshold_value * np.std(baseline)
+
+                if np.mean(stim_segment) > threshold:
+                    roi_stat = stat[roi]
+                    mask = np.zeros((Ly, Lx), dtype=np.uint8)
+                    mask[roi_stat['ypix'], roi_stat['xpix']] = 1
+
+                    for j in range(stim_segm):
+                        frame = mask * stim_segment[j]
+                        if np.max(frame) > 0:
+                            frame = (255 * frame / np.max(frame)).astype(np.uint8)
+                        else:
+                            frame = frame.astype(np.uint8)
+                        all_frames.append(frame)
+
     height, width = all_frames[0].shape
     out_path = os.path.join(tiff_dir, output_video_name)
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(out_path, fourcc, 5, (width, height), isColor=False)
+
+    if not out.isOpened():
+        raise IOError(f"Failed to open video writer for: {out_path}")
+
     for frame in all_frames:
-        out.write(cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR))  # convert to 3-channel for OpenCV
+        out.write(cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR))
     out.release()
     print(f"Saved video to: {out_path}")
 

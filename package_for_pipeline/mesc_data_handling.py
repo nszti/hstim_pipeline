@@ -63,6 +63,7 @@ def tiff_merge(mesc_file_name, list_of_file_nums, output_root_directory):
         tifffile.imwrite(output_fpath, merged_stack.astype(np.uint16))
         print(f"files {tiff_files_li} merged into {output_fpath}")
 
+        '''
         selected_freqs = frequencies[numbers_to_merge]
         print(f"Used frequency: {selected_freqs}")
         output_dirname = 'merged_' + base_filename + '_'.join(map(str, numbers_to_merge))
@@ -70,7 +71,7 @@ def tiff_merge(mesc_file_name, list_of_file_nums, output_root_directory):
 
         #print(selected_electrode_ROIs)
         selected_electrode_ROIs = elec_ROIs[numbers_to_merge]
-        np.save(outer_directory + '/' + output_dirname + '/selected_elec_ROI.npy', selected_electrode_ROIs)
+        np.save(outer_directory + '/' + output_dirname + '/selected_elec_ROI.npy', selected_electrode_ROIs)'''
     '''
     for i, numbers_to_merge in enumerate(list_of_file_nums):
         base_filename = mesc_file_name + suffix

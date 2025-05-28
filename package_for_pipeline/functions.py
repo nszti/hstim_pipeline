@@ -2204,22 +2204,21 @@ def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15,
 
                     for j in range(stim_segm):
                         frame = mask * stim_segment[j]
-                        if np.max(frame) > 0:
-                            frame = (255 * frame / np.max(frame)).astype(np.uint8)
-                        else:
-                            frame = frame.astype(np.uint8)
-                        all_frames.append(frame)
+                        frame = (255 * frame / np.max(frame)) if np.max(frame) > 0 else frame
+                        frame = frame.astype(np.uint8)
+                        bgr_frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+                        all_frames.append(bgr_frame)
 
     height, width = all_frames[0].shape
     out_path = os.path.join(tiff_dir, output_video_name)
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter(out_path, fourcc, 5, (width, height), isColor=False)
+    out = cv2.VideoWriter(out_path, fourcc, 5, (width, height), isColor=True)
 
     if not out.isOpened():
         raise IOError(f"Failed to open video writer for: {out_path}")
 
     for frame in all_frames:
-        out.write(cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR))
+        out.write(frame)
     out.release()
     print(f"Saved video to: {out_path}")
 

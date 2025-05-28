@@ -2144,26 +2144,16 @@ def get_stim_frames_to_video(exp_dir, mesc_file_name, tiff_dir, list_of_file_num
     if block_order is None:
         block_order = list(range(len(block_info)))
 
-
     base_dir = Path(tiff_dir)
-    filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
-    all_frames = []
+    merged_dirs = [f for f in base_dir.iterdir() if f.name.startswith('merged')]
+    if not merged_dirs:
+        raise FileNotFoundError("No 'merged' directory found.")
+    merged_dir = os.path.join(base_dir, merged_dirs[0], 'suite2p', 'plane0')
 
-    for file_group in list_of_file_nums:
-        suffix = '_'.join(map(str, file_group))
-        matched_file = next((f for f in filenames if f'MUnit_{suffix}' in f), None)
-        if not matched_file:
-            print(f"No matched directory for MUnit_{suffix}")
-            continue
-
-        print(f"Processing: {matched_file}")
-        exp_dir = os.path.join(base_dir, matched_file)
-        suite2p_dir = os.path.join(exp_dir, 'suite2p', 'plane0')
-
-        F = np.load(os.path.join(suite2p_dir, 'F0.npy'), allow_pickle=True)
-        iscell = np.load(os.path.join(suite2p_dir, 'iscell.npy'), allow_pickle=True)
-        stat = np.load(os.path.join(suite2p_dir, 'stat.npy'), allow_pickle=True)
-        ops = np.load(os.path.join(suite2p_dir, 'ops.npy'), allow_pickle=True).item()
+    F = np.load(os.path.join(merged_dir, 'F.npy'), allow_pickle=True)
+    iscell = np.load(os.path.join(merged_dir, 'iscell.npy'), allow_pickle=True)
+    stat = np.load(os.path.join(merged_dir, 'stat.npy'), allow_pickle=True)
+    ops = np.load(os.path.join(merged_dir, 'ops.npy'), allow_pickle=True).item()
         Ly, Lx = ops['Ly'], ops['Lx']
         valid_rois = np.where(iscell[:, 0] == 1)[0]
         all_frames = []

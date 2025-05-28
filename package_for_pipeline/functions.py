@@ -2141,9 +2141,13 @@ def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15,
 
     block_start_frames = np.cumsum([0] + frame_lens[:-1])
     block_info = list(zip(file_ids, triggers, frame_lens, block_start_frames))
+    searched_blocks = [info for info in block_info if info[0] in list_of_file_nums]
 
     if block_order is None:
-        block_order = list(range(len(block_info)))
+        block_order = list(range(len(searched_blocks)))
+    else:
+        if sorted(block_order) != list(range(len(searched_blocks))):
+            raise ValueError("block_order must contain all indices of searched_blocks in any order.")
 
     base_dir = Path(tiff_dir)
     merged_dirs = [f for f in base_dir.iterdir() if f.name.startswith('merged')]
@@ -2160,7 +2164,7 @@ def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15,
     all_frames = []
 
     for idx in block_order:
-        file_id, trigger, frame_len, block_start = block_info[idx]
+        file_id, trigger, frame_len, block_start = searched_blocks[idx]
         if trigger is None or trigger + stim_segm > frame_len:
             print(f"Skipping block {file_id}, invalid trigger.")
             continue

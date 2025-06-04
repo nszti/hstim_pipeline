@@ -7,6 +7,17 @@ import pandas as pd
 
 
 def suite2p_to_cellreg_masks(expDir, list_of_file_nums):
+    '''
+
+    Parameters
+    ----------
+    expDir: root_directory
+    list_of_file_nums
+
+    Returns
+    -------
+    saves result .mat files into new cellreg_files directory
+    '''
     base_dir = Path(expDir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
     print(filenames)
@@ -17,13 +28,11 @@ def suite2p_to_cellreg_masks(expDir, list_of_file_nums):
         for dir in filenames:
             print(dir)
             num_to_search_split = dir.split('MUnit_')
-            # print(num_to_search_split)
             if len(num_to_search_split) > 1:
                 file_suffix = num_to_search_split[1].rsplit('.', 1)[0]
                 if file_suffix == suffix:
                     matched_file = dir
                     print(f'Found file: {matched_file}')
-                    # print(matched_file)
                     break
         else:
             continue
@@ -42,7 +51,7 @@ def suite2p_to_cellreg_masks(expDir, list_of_file_nums):
             filtered_stat = []
             for roi in stat:
                 y, x = roi['med']
-                if x > 1 and y > 1:  # Exclude ROIs too close to the image edge (which may lead to 0 distances)
+                if x > 1 and y > 1:
                     filtered_stat.append(roi)
                 else:
                     continue
@@ -67,7 +76,21 @@ def suite2p_to_cellreg_masks(expDir, list_of_file_nums):
                 print(f" Saved: {out_path} with shape {mask_stack.shape}")
 
 
-def cellreg_analysis(expDir, mat_file, list_of_file_nums, postfix, num_trials):
+def cellreg_analysis_overlap(expDir, mat_file, list_of_file_nums, postfix):
+    '''
+
+    Parameters
+    ----------
+    expDir: root_directory
+    mat_file: cell_Registered[date_num].mat saved after running the cellreg process
+    list_of_file_nums
+    postfix: if there is a separate directory for the cellreg files, you can add a postfix so it finds the path
+
+    Returns
+    -------
+    session_pair_overlap.csv: contains how many activated cells are the same between each 2 sessions
+    also prints the results to the console
+    '''
     base_dir = Path(expDir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
     for numbers_to_merge in list_of_file_nums:
@@ -75,28 +98,21 @@ def cellreg_analysis(expDir, mat_file, list_of_file_nums, postfix, num_trials):
         num_to_search = []
         for dir in filenames:
             num_to_search_split = dir.split('MUnit_')
-            # print(num_to_search_split)
             if len(num_to_search_split) > 1:
                 file_suffix = num_to_search_split[1].rsplit('.', 1)[0]
                 if file_suffix == suffix:
                     matched_file = dir
                     print(f'Found file: {matched_file}')
-                    # print(matched_file)
                     break
         else:
             continue
         matched_file = matched_file + '/'
         found_file = os.path.join(expDir, matched_file)
-        #cell_reg_path = os.path.join(found_file, 'cellreg_files/')
-        #print(cell_reg_path)
         cell_reg_path = found_file
         cell_reg_path_input = cell_reg_path + postfix
         input_file = os.path.join(cell_reg_path_input, mat_file)
         print(input_file)
         with h5py.File(input_file, 'r') as file:
-            # List all top-level keys in the .mat file
-            # print(list(file.keys()))
-            # nested list of cell_to_index_map
             data = file['cell_registered_struct']['cell_to_index_map'][:][:]
         num_sessions, num_cells = data.shape
         print(num_cells, num_sessions)
@@ -130,11 +146,28 @@ def cellreg_analysis(expDir, mat_file, list_of_file_nums, postfix, num_trials):
         csv_path = os.path.join(cell_reg_path_input, 'session_pair_overlap.csv')
         df = pd.DataFrame(result_rows, columns=['Session A', 'Session B', 'Number of Overlapping Cells', 'Overlap %'])
         df.to_csv(csv_path, index=False)
-        print("Overlap matrix saved as overlap_matrix.csv")
+        print("Overlap matrix saved as session_pair_overlap.csv")
 
 
-def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per_repeat, list_of_file_nums,
-                            start_btw_stim, stim_dur, threshold_value):
+def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per_repeat, list_of_file_nums, start_btw_stim, stim_dur, threshold_value):
+    '''
+
+    Parameters
+    ----------
+    expDir: root_directory
+    postfix: if needed
+    mat_file
+    frame_rate
+    num_stims_per_repeat
+    list_of_file_nums
+    start_btw_stim: trial_delay *from the experiment records*
+    stim_dur: duration *from the experiment records*
+    threshold_value: usually 3
+
+    Returns
+    -------
+
+    '''
     base_dir = Path(expDir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
 

@@ -268,6 +268,23 @@ def dist_vals (tiff_dir, list_of_file_nums):
 
 
 def spontaneous_baseline_val(tiff_dir, list_of_file_nums, list_of_roi_nums, frame_rate = 30.97, baseline_frame=3, plot_start_frame = 0, plot_end_frame=None ):
+    '''
+
+    Parameters
+    ----------
+    tiff_dir
+    list_of_file_nums
+    list_of_roi_nums: int list, defines which ROIs look at
+    frame_rate
+    baseline_frame: frame number to consider as baseline
+    plot_start_frame,plot_end_frame: to define concrete frame fragment to save
+
+    Returns
+    -------
+    saves F0.npy corrected fluorescent trace
+    roi[roi_index].svg ca traces of all the ROIs specified in list_of_roi_nums
+
+    '''
     base_dir = Path(tiff_dir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
     print(filenames)
@@ -304,7 +321,7 @@ def spontaneous_baseline_val(tiff_dir, list_of_file_nums, list_of_roi_nums, fram
 
             all_norm_traces = np.array(all_norm_traces)
 
-            # Save normalized traces
+            # Save normalised trace
             s2p_path = tiff_dir + dir + '/suite2p/plane0'
             out_path = os.path.join(s2p_path, 'F0.npy')
             np.save(out_path, all_norm_traces)
@@ -336,7 +353,16 @@ def spontaneous_baseline_val(tiff_dir, list_of_file_nums, list_of_roi_nums, fram
 
 def baseline_val(root_directory,tiff_dir, list_of_file_nums ):
     '''
-    :return: saves all_norm_traces, prints shape of all_norm_traces, output: F0.npy (baseline corrected fluorescence trace)
+
+    Parameters
+    ----------
+    root_directory
+    tiff_dir
+    list_of_file_nums
+
+    Returns
+    -------
+    saves all_norm_traces, prints shape of all_norm_traces, output: F0.npy (baseline corrected fluorescence trace)
     '''
     base_dir = Path(tiff_dir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
@@ -372,21 +398,6 @@ def baseline_val(root_directory,tiff_dir, list_of_file_nums ):
                     break
         else:
             continue
-
-        '''file_dir = Path(base_dir/matched_dir)
-        baseline_durations = []
-        for num_id in file_nums_to_search:
-            stim_times_path = os.path.join(file_dir, f'stimTimes.npy')
-            print(stim_times_path)
-            if os.path.exists(stim_times_path):
-                stim_times = np.load(stim_times_path, allow_pickle=True)
-                print(stim_times)
-                if stim_times.size > 0:
-                    print(int(stim_times[0]))
-                    baseline_duration = int(stim_times[0]) - 1
-                    baseline_durations.append(baseline_duration)'''
-
-
         if matched_dir:
 
             F_path = tiff_dir + matched_dir + '/suite2p/plane0/F.npy'
@@ -406,24 +417,16 @@ def baseline_val(root_directory,tiff_dir, list_of_file_nums ):
                 # Check iscell==1
                 if iscell_value == 1:
                     cellcount += 1
-                    #baseline_duration = baseline_durations[cell_index % len(baseline_durations)]
                     baseline_duration = int(stim_start_times[0]) - 1
                     if baseline_duration is not None:
                         baseline_value = np.mean(fluorescence_trace[:baseline_duration])
                         normalized_trace = (fluorescence_trace - baseline_value) / baseline_value
                         all_norm_traces.append(normalized_trace)
-                        #plt.figure()
-                        #plt.plot(normalized_trace)
-                        #plt.show()
             # convert the list of baseline_diffs to a npy array
             all_norm_traces = np.array(all_norm_traces)
-            #print(len(all_norm_traces))
-            #save output as .npy file
             dir_path = os.path.join(base_dir, dir)
             np.save(dir_path + '/suite2p/plane0/F0.npy', all_norm_traces)
             print(f"F0.npy saved to {dir_path + '/suite2p/plane0/F0.npy'}")
-            #print(all_norm_traces.shape)
-            #print(all_norm_traces)
 
 #activated_neurons
 def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold_value):
@@ -1082,6 +1085,25 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
 
 
 def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list_of_file_nums, start_btw_stim, trial_delay,roi_idx, stim_dur=200, threshold_value = 3):
+    '''
+
+    Parameters
+    ----------
+    expDir
+    frame_rate
+    num_repeats
+    num_stims_per_repeat
+    list_of_file_nums
+    start_btw_stim
+    trial_delay
+    roi_idx
+    stim_dur
+    threshold_value
+
+    Returns
+    -------
+
+    '''
     roi_idx_og = roi_idx
     base_dir = Path(expDir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
@@ -1130,9 +1152,6 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             stimulation_duration_frames = int(round((stim_dur / 1000) * frame_rate,0))
             #print(f" rois of cells: {cell_indices}")
             num_cells = len(cell_indices)
-
-
-
             if roi_idx_og  not in cell_indices:
                 raise ValueError
 
@@ -2229,7 +2248,8 @@ def get_stim_frames_to_video(exp_dir, tiff_dir, list_of_file_nums, stim_segm=15,
 
 
 def create_video_from_mesc_tiffs(mesc_dir, list_of_file_nums, output_video_name='first_stim_video.avi', stim_segm=15,block_order=None):
-    # Load metadata
+    import tifffile
+    import cv2
     file_ids = []
     triggers = []
     frame_lens = []
@@ -2238,6 +2258,9 @@ def create_video_from_mesc_tiffs(mesc_dir, list_of_file_nums, output_video_name=
          open(os.path.join(mesc_dir, 'trigger.txt'), 'r') as f_trigs, \
          open(os.path.join(mesc_dir, 'frameNo.txt'), 'r') as f_lens:
         for id_line, trig_line, len_line in zip(f_ids, f_trigs, f_lens):
+            trig_line = trig_line.strip().lower()
+            if trig_line == 'none' or trig_line == '':
+                continue
             file_ids.append(int(id_line.strip().replace('MUnit_', '')))
             triggers.append(int(trig_line.strip()))
             frame_lens.append(int(len_line.strip()))
@@ -2292,24 +2315,6 @@ def create_video_from_mesc_tiffs(mesc_dir, list_of_file_nums, output_video_name=
     out.release()
     print(f"\n Saved video to: {out_path}")
 
-
-#scratch_1
-def scratch_val(tiff_dir):
-    '''
-    :param expDir:
-    :return:
-    '''
-    base_dir = Path(tiff_dir)
-    filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
-    for dir in os.listdir(filenames):
-        distances = np.load(tiff_dir + '/' + dir + '/suite2p/plane0/distances.npy', allow_pickle=True)
-        F0 = np.load(tiff_dir + '/' + dir + '/suite2p/plane0/F0.npy', allow_pickle=True)
-        #iscell = np.load(expDir + '/' + dir + '/suite2p/plane0/iscell.npy', allow_pickle=True)
-
-        distanceValues = distances[:,2]
-        plt.hist(distanceValues, bins=30, color='skyblue', edgecolor='black')
-        plt.plot(F0[48,:])
-        plt.show()
 def speed_up():
     import cv2
 

@@ -1,0 +1,19 @@
+name: suite2p
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - numpy=1.26.4
+  - scipy>=1.10.0
+  - scikit-learn>=1.3.0
+  - matplotlib>=3.7.0
+  - pandas>=2.1.0
+  - h5py>=3.9.0
+  - pytables>=3.8.0       # For HDF5 support
+  - tifftools>=1.5.0
+  - opencv>=4.9.0
+  - pyqt=5.15.*           # For GUI support
+  - pip
+  - pip:
+      - suite2p[gui]

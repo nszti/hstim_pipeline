@@ -7,7 +7,7 @@ import tifftools
 import pandas as pd
 import pickle
 
-def tiff_merge(mesc_file_name, list_of_file_nums, output_root_directory, stimulation=False):
+def tiff_merge(mesc_file_name, list_of_file_nums, output_root_directory, stimulation):
     '''
     Parameters
     ----------

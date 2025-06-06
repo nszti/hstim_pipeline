@@ -11,6 +11,7 @@
 #to install the environment:
 #    conda env create -f environment.yml
 #    conda activate suite2p
+# zc.lockfile error: no module named zc --> from command line → pip install zc-lockfile
 
 
 
@@ -28,6 +29,9 @@ dependencies:
   - scipy
   - scikit-learn
   - opencv
+  - pandas
+  - h5py
+  - xmltodict
   - pip
   - pip:
       - suite2p[gui]

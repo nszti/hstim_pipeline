@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>https://nszti.github.io/hstim_pipeline/docs/</loc>
+         <loc>https://nszti.github.io/hstim_pipeline/docs/index.html</loc>
          <lastmod>2025-06-08</lastmod>
     </url>
     <url>
-         <loc>https://nszti.github.io/hstim_pipeline/docs/api/</loc>
+         <loc>https://nszti.github.io/hstim_pipeline/docs/api.html</loc>
          <lastmod>2025-06-08</lastmod>
     </url>
     <url>
-         <loc>https://nszti.github.io/hstim_pipeline/docs/usage/</loc>
+         <loc>https://nszti.github.io/hstim_pipeline/docs/usage.html</loc>
          <lastmod>2025-06-08</lastmod>
     </url>
 </urlset>

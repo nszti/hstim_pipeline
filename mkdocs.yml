@@ -1,0 +1,12 @@
+site_name: Hyperstim data analysis pipeline
+theme:
+    name: material
+    palette:
+        primary: indigo
+        accent: pink
+    features:
+        - navigation.tabs
+nav:
+    - Home: index.md
+    - Usage: usage.md
+    - Documentation: api.md

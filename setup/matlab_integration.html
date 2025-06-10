@@ -682,13 +682,14 @@
 <p>This guide explains how to run a MATLAB <code>.m</code> script from a Python <code>.py</code> script using the MATLAB Engine API in PyCharm.</p>
 <hr />
 <h2 id="outlook">Outlook</h2>
-<p>I explored multiple options for integrating MATLAB and Python, and found the MATLAB Engine API to be the most reliable. Below is a working setup you can use in PyCharm.</p>
+<p>I took this <a href="https://www.youtube.com/watch?v=OocdPu1Tcrg" target="_blank" rel="noopener"><strong>video</strong></a> as a starting point, tried both ways, but found the Matlab engine API the feasible method. (however you’re more than welcome to solve the other one)
+Let’s assume ‘main.py’ is the main Python file which runs your Python project &amp; ‘main.m’ is the main Matlab file which you’d like to run in PyCharm. For this, you need to 1) put the ‘main.m’ file in the same folder as the ‘main.py’, 2) connect Matlab with PyCharm with a Matlab Engine API for Python, 3) import the Matlab engine into the ‘main.py’ and call the Matlab code. For this method, you need Matlab to be installed. </p>
 <hr />
 <h2 id="step-0-version-compatibility">Step 0: Version Compatibility</h2>
 <ul>
-<li>Check that you are using a <strong>64-bit version of Python</strong>, especially if using a virtual environment (e.g., Anaconda).</li>
-<li>Confirm your <strong>MATLAB release version</strong>.</li>
-<li>Use the official compatibility table to check Python–MATLAB version compatibility.</li>
+<li>First and foremost, check the version of Python which you’re working with. (If you're working in .venv, check that as well and take that into account too). Also check that you’re working with a <strong>64 bit</strong> version of Python to match the architecture of Matlab.</li>
+<li>Check your Matlab release version too. </li>
+<li>Crucial step!: Check the compatibility of your Python and Matlab <a href="https://www.mathworks.com/support/requirements/python-compatibility.html" target =" _blank" rel = "noopener"><strong>here</strong></a>.</li>
 </ul>
 <hr />
 <h2 id="step-1-install-matlab-engine-api">Step 1: Install MATLAB Engine API</h2>

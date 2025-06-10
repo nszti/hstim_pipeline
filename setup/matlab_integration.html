@@ -464,18 +464,18 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-2-place-m-and-py-files-together" class="md-nav__link">
+  <a href="#step-2-place-m-and-py-files-are-in-the-same-folder" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 2: Place .m and .py Files Together
+      Step 2: Place .m and .py Files are in the same folder
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-3-import-the-matlab-engine" class="md-nav__link">
+  <a href="#step-3-import-the-mainengine" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 3: Import the MATLAB Engine
+      Step 3: Import the main.engine
     </span>
   </a>
   
@@ -500,9 +500,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-6-run-the-integrated-code" class="md-nav__link">
+  <a href="#step-6-run-the-python-code" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 6: Run the Integrated Code
+      Step 6: Run the Python Code
     </span>
   </a>
   
@@ -609,18 +609,18 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-2-place-m-and-py-files-together" class="md-nav__link">
+  <a href="#step-2-place-m-and-py-files-are-in-the-same-folder" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 2: Place .m and .py Files Together
+      Step 2: Place .m and .py Files are in the same folder
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-3-import-the-matlab-engine" class="md-nav__link">
+  <a href="#step-3-import-the-mainengine" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 3: Import the MATLAB Engine
+      Step 3: Import the main.engine
     </span>
   </a>
   
@@ -645,9 +645,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-6-run-the-integrated-code" class="md-nav__link">
+  <a href="#step-6-run-the-python-code" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 6: Run the Integrated Code
+      Step 6: Run the Python Code
     </span>
   </a>
   
@@ -694,29 +694,30 @@ Let’s assume ‘main.py’ is the main Python file which runs your Python proj
 <hr />
 <h2 id="step-1-install-matlab-engine-api">Step 1: Install MATLAB Engine API</h2>
 <ol>
-<li>Open <strong>Anaconda Prompt</strong> or <strong>Command Prompt</strong> as Administrator.</li>
-<li>Navigate to the engine API folder, usually:</li>
+<li>The matlab engine API is within the installed MATLAB package. To avoid any permission errors and other issues  run cmd as an Administrator (OR if you’re running your ‘main.py’ from a virtual environment -in my case anaconda3- open anaconda prompt as an Administrator).</li>
+<li>While in the virtual environment, direct to the API folder, which is usually in the following path:</li>
 </ol>
 <pre><code>C:\Program Files\MATLAB\[your_version]\extern\engines\python
 </code></pre>
-<ol>
-<li>Run this installation command inside your virtual environment:</li>
-</ol>
-<pre><code class="language-bash">python setup.py install
+<p>If you direct to this path, you should see the ‘setup.py’ file.
+3. In the command line, install this with the following command:</p>
+<pre><code>python setup.py install
 </code></pre>
-<p>For alternative installation methods, refer to the <a href="https://www.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html">official guide</a>.</p>
+<p>For alternative installation methods, refer to the <a href="https://se.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html" target="_blank" rel="noopener"><strong>official guide</strong></a>.</p>
 <hr />
-<h2 id="step-2-place-m-and-py-files-together">Step 2: Place <code>.m</code> and <code>.py</code> Files Together</h2>
-<p>Put your <code>main.m</code> file in the same directory as your <code>main.py</code>.</p>
+<h2 id="step-2-place-m-and-py-files-are-in-the-same-folder">Step 2: Place <code>.m</code> and <code>.py</code> Files are in the same folder</h2>
+<p>Put your <code>main.m</code> file in the same folder where you run your <code>main.py</code> file from.</p>
 <hr />
-<h2 id="step-3-import-the-matlab-engine">Step 3: Import the MATLAB Engine</h2>
+<h2 id="step-3-import-the-mainengine">Step 3: Import the <code>main.engine</code></h2>
 <p>In your <code>main.py</code>:</p>
 <pre><code class="language-python">import matlab.engine
 </code></pre>
-<p>If you get a <code>No module named 'matlab'</code> error, your installation didn’t work — double-check your install path.</p>
+<p>If you get the `No module named 'matlab' error, then your API installation wasn’t successful:(( 
+Check if you installed the engine to the right path.</p>
 <hr />
 <h2 id="step-4-test-the-connection">Step 4: Test the Connection</h2>
-<p>Test if MATLAB connects:</p>
+<p>Check if you were successful and matlab is connected to PyCharm with the following code:
+You can also see how you can start the engine <a href="https://www.mathworks.com/help/matlab/matlab_external/start-the-matlab-engine-for-python.html" target="_blank" rel="noopener"><strong>here</strong></a>.</p>
 <pre><code class="language-python">import matlab.engine
 eng = matlab.engine.start_matlab()
 eng.eval(&quot;disp('Connected to MATLAB')&quot;, nargout=0)
@@ -724,25 +725,18 @@ eng.quit()
 </code></pre>
 <hr />
 <h2 id="step-5-pass-parameters-from-python-to-matlab">Step 5: Pass Parameters from Python to MATLAB</h2>
-<p>You can't directly set workspace variables in MATLAB that are visible inside functions. Instead:</p>
-<ul>
-<li>Modify your MATLAB script into a function that <strong>accepts parameters</strong>.</li>
-<li>In Python, call the MATLAB function with those parameters:</li>
-</ul>
-<pre><code class="language-python">eng = matlab.engine.start_matlab()
-eng.cd(r'path/to/folder')
-eng.my_matlab_function(data_path, nargout=0)
-eng.quit()
-</code></pre>
-<p>Avoid clearing variables in your MATLAB code (<code>clear all</code>), as it may delete passed arguments.</p>
+<p>So far, the setup can run a MATLAB code, but can not overwrite the variables dynamically. To overwrite a variable in Python and ensure MATLAB uses it when you call the MATLAB function via the API, you can pass it as an argument to your MATLAB function.</p>
+<p>Theoretically, the other option would be to assign it directly in the MATLAB workspace with <code>eng.workspace[‘data_path’] = …</code></p>
+<p>HOWEVER for me, it resulted in an error saying unrecognised function or variable, which confirms that (in this case) <code>data_path</code> is not visible in the function scope of the MATLAB script. This presumably is because variables set in the MATLAB base workspace (via Python eng.workspace['...'] = ...) are not automatically visible inside the functions. Therefore, we’re left with passing the variables as arguments.
+For this, you have to modify the code to a <strong>function</strong> that accepts the data_path and other variables as inputs. (make sure you don’t clear the assigned variables).</p>
 <hr />
-<h2 id="step-6-run-the-integrated-code">Step 6: Run the Integrated Code</h2>
-<p>Once the MATLAB function accepts arguments, just run:</p>
-<pre><code class="language-python">eng.my_function_from_main(nargout=0)
+<h2 id="step-6-run-the-python-code">Step 6: Run the Python Code</h2>
+<p>Run the MATLAB code via the API, you can call the MATLAB script as if it were a Python function with:</p>
+<pre><code class="language-python"> eng.[matlab_script_name ](params, nargout = 0)
 </code></pre>
 <hr />
 <h2 id="done">🎉 Done!</h2>
-<p>Congratulations — your Python project now integrates MATLAB! 🤯🥳</p>
+<p><a href="https://kumospace.mo.cloudinary.net/https://content.kumospace.com/hubfs/success-one-thing.jpg?tx=c_scale,w_600,h_770" target="_blank" rel="noopener"><strong>Congratulations</strong></a> — your Python project now integrates MATLAB! 🤯🥳</p>
 
 
 

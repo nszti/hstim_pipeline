@@ -8,28 +8,28 @@
       
       
       
-        <link rel="canonical" href="https://nszti.github.io/hstim_pipeline/usage.html">
+        <link rel="canonical" href="https://nszti.github.io/hstim_pipeline/setup/interpreter.html">
       
       
-        <link rel="prev" href="index.html">
+        <link rel="prev" href="usage.html">
       
       
-        <link rel="next" href="api.html">
+        <link rel="next" href="matlab_integration.html">
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
     
     
       
-        <title>Setup - Hyperstim data analysis pipeline</title>
+        <title>Interpreter Setup - Hyperstim data analysis pipeline</title>
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.342714a4.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.342714a4.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -48,7 +48,7 @@
       
     
     
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#setup-guide" class="md-skip">
+        <a href="#git-pycharm-setup-guide" class="md-skip">
           Skip to content
         </a>
       
@@ -86,7 +86,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="index.html" title="Hyperstim data analysis pipeline" class="md-header__button md-logo" aria-label="Hyperstim data analysis pipeline" data-md-component="logo">
+    <a href="../index.html" title="Hyperstim data analysis pipeline" class="md-header__button md-logo" aria-label="Hyperstim data analysis pipeline" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -106,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Setup
+              Interpreter Setup
             
           </span>
         </div>
@@ -179,7 +179,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="index.html" class="md-tabs__link">
+      <a href="../index.html" class="md-tabs__link">
         
   
   
@@ -199,17 +199,18 @@
     
   
   
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="usage.html" class="md-tabs__link">
-        
-  
-  
     
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="usage.html" class="md-tabs__link">
+          
+  
   
   Setup
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
   
 
       
@@ -219,7 +220,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="api.html" class="md-tabs__link">
+      <a href="../api.html" class="md-tabs__link">
         
   
   
@@ -254,7 +255,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="index.html" title="Hyperstim data analysis pipeline" class="md-nav__button md-logo" aria-label="Hyperstim data analysis pipeline" data-md-component="logo">
+    <a href="../index.html" title="Hyperstim data analysis pipeline" class="md-nav__button md-logo" aria-label="Hyperstim data analysis pipeline" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -272,7 +273,7 @@
   
   
     <li class="md-nav__item">
-      <a href="index.html" class="md-nav__link">
+      <a href="../index.html" class="md-nav__link">
         
   
   
@@ -295,6 +296,75 @@
   
   
   
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Setup
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Setup
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="usage.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
     <li class="md-nav__item md-nav__item--active">
       
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
@@ -308,7 +378,7 @@
   
   
   <span class="md-ellipsis">
-    Setup
+    Interpreter Setup
     
   </span>
   
@@ -316,12 +386,12 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <a href="usage.html" class="md-nav__link md-nav__link--active">
+      <a href="interpreter.html" class="md-nav__link md-nav__link--active">
         
   
   
   <span class="md-ellipsis">
-    Setup
+    Interpreter Setup
     
   </span>
   
@@ -344,99 +414,45 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
+  <a href="#0-clone-the-repository-if-not-done-yet" class="md-nav__link">
     <span class="md-ellipsis">
-      📦 Prerequisites
+      0. Clone the Repository (if not done yet)
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#repository-setup" class="md-nav__link">
+  <a href="#1-open-the-project-in-pycharm" class="md-nav__link">
     <span class="md-ellipsis">
-      📁 Repository Setup
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="📁 Repository Setup">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#clone-the-repository" class="md-nav__link">
-    <span class="md-ellipsis">
-      Clone the Repository
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#project-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      🧱 Project Structure
+      1. Open the Project in PyCharm
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#python-environment-setup" class="md-nav__link">
+  <a href="#2-make-sure-git-is-recognised" class="md-nav__link">
     <span class="md-ellipsis">
-      🐍 Python Environment Setup
+      2. Make Sure Git is Recognised
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="🐍 Python Environment Setup">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#step-by-step" class="md-nav__link">
-    <span class="md-ellipsis">
-      Step-by-Step:
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#ide-setup-pycharm-recommended" class="md-nav__link">
+  <a href="#3-enable-version-control-integration" class="md-nav__link">
     <span class="md-ellipsis">
-      🖥️ IDE Setup (PyCharm Recommended)
+      3. Enable Version Control Integration
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="🖥️ IDE Setup (PyCharm Recommended)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#connect-conda-environment" class="md-nav__link">
-    <span class="md-ellipsis">
-      Connect Conda Environment
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#matlab-cellreg-setup" class="md-nav__link">
+  <a href="#4-check-the-git-remote" class="md-nav__link">
     <span class="md-ellipsis">
-      🧬 MATLAB + CellReg Setup
+      4. Check the Git Remote
     </span>
   </a>
   
@@ -449,6 +465,37 @@
     </li>
   
 
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="matlab_integration.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MATLAB Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
     
       
       
@@ -457,7 +504,7 @@
   
   
     <li class="md-nav__item">
-      <a href="api.html" class="md-nav__link">
+      <a href="../api.html" class="md-nav__link">
         
   
   
@@ -499,99 +546,45 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
+  <a href="#0-clone-the-repository-if-not-done-yet" class="md-nav__link">
     <span class="md-ellipsis">
-      📦 Prerequisites
+      0. Clone the Repository (if not done yet)
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#repository-setup" class="md-nav__link">
+  <a href="#1-open-the-project-in-pycharm" class="md-nav__link">
     <span class="md-ellipsis">
-      📁 Repository Setup
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="📁 Repository Setup">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#clone-the-repository" class="md-nav__link">
-    <span class="md-ellipsis">
-      Clone the Repository
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#project-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      🧱 Project Structure
+      1. Open the Project in PyCharm
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#python-environment-setup" class="md-nav__link">
+  <a href="#2-make-sure-git-is-recognised" class="md-nav__link">
     <span class="md-ellipsis">
-      🐍 Python Environment Setup
+      2. Make Sure Git is Recognised
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="🐍 Python Environment Setup">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#step-by-step" class="md-nav__link">
-    <span class="md-ellipsis">
-      Step-by-Step:
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#ide-setup-pycharm-recommended" class="md-nav__link">
+  <a href="#3-enable-version-control-integration" class="md-nav__link">
     <span class="md-ellipsis">
-      🖥️ IDE Setup (PyCharm Recommended)
+      3. Enable Version Control Integration
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="🖥️ IDE Setup (PyCharm Recommended)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#connect-conda-environment" class="md-nav__link">
-    <span class="md-ellipsis">
-      Connect Conda Environment
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#matlab-cellreg-setup" class="md-nav__link">
+  <a href="#4-check-the-git-remote" class="md-nav__link">
     <span class="md-ellipsis">
-      🧬 MATLAB + CellReg Setup
+      4. Check the Git Remote
     </span>
   </a>
   
@@ -613,92 +606,54 @@
 
 
 
-<h1 id="setup-guide">Setup Guide</h1>
-<p>This guide walks you through the setup and usage of the calcium imaging and stimulation data pipeline.</p>
+<h1 id="git-pycharm-setup-guide">🛠️ Git &amp; PyCharm Setup Guide</h1>
+<p>Follow these steps to set up your cloned GitHub project in PyCharm and ensure Git is properly configured.</p>
 <hr />
-<h2 id="prerequisites">📦 Prerequisites</h2>
-<p>Before you begin, make sure the following are installed:</p>
+<h2 id="0-clone-the-repository-if-not-done-yet">0. Clone the Repository (if not done yet)</h2>
+<p>Use <strong>Git Bash</strong> or your terminal:</p>
+<pre><code class="language-bash">git clone https://github.com/your-username/your-repo.git
+</code></pre>
+<p>This will create a folder named <code>your-repo</code>.</p>
+<hr />
+<h2 id="1-open-the-project-in-pycharm">1. Open the Project in PyCharm</h2>
 <ul>
-<li><a href="https://git-scm.com/" target="_blank" rel="noopener"><strong>Git</strong></a></li>
-<li><a href="https://www.anaconda.com/docs/getting-started/anaconda/install" target="_blank" rel="noopener"><strong>Anaconda</strong></a> (recommended for managing Python environments)</li>
-<li><a href="https://login.mathworks.com/embedded-login/signin.html?cid=wdnl&uri=https%3A%2F%2Fwww.mathworks.com%2Fdownloads%2F"><strong>MATLAB</strong></a> (recommended versions: <strong>2021b to 2023a</strong>)</li>
-<li>Also install the <strong>Parallel Computing Toolbox</strong> for CellReg</li>
-<li><strong>Python IDE</strong> (e.g., PyCharm)</li>
+<li>Launch PyCharm</li>
+<li>Select <strong>“Open”</strong> from the welcome screen (or go to <strong>File &gt; Open...</strong>)</li>
+<li>Navigate to the folder where your GitHub repo is cloned</li>
+<li>Click <strong>Select Folder</strong> → choose <strong>This Window</strong> or <strong>New Window</strong> to open the project.</li>
 </ul>
 <hr />
-<h2 id="repository-setup">📁 Repository Setup</h2>
-<h3 id="clone-the-repository">Clone the Repository</h3>
-<p>Open Git Bash or your terminal and run:</p>
-<pre><code class="language-bash">git clone https://github.com/nszti/hstim_pipeline.git
-cd hstim_pipeline
-</code></pre>
-<p>You should now see the <code>hstim_pipeline</code> folder in your working directory.</p>
-<hr />
-<h2 id="project-structure">🧱 Project Structure</h2>
-<p>Here's a simplified layout of the project:</p>
-<pre><code>Hyperstim/pipeline_pending/
-├── pipeline_script.py
-├── mesc_loader.py
-├── general.py
-├── package_for_pipeline/
-│   ├── CoM.py
-│   ├── cellreg_analysis.py
-│   ├── cellreg_process.py
-│   ├── frequency_to_save.py
-│   ├── functions.py
-│   ├── mesc_data_handling.py
-│   ├── mesc_tiff_extract.py
-│   ├── suite2p_script.py
-│   └── tiff_merge.py
-└── hdf5io/
-    └── setup.py
-</code></pre>
-<hr />
-<h2 id="python-environment-setup">🐍 Python Environment Setup</h2>
-<p>The environment includes dependencies for Suite2p and the custom pipeline scripts.</p>
-<h3 id="step-by-step">Step-by-Step:</h3>
-<ol>
-<li>Open your terminal / Anaconda Prompt</li>
-<li>Navigate to the repository directory:
-   <code>bash
-   cd path/to/hstim_pipeline</code></li>
-<li>Create the Conda environment:
-   <code>bash
-   conda env create -f environment.yml</code></li>
-<li>Activate it:
-   <code>bash
-   conda activate suite2p</code></li>
-<li>Verify Suite2p is installed:
-   <code>bash
-   suite2p --version
-   python -m suite2p</code></li>
-</ol>
-<hr />
-<h2 id="ide-setup-pycharm-recommended">🖥️ IDE Setup (PyCharm Recommended)</h2>
-<h3 id="connect-conda-environment">Connect Conda Environment</h3>
-<ol>
-<li>Open PyCharm</li>
-<li>Go to <strong>Project &gt; Python Interpreter</strong></li>
-<li>Click <strong>Add Interpreter</strong></li>
-<li>Select <strong>Add Local Interpreter</strong></li>
-<li>Choose <strong>Conda</strong> and select the <code>suite2p</code> environment</li>
-<li>Click OK and wait for it to load the packages</li>
-</ol>
-<p>Now your IDE should be able to run the Python-based parts of the pipeline.</p>
-<hr />
-<h2 id="matlab-cellreg-setup">🧬 MATLAB + CellReg Setup</h2>
-<p>Since <strong>CellReg</strong> is MATLAB-based:</p>
+<h2 id="2-make-sure-git-is-recognised">2. Make Sure Git is Recognised</h2>
 <ul>
-<li>Download and install <strong>CellReg</strong></li>
-<li>Add all folders and subfolders of CellReg to the MATLAB path</li>
-<li>Use the MATLAB GUI to:</li>
-<li>Load sessions</li>
-<li>Run non-rigid alignment</li>
-<li>Run probabilistic modeling (12 microns pixel size)</li>
+<li>Go to <strong>File &gt; Settings</strong> (or <strong>PyCharm &gt; Preferences</strong> on macOS)</li>
+<li>Navigate to <strong>Version Control &gt; Git</strong></li>
+<li>Ensure the path to Git executable is correct. Click <strong>Test</strong> to verify</li>
 </ul>
-<p>Full instructions are available in the official <a href="https://github.com/zivlab/CellReg">CellReg documentation</a>.</p>
 <hr />
-<p>Once setup is complete, continue to the <code>pipeline_script.py</code> to run the analysis.</p>
+<h2 id="3-enable-version-control-integration">3. Enable Version Control Integration</h2>
+<p>If PyCharm doesn't automatically detect Git:</p>
+<ul>
+<li>Go to <strong>VCS &gt; Enable Version Control Integration</strong> (only appears if Git isn't yet detected, otherwise you’ll see Git)</li>
+<li>Select <strong>Git</strong> from the list and click <strong>OK</strong></li>
+</ul>
+<hr />
+<h2 id="4-check-the-git-remote">4. Check the Git Remote</h2>
+<p>To verify the remote origin (connection to GitHub):</p>
+<ul>
+<li>Go to <strong>Git &gt; Manage Remotes</strong></li>
+<li>Or open the <strong>Terminal</strong> and run:</li>
+</ul>
+<pre><code class="language-bash">git remote -v
+</code></pre>
+<p>You should see:</p>
+<pre><code>origin  https://github.com/your-username/your-repo.git (fetch)
+origin  https://github.com/your-username/your-repo.git (push)
+</code></pre>
+<p>If it's missing, add it manually from the terminal:</p>
+<pre><code class="language-bash">git remote add origin https://github.com/your-username/your-repo.git
+</code></pre>
+<hr />
+<p>This ensures that your Git integration is ready to use for commits, pushes, and GitHub Pages deployment.</p>
 
 
 
@@ -747,10 +702,10 @@ cd hstim_pipeline
     
     
       
-      <script id="__config" type="application/json">{"base": ".", "features": ["navigation.tabs", "toggle"], "search": "assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "toggle"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="assets/javascripts/bundle.13a4f30d.min.js"></script>
+      <script src="../assets/javascripts/bundle.13a4f30d.min.js"></script>
       
     
   </body>

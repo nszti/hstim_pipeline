@@ -1,7 +1,58 @@
 import numpy as np
 import matplotlib.pyplot as plt
-# Given coordinates of the ROIs
 import os
+
+
+def inverse_distance_weighted_center_of_mass(coords, alpha=2, center_of_mass=(0, 0)):
+    x0, y0 = center_of_mass
+    # Calculate distances from each point to the predefined center
+    distances = np.sqrt((coords[:, 0] - x0) ** 2 + (coords[:, 1] - y0) ** 2)
+    weights = 1 / (distances ** alpha)
+    weights /= np.sum(weights)
+    x_cm = np.sum(weights * coords[:, 0])
+    y_cm = np.sum(weights * coords[:, 1])
+    return x_cm, y_cm
+
+def plot_weighted_com(coords_list, plot_order, output_path, in_um=1.07):
+    """
+    Plots the inverse-distance weighted center of mass (CoM) for a list of coordinate arrays.
+
+
+    Parameters:
+    - coords_list: List of np.array, each containing (x, y) coordinates for one file.
+    - plot_order: List of integers indicating the order in which to plot files.
+        Example [2, 0, 1] means: plot File 3 first, then File 1, then File 2 --> give the index of the file in the coord_list
+    - output_path: Path where the plot will be saved.
+    - in_um: Scaling factor from pixels to micrometers.
+    """
+    # Calculate weighted CoMs
+    com_list = [inverse_distance_weighted_center_of_mass(coords) for coords in coords_list]
+    com_list_um = np.array(com_list) * in_um
+
+    # Plot
+    plt.figure(figsize=(8, 8))
+
+    for order_position, file_idx in enumerate(plot_order):
+        x_um, y_um = com_list_um[file_idx]
+        plt.scatter(x_um, y_um, color='red', marker='^')
+        plt.text(x_um, y_um - 10, f'File {order_position + 1}', color='black', fontsize=7, ha='center')
+
+    # Plot limits (for 512x512 FOV)
+    plt.xlim(0, 512 * in_um)
+    plt.ylim(0, 512 * in_um)
+    plt.title("CoM Coordinates")
+    plt.xlabel("X Coordinate (\µm)")
+    plt.ylabel("Y Coordinate (\µm)")
+    plt.grid(True)
+    plt.gca().invert_yaxis()
+
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    plt.savefig(output_path)
+    plt.close()
+
+
+
+
 '''
 coords = np.array([
     [273, 142],
@@ -178,7 +229,7 @@ mean_center = np.mean(coords, axis=0)
 mean_x, mean_y = mean_center
 print(f"2: Mean center of mass (average of coordinates): ({mean_x}, {mean_y})")
 '''
-# Define a function for inverse distance weighting
+'''# Define a function for inverse distance weighting
 def inverse_distance_weighted_center_of_mass(coords, alpha=2, center_of_mass=(0, 0)):
     x0, y0 = center_of_mass
     # Calculate distances from each point to the center
@@ -196,7 +247,7 @@ def inverse_distance_weighted_center_of_mass(coords, alpha=2, center_of_mass=(0,
 
     return x_cm, y_cm
 
-
+'''
 # Calculate the weighted center of mass using the inverse distance weighting
 #x_cm, y_cm = inverse_distance_weighted_center_of_mass(coords)
 #print(f"1: Weighted Center of Mass w center(0,0): ({x_cm}, {y_cm})")
@@ -526,7 +577,7 @@ np.array([
     [23, 275], [21, 389], [69, 477], [73, 371], [41, 403],
     [41, 443], [123, 431]
 ])#f43
-'''
+''''''
 coords_list = [
 np.array([
     [425, 139], [507, 279], [93, 259], [247, 127], [287, 159],
@@ -638,4 +689,4 @@ plt.gca().invert_yaxis()
 # Save and show
 output_path = 'c:/Hyperstim/data_analysis/2025-05-20-Amouse-invivo-GCaMP6f/merged_tiffs/merged_2025-05-20-Amouse-invivo-GCaMP6f_MUnit_46_47_48_49_50_51_52_53_54_55_56/COM_file_coords_rev2_inv.svg'
 plt.savefig(output_path)
-plt.show()
+plt.show()'''

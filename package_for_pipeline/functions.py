@@ -1870,6 +1870,19 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             plt.show()
 
 def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums, frame_rate ):
+    '''
+    Plot traces from multiple experiments across different stimulation amplitudes.
+    Parameters
+    ----------
+    root_directory
+    tiff_dir
+    list_of_file_nums
+    frame_rate
+
+    Returns
+    -------
+
+    '''
     # Settings
     amplitude_keys = ['10', '20', '30','15', '25']  # uA values to expect
     pre_frames = int(np.round(frame_rate, 0))  # 1 second before
@@ -1926,6 +1939,24 @@ def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums, frame_r
 
 
 def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_of_file_nums,  stim_segm = 6 , threshold_value=3.0, trialNo = 10,trialDur = 4.2, frameRate = 30.97):
+    '''
+
+    Parameters
+    ----------
+    exp_dir
+    mesc_file_name
+    tiff_dir
+    list_of_file_nums
+    stim_segm
+    threshold_value
+    trialNo
+    trialDur
+    frameRate
+
+    Returns
+    -------
+
+    '''
 #stim_segm: frame num for stim_avg
 
     fileId_path = os.path.join(exp_dir, 'fileId.txt')

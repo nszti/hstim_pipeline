@@ -90,8 +90,6 @@ S2P = False #suite2p futtatás
 RUN_ANALYSIS_PREP = False  #F0 savelodik, ha modositod a suite2p barmelyik propertyet, akkor ezt ujra kell futtatni h frissuljon az F0
 PLOTS = False #Analysis plotok, utolso 3 a relevans
 PLOT_BTW_EXP = False
-RUN_FOR_SINGLE_PARAM_EXP = False
-RUN_FOR_ADVANCED_EXP = False
 RUN_CELLREG_PREP = False #cellreghez mat fileokat ment ki
 #cellreg hasznalat: CellReg.m run > GUIban load new dataval berakod a mat fileokat & 1.07 micront megadod> Non-rigid alignment futtatas > 12 micronos probabilistc modeling futtatas > a tobbit csak megnyomkodod sorban
 RUN_CELLREG_ANALYSIS = True

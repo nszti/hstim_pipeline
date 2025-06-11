@@ -32,7 +32,6 @@ dependencies:
   - pandas
   - h5py
   - xmltodict
-  - matlab
   - pip
   - pip:
       - suite2p[gui]

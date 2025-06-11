@@ -32,9 +32,6 @@ def convert_to_plain_types(d):
             plain_dict[k] = v
     return plain_dict
 
-plain_base_db = convert_to_plain_types(base_db)
-
-txt_path = os.path.join(folder_path, 'suite2p_params.txt')
 def run_suite2p(tiff_dir, list_of_file_nums, reused_params, gcamp):
       '''
 

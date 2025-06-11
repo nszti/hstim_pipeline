@@ -32,9 +32,9 @@ def convert_to_plain_types(d):
             plain_dict[k] = v
     return plain_dict
 
-plain_base_db = convert_to_plain_types(base_db)
+'''plain_base_db = convert_to_plain_types(base_db)
 
-txt_path = os.path.join(folder_path, 'suite2p_params.txt')
+txt_path = os.path.join(folder_path, 'suite2p_params.txt')'''
 def run_suite2p(tiff_dir, list_of_file_nums, reused_params, gcamp):
       '''
 
@@ -103,7 +103,7 @@ def run_suite2p(tiff_dir, list_of_file_nums, reused_params, gcamp):
                               base_db.update({
                                     'tau': 0.5,
                                     'spatial_scale': 0,
-                                    'threshold_scaling': 0.55,
+                                    'threshold_scaling': 0.26,
                                     'max_overlap': 0.75
                               })
                               print(f'Using parameters given for GCaMP6f')
@@ -134,8 +134,8 @@ def run_suite2p(tiff_dir, list_of_file_nums, reused_params, gcamp):
                         elif gcamp == 's':
                               base_db.update({
                                     'tau': 1.25,
-                                    'spatial_scale': 2,
-                                    'threshold_scaling': 0.26,
+                                    'spatial_scale': 0,
+                                    'threshold_scaling': 0.3,
                                     'max_overlap': 0.7
                               })
                               print(f'Using parameters given for GCaMP6s')

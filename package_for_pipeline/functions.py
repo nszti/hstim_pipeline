@@ -49,7 +49,7 @@ def stim_dur_val(tiff_dir, list_of_file_nums):
 
         if matched_file:
             dir_path = base_dir / matched_file
-            frequency_path = dir_path / 'selected_freqs.npy'
+            frequency_path = os.path.join(dir_path, 'selected_freqs.npy')
             frequency = np.load(frequency_path, allow_pickle=True)
             print(frequency)
             if not os.path.exists(frequency_path):
@@ -264,7 +264,7 @@ def dist_vals (tiff_dir, list_of_file_nums):
             # save output as .npy file
             # np.save(expDir + '/' + dir + '/suite2p/plane0/distances.npy', result_df)
             # np.save(expDir + '/' + dir + '/suite2p/plane0/distances.npy', distances)
-            # np.save(expDir + '/' + dir + '/suite2p/plane0/ROI_numbers.npy', roi_numbers)
+            np.save(tiff_dir + '/' + dir + '/suite2p/plane0/ROI_numbers.npy', roi_numbers)
 
 
 def spontaneous_baseline_val(tiff_dir, list_of_file_nums, list_of_roi_nums, frame_rate = 30.97, baseline_frame=3, plot_start_frame = 0, plot_end_frame=None ):
@@ -900,7 +900,6 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
 
             # calculate and plot the mean amplitudes during stimulation trials and blocks
             avgCA = np.empty([block_No, trial_No])
-            avgCAperTrial = np.empty([trial_No])
             avgCAperBlock = np.empty([block_No])
             for iBlock in range(block_No):
                 if stim_type == 'freq' and iBlock == 0:
@@ -913,7 +912,6 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
                     avgCAperBlock[iBlock] = np.mean(avgCA[iBlock, :])
             print(avgCA)
             avgCAperTrial = np.mean(avgCA, axis=0)
-            #avgCAperBlock = np.mean(avgCA, axis=1)
             plt.savefig(output_dir + '/09_17_amp_fig1_2.svg')
 
 
@@ -1349,103 +1347,6 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
 
         # =======Average x coordinates calculation END=======
 
-        # Distance calc from artif. origo
-            #um
-            trafo = 1.07422
-            y, x = ops['Ly'], ops['Lx']
-            artif_origo_y, artif_origo_x = y / 2 * trafo, x / 2 * trafo
-            artif_origo = (artif_origo_y, artif_origo_x)
-            #pix
-            artif_o_pix = (y/2, x/2)
-            #reshape bc eucledian dist function expects 2d arrays:
-            #artif_origo = np.array([[artif_origo_y, artif_origo_x]])
-            def nd1_eucledian_distance(point1, point2):
-                point1 = np.array(point1)
-                point2 = np.array(point2)
-                if point1.ndim == 1:
-                    point1 = point1.reshape(1, -1)
-                if point2.ndim == 1:
-                    point2 = point2.reshape(1, -1)
-                return np.linalg.norm(point1 - point2)
-            #um
-            med_val_um = []
-            dist_from_artf_o_um = []
-            #pix
-            med_val = []
-            dist_from_artf_o_pix = []
-            roi_names = []
-            for roi_id in cell_indices:
-                #um
-                med_val_um.append((stat[roi_id]['med'][0] * trafo, stat[roi_id]['med'][1] * trafo))
-                dist_from_artf_o_um.append(nd1_eucledian_distance(artif_origo, med_val_um))
-                #pix
-                med_val.append((stat[roi_id]['med'][0],stat[roi_id]['med'][1] ))
-                dist_from_artf_o_pix.append(nd1_eucledian_distance(artif_o_pix, med_val))
-                roi_names.append(roi_id)
-
-
-            dist_from_o_pix_path = os.path.join(expDir, dir, 'dist_from_o_pix.txt',)
-            np.savetxt(dist_from_o_pix_path, dist_from_artf_o_pix)
-
-            #um ez ki volt kommentelve
-            
-            im = np.zeros((int(artif_origo_y), int(artif_origo_x)))
-            plt.scatter(*artif_origo, color='black', label='Artificial Origin um')
-            # Plot all rois & distances
-            for i, (coord, dist) in enumerate(zip(med_val_um, dist_from_artf_o_um)):
-                plt.scatter(*coord, label=f'ROI {i + 1}')
-                #plt.text(coord[0], coord[1], f'{dist:.2f} um', fontsize=9)
-    
-            #plt.imshow(im)
-            plt.colorbar()
-            plt.gca().invert_yaxis()  # Invert the y-axis
-            plt.title('activated rois & dist from artif. origo in um')
-            plt.show()
-            
-            #um ez ki volt kommentelve
-            #plt.figure(figsize=((int(artif_origo_y), int(artif_origo_x)))
-
-            #print roi names & med values together
-            roi_names = []
-            med_val = []
-            for roi_id in cell_indices:
-                roi_names.append(roi_id)
-                med_val.append((stat[roi_id]['med'][0], stat[roi_id]['med'][1]))
-                #print(f"roi: {roi_names[roi_idx]}, medy: {stat[roi_idx]['med'][0]}, medx: {stat[roi_idx]['med'][1]} ")
-            #for i, (roi, dist_) in enumerate(zip(roi_names, dist_from_artf_o_um)):
-                #print(f'{roi_names[i]}', dist_)
-
-
-
-            #--Plot out activated neurons--jo!!
-            im = np.zeros((ops['Ly'], ops['Lx']))
-            #plt.figure(figsize=(y, x))
-            #print(im)
-
-            # Define the activated ROIs (example list, replace with actual data)
-            activated_rois = list(activation_results.keys())  # Replace with the actual list of activated ROIs
-            cell_stat = [stat[i] for i in cell_indices]
-            distances = []
-            # Plot all ROIs
-            for n in range(len(cell_stat)):
-                ypix = cell_stat[n]['ypix'][~cell_stat[n]['overlap']]
-                xpix = cell_stat[n]['xpix'][~cell_stat[n]['overlap']]
-                #euclidean distance
-                distance = np.sqrt((ypix - artif_o_pix[0]) ** 2 + (xpix - artif_o_pix[1]) ** 2)
-                distances.append(distance)
-                im[ypix, xpix] = n + 1
-            for i, coord in enumerate(med_val):
-                plt.text(coord[1], coord[0], f'{roi_names[i]}', fontsize=9, color = 'white')
-
-            # Plot the image
-            plt.imshow(im)
-            scatter = plt.scatter([coord[1] for coord in med_val], [coord[0] for coord in med_val], c=dist_from_artf_o_pix)
-            plt.scatter(*artif_o_pix, color='white',  label='artificial origo')
-            plt.colorbar(label = 'distance from origo')
-            plt.title('Activated ROI dist from origo')
-            #plt.savefig(os.path.join(expDir, dir, 'roi_map.png'))
-            plt.show()
-
         #Stimulation counts
             stim_activation_counts = []
             sorted_indices = np.argsort(stimulation_amplitudes)
@@ -1653,47 +1554,6 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             plt.savefig(os.path.join(expDir, dir, f'overlapping_per_param_for_roi0_05_tif17.png'))
             plt.show()
 
-    ##------ plot 4:  grand average--> Avg trace from all activated rois per amplitude ------ ##
-            '''fig, axes = plt.subplots(1, num_repeats, figsize=(4 * num_repeats, 4), sharey=True)
-            time = np.linspace(-1, 3, total_frames)
-            fig.suptitle("Overall average of trials per amplitude", fontsize=16)
-
-            sorted_indices = np.argsort(amplitude_values)
-            sorted_amplitudes = np.array(amplitude_values)[sorted_indices]
-            for repeat in range(num_repeats):
-                ax = axes[repeat] if num_repeats > 1 else axes  # Handle case when only 1 repeat
-                for stim_idx, amplitude in zip(sorted_indices, sorted_amplitudes):
-                    roi_traces = []
-                    for roi_idx in cell_indices:
-                        F_index = np.where(cell_indices == roi_idx)[0][0]
-                        stim_time = start_timepoints[repeat * num_stims_per_repeat + stim_idx]
-
-                        pre_start = max(0, stim_time - pre_frames)
-                        post_end = min(F.shape[1], stim_time + post_frames)
-                        trace = F[F_index, pre_start:post_end]
-
-                        if trace.shape[0] == total_frames:
-                            roi_traces.append(trace)
-
-                    if roi_traces:
-                        avg_trace = np.mean(roi_traces, axis=0)
-                        color = amplitude_colors.get(amplitude, 'black')
-                        ax.plot(time, avg_trace, label=f"{amplitude} μA", linewidth=2, color=color)
-
-                ax.set_title(f'Trial {repeat + 1}')
-                ax.set_xlabel("Time (s)")
-                if repeat == 0:
-                    ax.set_ylabel("Mean ΔF/F₀")
-                ax.grid(True)
-                #ax.set_ylim(min_trace_value, max_trace_value)
-
-            handles = [plt.Line2D([0], [0], color=amplitude_colors.get(amp, 'black'), lw=2, label=f"{amp} μA") for amp in sorted_amplitudes]
-            fig.legend(handles=handles, loc='upper right', title="Amplitude", bbox_to_anchor=(0.98, 1))
-            avg_plot_path = os.path.join(expDir, dir, 'sum_avg_trace_per_amplitude.png')
-
-            plt.tight_layout()
-            plt.savefig(avg_plot_path)
-            plt.show()'''
     # plot 4.2: ROIadik F_index & trace az osszes iscell==1 ROIra + .mat file save PER AMPLITUDE for cellreg
             num_rois = len(cell_indices)
             all_traces_grand_avg = np.zeros((num_rois, num_repeats, num_stims_per_repeat, total_frames))
@@ -1805,24 +1665,6 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 activation_count[amplitude] = len(active_rois)
                 print(f'for amplitude: {amplitude} active number of roi: {len(active_rois)}')
 
-                # Save ypix and xpix of activated ROIs
-                # Create binary masks for activated ROIs at this amplitude
-                masks = []
-                for roi_idx in active_rois:
-                    roi = stat[roi_idx]
-                    mask = np.zeros((Ly, Lx), dtype=np.uint8)
-                    mask[roi['ypix'], roi['xpix']] = 1
-                    masks.append(mask)
-
-                if masks:
-                    mask_stack = np.stack(masks, axis=0).astype(np.double)  # Shape: [n_active_rois, Ly, Lx]
-                    output_folder = os.path.join(sum_avg_dir, 'activated_roi_masks')
-                    os.makedirs(output_folder, exist_ok=True)
-                    mat_filename = f'activated_mask_{amplitude}uA.mat'
-                    out_path = os.path.join(output_folder, mat_filename)
-                    savemat(out_path, {'cells_map': mask_stack})
-                    print(f"Saved mask for {amplitude}uA to {out_path} with shape {mask_stack.shape}")
-
                 if roi_traces:
                     roi_traces = np.array(roi_traces)
                     if roi_traces.ndim != 2:
@@ -1844,8 +1686,6 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
             if all_sum_avgs:
                 global_min = min(np.min(trace) for trace in all_sum_avgs)
                 global_max = max(np.max(trace) for trace in all_sum_avgs)
-            '''else:
-                global_min, global_max = 0, 1  '''
 
             # Plot
             for stim_idx, amplitude in enumerate(amplitude_values):

@@ -1,0 +1,21 @@
+site_name: HeureCa
+site_url: https://nszti.github.io/hstim_pipeline/
+use_directory_urls: false
+theme:
+    name: material
+    palette:
+        scheme: default
+        primary: cyan
+        accent: blue
+    features:
+        - navigation.tabs
+        - toggle
+nav:
+    - Home: index.md
+    - Setup:
+          - Overview: setup/usage.md
+          - Interpreter Setup: setup/interpreter.md
+          - MATLAB Integration: setup/matlab_integration.md
+    - Documentation: api.md
+plugins:
+    - search

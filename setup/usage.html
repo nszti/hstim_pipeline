@@ -63,7 +63,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="cyan" data-md-color-accent="blue">
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="green">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -888,6 +888,14 @@ cd hstim_pipeline
 <p>Now your IDE should be able to run the Python-based parts of the pipeline.</p>
 <hr />
 <h2 id="matlab-cellreg-setup">🧬 MATLAB + CellReg Setup</h2>
+<p><u>Cellreg intorduction:</u>
+CellReg is a package we use for the tracking of neurons between multiple sessions (recordings, tiffs) and find the overlap between sessions. It is mostly working, but has some bugs which we’re yet to understand. CellReg is matlab based, so the functions in the pipeline have the purpose of creating the .mat files needed for cellreg’s input.   </p>
+<p>Namely: <em>“matrices of spatial footprints of cellular activity (ROIs) of the cells that were detected separately in the different sessions”</em> <br />
+The dimensions of said matrices translated into Suite2p outputs: <code>[nROIs, Ly, Lx]</code>.  So the needed outputs of Suite2p for generating CellReg inputs are: <code>ops.npy</code> for <code>Ly</code> and <code>Lx</code> dimensions, <code>stat.npy</code> for pixel information, <code>iscell.npy</code> for ROI information.</p>
+<p><u>Run cellreg manually:</u>  </p>
+<p>First make sure to add to path all the folders and subfolders of CellReg in Matlab. <br />
+Then, in the MATLAB GUI:  </p>
+<p><code>CellReg.m</code> run → in GUI load new data: select the <code>.mat</code> files for sessions &amp; give <strong>1.07</strong> micron for <strong>pixel size</strong> → run <strong>Non-rigid alignment</strong> → run <strong>probabilistc modeling</strong>  with <strong>12 microns</strong> → from here just run the next part of the pipeline</p>
 <p>Since <strong>CellReg</strong> is MATLAB-based:</p>
 <ul>
 <li>Download and install <strong>CellReg</strong></li>

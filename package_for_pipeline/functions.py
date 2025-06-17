@@ -1188,6 +1188,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     med_csv_path = os.path.join(expDir, dir, f'med_of_act_ns_{file_suffix}.csv')
                     med_df.to_csv(med_csv_path, index=False)
                     print(f"Saved centroid coordinates to {med_csv_path}")
+
             # Avg coords for each repeat
             data = []
             for stim_idx in range(num_stims_per_repeat):

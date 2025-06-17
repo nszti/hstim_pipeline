@@ -206,8 +206,6 @@ def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per
             stim_start_times = np.load(stim_start_times_path, allow_pickle=True)
             stat = np.load(stat_path, allow_pickle=True)
             ops = np.load(ops_path, allow_pickle=True).item()
-            # print(stat)
-
             # --------CALCULATIONS--------
             # Extract the ROI indexes for cells
             cell_indices = np.where(iscell[:, 0] == 1)[0]  # Get indices of valid ROIs
@@ -238,7 +236,6 @@ def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per
                 activation_results[roi_idx] = roi_activation
                 if is_active:
                     activation_count += 1
-            # print(activation_results)
             print(f"Number of activated neurons: {activation_count} out of {num_cells} cells")
             # ===
             Ly, Lx = ops['Ly'], ops['Lx']
@@ -279,7 +276,6 @@ def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per
             activation_df.insert(0, "ROI", activation_df.index)
             csv_path = os.path.join(expDir, dir, f'activation_results_file{suffix}.csv')
             # activation_df.to_csv(csv_path, index=False)
-            # print(f"Results saved to {csv_path}")
 
             # === Match activated ROIs with cellreg data ===
             matched_results = []
@@ -296,37 +292,6 @@ def single_block_activation(expDir, postfix, mat_file, frame_rate, num_stims_per
                             stat_j = all_stats[j][roi_j]
                             med_i = tuple(stat_i['med'])
                             med_j = tuple(stat_j['med'])
-                            # print(roi_i, med_i, roi_j, med_j)
-
-            # for cellreg_idx in data[:,]:
-            '''
-                for i in range(data.shape[cellreg_idx]):
-                    roi_i = int(data[cellreg_idx, i])
-                    if roi_i <= 0:
-                        continue
-                    for j in range(i + 1, data.shape[1]):
-                        roi_j = int(data[cellreg_idx, j])
-                        if roi_j <= 0 or j >= len(all_stats) or roi_j >= len(all_stats[j]):
-                            continue
-                        # med info from stat
-                        stat_i = all_stats[i][roi_i]
-                        stat_j = all_stats[j][roi_j]
-                        y_i, x_i = stat_i['med']
-                        y_j, x_j = stat_j['med']
-                        #print(f'{data[cellreg_idx]},({y_i, x_i}), ({y_j, x_j})')
-
-                        for idx, row in activated_roi_df.iterrows():
-                            print(y_i, x_i,row['Med_Values'])
-                            if (y_i, x_i) == row['Med_Values']:
-                                matched_results.append({
-                                    'CellReg_Index': cellreg_idx,
-                                    'Session_A': i + 1,
-                                    'Session_B': j + 1,
-                                    'Suite2p_ROI_A': roi_i,
-                                    'Suite2p_ROI_B': roi_j,
-                                    'Match_Med': (y_i, x_i)
-                                })
-            '''
 
             # print(matched_results)
             results_df = pd.DataFrame(matched_results)

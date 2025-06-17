@@ -11,8 +11,6 @@ from suite2p.detection import denoise
 from suite2p.io import save
 
 
-#data_path = 'C:/Hyperstim/pipeline_pending/mesc_preprocess_1/merged_tiffs/'
-
 def search_merged_subfolders(data_path):
       merged_subfolders = []
       for path in data_path:
@@ -32,9 +30,6 @@ def convert_to_plain_types(d):
             plain_dict[k] = v
     return plain_dict
 
-'''plain_base_db = convert_to_plain_types(base_db)
-
-txt_path = os.path.join(folder_path, 'suite2p_params.txt')'''
 def run_suite2p(tiff_dir, list_of_file_nums, reused_params, gcamp):
       '''
 
@@ -87,7 +82,6 @@ def run_suite2p(tiff_dir, list_of_file_nums, reused_params, gcamp):
 
                       }
                   #base params
-                  # nedd to spec params path
                   if reused_params:
                         params_path = os.path.join(folder_path, 'suite2p_params.pkl')
                         if os.path.exists(params_path):
@@ -103,7 +97,7 @@ def run_suite2p(tiff_dir, list_of_file_nums, reused_params, gcamp):
                               base_db.update({
                                     'tau': 0.5,
                                     'spatial_scale': 0,
-                                    'threshold_scaling': 0.26,
+                                    'threshold_scaling': 0.46,
                                     'max_overlap': 0.75
                               })
                               print(f'Using parameters given for GCaMP6f')

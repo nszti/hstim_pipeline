@@ -61,9 +61,7 @@ def analyse_mesc_file(filepath, output_path,  plot_curves=False, print_all_attri
             f3 = open(f"{output_path}/frameNo.txt", "w")
 
             for unit_id in units:
-            #for unit_id in range(len(units)):
                 selected_unit = selected_session[unit_id]
-                #selected_unit = selected_session['MUnit_' + str(unit_id)]
                 # Printing comment of MUnit
                 comment = selected_unit._f_getattr('Comment')
                 # Decoding ascii to string
@@ -77,7 +75,6 @@ def analyse_mesc_file(filepath, output_path,  plot_curves=False, print_all_attri
                             if 'CurveDataXRawData' in selected_unit[key]._v_children.keys():
                                 plt.plot(selected_unit[key]['CurveDataXRawData'][()],
                                          selected_unit[key]['CurveDataYRawData'][()])
-                                #print("Has X axis data.")
                                 for attr_key in selected_unit[key]._v_attrs._v_attrnames:
                                     print(attr_key, ' ', ascii_to_str(selected_unit[key]._v_attrs[attr_key]))
                             else:

@@ -1172,6 +1172,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                                 x_coords.append(stat[roi_id]['med'][1])
                                 y_coords.append(stat[roi_id]['med'][0])
                     if x_coords:
+
                         avg_x = np.mean(x_coords)
                         avg_y = np.mean(y_coords)
                     else:
@@ -1179,7 +1180,14 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                         avg_y = np.nan
                     x_coords_per_repeat_stim[repeat][stim_idx] = avg_x
                     y_coords_per_repeat_stim[repeat][stim_idx] = avg_y
-
+                    med_df = pd.DataFrame({
+                        'ROI': list(activation_results.keys()),
+                        'X_coord': x_coords,
+                        'Y_coord': y_coords
+                    })
+                    med_csv_path = os.path.join(expDir, dir, f'med_of_act_ns_{file_suffix}.csv')
+                    med_df.to_csv(med_csv_path, index=False)
+                    print(f"Saved centroid coordinates to {med_csv_path}")
             # Avg coords for each repeat
             data = []
             for stim_idx in range(num_stims_per_repeat):

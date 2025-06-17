@@ -1165,12 +1165,14 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                 for stim_idx in range(num_stims_per_repeat):
                     x_coords = []
                     y_coords = []
+                    activated_rois_csv = []
                     for roi_id in activation_results.keys():
                         act = activation_results[roi_id]
                         if act[repeat][stim_idx] == 1:  # any() missing but integare is not iterable
                             if 'med' in stat[roi_id]:
                                 x_coords.append(stat[roi_id]['med'][1])
                                 y_coords.append(stat[roi_id]['med'][0])
+                                activated_rois_csv.append(roi_id)
                     if x_coords:
 
                         avg_x = np.mean(x_coords)
@@ -1181,7 +1183,7 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                     x_coords_per_repeat_stim[repeat][stim_idx] = avg_x
                     y_coords_per_repeat_stim[repeat][stim_idx] = avg_y
                     med_df = pd.DataFrame({
-                        'ROI': list(activation_results.keys()),
+                        'ROI': activated_rois_csv,
                         'X_coord': x_coords,
                         'Y_coord': y_coords
                     })

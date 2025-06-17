@@ -46,6 +46,8 @@
       
     
     
+      <link rel="stylesheet" href="../stylesheets/custom.css">
+    
     <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
@@ -1474,7 +1476,7 @@
 
 
 
-<h1 id="modul-function-descriptions">Modul &amp; Function Descriptions</h1>
+<h1 id="modul-function-descriptions"><font color= "#000000">Modul &amp; Function Descriptions</font></h1>
 <p>This document describes the main Python modules and functions used in the calcium imaging and electrical stimulation data pipeline.</p>
 <hr />
 <h2 id="pipeline_scriptpy"><code>pipeline_script.py</code></h2>
@@ -1509,10 +1511,10 @@ Saves frequency info: into <code>FREQUENCIES.NYP</code>: have 3 options (single 
 <h2 id="mesc_data_handlingpy"><code>mesc_data_handling.py</code></h2>
 <h4 id="tiff_merge"><code>tiff_merge()</code></h4>
 <p>Merges multiple TIFFs based on experimental parameters. Saves merged TIFFs and associated frequency and ROI info.</p>
-<p>It creates the <code>merged_tiffs</code> folder, receives the numbers given in <code>pipeline_script.py</code> and merges (concatenates) the corresponding tiffs, which are saved to their own separate folders. The nomenclature of them as follows: 
-Folder name: <code>merged_expreimentname_MUnit_number1_number2</code>
-Tiff file name: <code>merged_expreimentname_MUnit_number1_number2.tif</code>
-If stimulation is <code>True</code>, it saves <code>SELECTED_FREQS.NPY</code> which uses FREQUENCIES (from Frequency_to_save) to save the corresponding frequencies. 
+<p>It creates the <code>merged_tiffs</code> folder, receives the numbers given in <code>pipeline_script.py</code> and merges (concatenates) the corresponding tiffs, which are saved to their own separate folders. The nomenclature of them as follows: <br />
+Folder name: <code>merged_expreimentname_MUnit_number1_number2</code><br />
+Tiff file name: <code>merged_expreimentname_MUnit_number1_number2.tif</code><br />
+If stimulation is <code>True</code>, it saves <code>SELECTED_FREQS.NPY</code> which uses FREQUENCIES (from Frequency_to_save) to save the corresponding frequencies. <br />
 And it also saves <code>SELECTED_ELEC_ROI.NPY</code> which is always the first ROI in the list, so the ROI with the number <code>0</code> ID. This part of the code was written at the beginning and is not often used.</p>
 <h4 id="extract_stim_frame"><code>extract_stim_frame()</code></h4>
 <p>Saves <code>FRAMENUM.NPY</code> and <code>STIMTIMES.NPY</code> which are the frame numbers and the stimulation timepoints for the merged tiff files.</p>
@@ -1536,10 +1538,13 @@ The parameters are saved in the <code>suite2p_params.txt</code>.</p>
 - Needs <code>selected_elec_roi</code> as input, which is the integer ROI number designated as the electrode.</p>
 <h4 id="dist_vals"><code>dist_vals()</code></h4>
 <p>Calculates and saves distances between ROIs and the electrode ROI.</p>
-<p>Extracts the ROI centroid coordinates (med) of all detected cells. Calculates the Euclidean distance between each ROI and a predefined electrode ROI. Saves results in both <code>.npy</code> and <code>.csv</code> formats.
-- Output is <code>ROI_numbers.npy</code>: Contains the Suite2p ROI indices of all detected cells, <code>distances.npy</code>: Euclidean distances from each ROI to the electrode ROI , <code>elec_roi_info.csv</code>: Summary CSV file with ROI indices, centroid positions, electrode med position, and distances
-- Attention: Suite2p saves the med in the format of (y,x) 
-<code>ROI_numbers.npy</code> is needed for further calculations in timecourse_val</p>
+<p>Extracts the ROI centroid coordinates (med) of all detected cells. Calculates the Euclidean distance between each ROI and a predefined electrode ROI. Saves results in both <code>.npy</code> and <code>.csv</code> formats.<br />
+Output is:<br />
+- <code>ROI_numbers.npy</code>: Contains the Suite2p ROI indices of all detected cells<br />
+- <code>distances.npy</code>: Euclidean distances from each ROI to the electrode ROI<br />
+- <code>elec_roi_info.csv</code>: Summary CSV file with ROI indices, centroid positions, electrode med position, and distances<br />
+Attention: Suite2p saves the med in the format of (y,x) !<br />
+--&gt; <code>ROI_numbers.npy</code> is needed for further calculations in timecourse_val</p>
 <h4 id="spontaneous_baseline_val"><code>spontaneous_baseline_val()</code></h4>
 <p>This function is for spontaneous recordings ( e.g.: chronic recording without stimulation). It calculates the baseline corrected traces using a pre-defined, fixed frame window &amp; plots and saves the calcium traces for a selected list of ROIs.
 - Output is <code>.svg</code> plots for each ROI in <code>list_of_roi_nums</code> &amp; <code>F0.npy</code> baseline-corrected trace</p>

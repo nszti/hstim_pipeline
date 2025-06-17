@@ -48,6 +48,8 @@
       
     
     
+      <link rel="stylesheet" href="../stylesheets/custom.css">
+    
     <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
@@ -810,10 +812,10 @@
 
 
 
-<h1 id="setup-guide">Setup Guide</h1>
+<h1 id="setup-guide"><font color= "#000000">Setup Guide</font></h1>
 <p>This guide walks you through the setup and usage of the calcium imaging and stimulation data pipeline.</p>
 <hr />
-<h2 id="prerequisites">📦 Prerequisites</h2>
+<h2 id="prerequisites">📦 <font color= "#000000">Prerequisites</font></h2>
 <p>Before you begin, make sure the following are installed:</p>
 <ul>
 <li><a href="https://git-scm.com/" target="_blank" rel="noopener"><strong>Git</strong></a></li>
@@ -823,7 +825,7 @@
 <li><strong>Python IDE</strong> (e.g., PyCharm)</li>
 </ul>
 <hr />
-<h2 id="repository-setup">📁 Repository Setup</h2>
+<h2 id="repository-setup">📁 <font color= "#000000">Repository Setup</font></h2>
 <h3 id="clone-the-repository">Clone the Repository</h3>
 <p>Open Git Bash or your terminal and run:</p>
 <pre><code class="language-bash">git clone https://github.com/nszti/hstim_pipeline.git
@@ -831,7 +833,7 @@ cd hstim_pipeline
 </code></pre>
 <p>You should now see the <code>hstim_pipeline</code> folder in your working directory.</p>
 <hr />
-<h2 id="project-structure">🧱 Project Structure</h2>
+<h2 id="project-structure">🧱 <font color= "#000000">Project Structure</font></h2>
 <p>Here's a simplified layout of the project:</p>
 <pre><code>Hyperstim/pipeline_pending/
 ├── pipeline_script.py
@@ -851,7 +853,7 @@ cd hstim_pipeline
     └── setup.py
 </code></pre>
 <hr />
-<h2 id="python-environment-setup">🐍 Python Environment Setup</h2>
+<h2 id="python-environment-setup">🐍 <font color= "#000000">Python Environment Setup</font></h2>
 <p>The environment includes dependencies for Suite2p and the custom pipeline scripts.</p>
 <h3 id="step-by-step">Step-by-Step:</h3>
 <ol>
@@ -876,18 +878,20 @@ cd hstim_pipeline
    python -m suite2p</code></li>
 </ol>
 <hr />
-<h2 id="ide-setup-pycharm-recommended">🖥️ IDE Setup (PyCharm Recommended)</h2>
+<h2 id="ide-setup-pycharm-recommended">🖥️ <font color= "#000000">IDE Setup (PyCharm Recommended)</font></h2>
 <h3 id="connect-conda-environment">Connect Conda Environment</h3>
-<p>Please see <a href="interpreter.html">here</a>, the detailed instructions to connect the Conda environment to your IDE, but here's a quick summary for PyCharm:
-1. Open PyCharm
-2. Go to <strong>Project &gt; Python Interpreter</strong>
-3. Click <strong>Add Interpreter</strong>
-4. Select <strong>Add Local Interpreter</strong>
-5. Choose <strong>Conda</strong> and select the <code>suite2p</code> environment
-6. Click OK and wait for it to load the packages</p>
+<p>Please see <a href="interpreter.html">here</a>, the detailed instructions to connect the Conda environment to your IDE, but here's a quick summary for PyCharm:  </p>
+<ol>
+<li>Open PyCharm</li>
+<li>Go to <strong>Project &gt; Python Interpreter</strong></li>
+<li>Click <strong>Add Interpreter</strong></li>
+<li>Select <strong>Add Local Interpreter</strong></li>
+<li>Choose <strong>Conda</strong> and select the <code>suite2p</code> environment</li>
+<li>Click OK and wait for it to load the packages</li>
+</ol>
 <p>Now your IDE should be able to run the Python-based parts of the pipeline.</p>
 <hr />
-<h2 id="matlab-cellreg-setup">🧬 MATLAB + CellReg Setup</h2>
+<h2 id="matlab-cellreg-setup">🧬 <font color= "#000000">MATLAB + CellReg Setup</font></h2>
 <p><u>Cellreg intorduction:</u>
 CellReg is a package we use for the tracking of neurons between multiple sessions (recordings, tiffs) and find the overlap between sessions. It is mostly working, but has some bugs which we’re yet to understand. CellReg is matlab based, so the functions in the pipeline have the purpose of creating the .mat files needed for cellreg’s input.   </p>
 <p>Namely: <em>“matrices of spatial footprints of cellular activity (ROIs) of the cells that were detected separately in the different sessions”</em> <br />

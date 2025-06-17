@@ -48,6 +48,8 @@
       
     
     
+      <link rel="stylesheet" href="../stylesheets/custom.css">
+    
     <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
@@ -774,12 +776,16 @@
 
 
 
-<h1 id="matlab-engine-api-setup-for-pycharm-integration">MATLAB Engine API Setup for PyCharm Integration</h1>
+<h1 id="matlab-engine-api-setup-for-pycharm-integration"><font color= "#000000">MATLAB Engine API Setup for PyCharm Integration</font></h1>
 <p>This guide explains how to run a MATLAB <code>.m</code> script from a Python <code>.py</code> script using the MATLAB Engine API in PyCharm.</p>
 <hr />
 <h2 id="outlook">Outlook</h2>
-<p>I took this <a href="https://www.youtube.com/watch?v=OocdPu1Tcrg" target="_blank" rel="noopener"><strong>video</strong></a> as a starting point, tried both ways, but found the Matlab engine API the feasible method. (however you’re more than welcome to solve the other one)
-Let’s assume ‘main.py’ is the main Python file which runs your Python project &amp; ‘main.m’ is the main Matlab file which you’d like to run in PyCharm. For this, you need to 1) put the ‘main.m’ file in the same folder as the ‘main.py’, 2) connect Matlab with PyCharm with a Matlab Engine API for Python, 3) import the Matlab engine into the ‘main.py’ and call the Matlab code. For this method, you need Matlab to be installed. </p>
+<p>I took this <a href="https://www.youtube.com/watch?v=OocdPu1Tcrg" target="_blank" rel="noopener"><strong>video</strong></a> as a starting point, tried both ways, but found the Matlab engine API the feasible method. (however you’re more than welcome to solve the other one)<br />
+Let’s assume ‘main.py’ is the main Python file which runs your Python project &amp; ‘main.m’ is the main Matlab file which you’d like to run in PyCharm. For this, you need to <br />
+1) put the ‘main.m’ file in the same folder as the ‘main.py’,<br />
+2) connect Matlab with PyCharm with a Matlab Engine API for Python,<br />
+3) import the Matlab engine into the ‘main.py’ and call the Matlab code. <br />
+Keep in mind, that for this method, you need Matlab to be installed. </p>
 <hr />
 <h2 id="step-0-version-compatibility">Step 0: Version Compatibility</h2>
 <ul>

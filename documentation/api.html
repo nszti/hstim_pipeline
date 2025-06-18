@@ -1679,7 +1679,8 @@ Loads previously saved average traces per stimulation amplitude (from <code>sum_
 <h4 id="analyze_merged_activation_and_save"><code>analyze_merged_activation_and_save()</code></h4>
 <p>Analyses neuronal activity across multiple blocks and files, identifying activated neurons based on a statistical threshold applied to the fluorescence signal during stimulation periods. 
 The analysis is performed block by block using metadata files and preprocessed Suite2p outputs. 
-The difference between the previous functions is that you can modify stimulation parameter values &amp; suit it to multiple protocols (e.g.: it1’s good for current steering experiments where there’s 1 repeat of 10 trials)</p>
+The difference between the previous functions is that you can modify stimulation parameter values &amp; suit it to multiple protocols (e.g.: it1’s good for current steering experiments where there’s 1 repeat of 10 trials)
+It also saves the results in a CellReg-compatible <code>.mat</code> file, which can be used for further analysis in CellReg.</p>
 <hr />
 <h2 id="compy"><code>CoM.py</code></h2>
 <h4 id="inverse_distance_weighted_center_of_mass">inverse_distance_weighted_center_of_mass()</h4>

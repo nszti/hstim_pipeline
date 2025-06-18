@@ -685,19 +685,34 @@
 <p><strong>Spontaneous Activity Recordings</strong><br />
 You can leave out any part which need stimulation times for calculation. This usually leaves us with the following functions:<br />
 <code>mesc_tiff_extract.analyse_mesc_file()</code><br />
-<code>mesc_data_handling.tiff_merge()</code><br />
+<code>mesc_data_handling.tiff_merge(stimulation=False)</code><br />
 <code>suite2p_script.run_suite2p()</code><br />
 <code>functions.spontaneous_baseline_val()</code><br />
 <code>cellreg_preprocess.suite2p_to_cellreg_masks()</code><br />
 <code>cellreg_analysis.run_cellreg_matlab()</code>  </p>
+<hr />
 <p><strong>Bipolar Experiments</strong>
  In bipolar experiments, for one set of parameters we usually have 1 recording. So there is no need to concatenate the tiffs, you can handle them individually.
 You can use the following functions:<br />
 <code>mesc_tiff_extract.analyse_mesc_file()</code><br />
-<code>mesc_data_handling.tiff_merge()</code><br />
+<code>mesc_data_handling.tiff_merge(stimulation=True)</code><br />
 <code>suite2p_script.run_suite2p()</code> <br />
 <code>functions.baseline_val()</code><br />
-<code>functions.plot_stim_traces()</code> - Pay attention to the parameter values. </p>
+<code>functions.plot_stim_traces()</code> - Pay attention to the parameter values. 
+<code>cellreg_preprocess.run_cellreg_matlab()</code>
+<code>cellreg_preprocess.cellreg_analysis_overlap()</code></p>
+<hr />
+<p><strong>Current steering Experiments</strong> <br />
+Similarly to bipolar experiments, in current steering experiments we usually have 1 recording for one set of parameters.<br />
+In these cases usually you can run the following functions: <br />
+<code>mesc_tiff_extract.analyse_mesc_file()</code> <br />
+<code>mesc_data_handling.tiff_merge(stimulation=True)</code> <br />
+<code>suite2p_script.run_suite2p()</code> <br />
+<code>functions.baseline_val()</code><br />
+<code>functions.analyze_merged_activation_and_save()</code><br />
+<code>CoM.plot_weighted_com()</code>- Pay attention to the plot order
+<code>cellreg_preprocess.run_cellreg_matlab()</code>
+<code>cellreg_preprocess.cellreg_analysis_overlap()</code></p>
 
 
 

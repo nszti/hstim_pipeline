@@ -14,6 +14,8 @@
         <link rel="prev" href="structure.html">
       
       
+        <link rel="next" href="runs.html">
+      
       
       <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
@@ -995,6 +997,29 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="runs.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1620,6 +1645,8 @@ For every valid ROI (<code>iscell==1</code>):  </p>
 <u>Activation summary:</u>  </p>
 <p>Optionally you can save the activation DataFrame as well, which contains the activation results: counts the number of activated ROIs per stim &amp; repeat.
 - Saves a <code>.csv</code> with lists and counts of activated ROIs (<code>stim_activation_counts_fileX.csv</code>).</p>
+<p><u>Extractin traces per amplitude:</u><br />
+Creates <code>sum_avg_dir/</code> folder which contains the traces of rois per amplitude in <code>.npy</code> files, a <code>.csv</code> containing the average coordinates of the rois per repeat and stim, and a <code>.csv</code> containing the activation results per amplitude.</p>
 <p><strong>Plots:</strong>  </p>
 <h5 id="roi_map_per_stimsvg"><code>roi_map_per_stim.svg</code></h5>
 <p>Grid of stimulation footprints: one subplot per (repeat × stimulation), showing which ROIs were activated.</p>
@@ -1646,7 +1673,8 @@ For every valid ROI (<code>iscell==1</code>):  </p>
 <h5 id="svg-png"><code>.svg / .png:</code></h5>
 <p>all plots</p>
 <h4 id="plot_across_experiments"><code>plot_across_experiments()</code></h4>
-<p>Plots overlaid average calcium traces across multiple stimulation experiments, grouped by stimulation amplitude. 
+<p>Gets the data from the <code>sum_avg_dir/</code> folder which is created in <code>plot_stim_traces()</code>.
+Plots overlaid average calcium traces across multiple stimulation experiments, grouped by stimulation amplitude. 
 Loads previously saved average traces per stimulation amplitude (from <code>sum_avg_&lt;amplitude&gt;uA.npy</code> files) and overlays these traces in subplots.</p>
 <h4 id="analyze_merged_activation_and_save"><code>analyze_merged_activation_and_save()</code></h4>
 <p>Analyses neuronal activity across multiple blocks and files, identifying activated neurons based on a statistical threshold applied to the fluorescence signal during stimulation periods. 
@@ -1657,8 +1685,7 @@ The difference between the previous functions is that you can modify stimulation
 <h4 id="inverse_distance_weighted_center_of_mass">inverse_distance_weighted_center_of_mass()</h4>
 <p>Calculates the center of mass from a pre-defined center ( this is set to (0,0) which is the upper left corner of the FOV) </p>
 <h4 id="plot_weighted_com">plot_weighted_com()</h4>
-<p><code>coords_list</code> is an array which holds the med values of the activated rois as np.arrays within the individual blocks (tiffs), these values are from the <code>med_of_act_ns_[…].csv</code> which is saved in the <code>analyze_merged_activation_and_save</code> function of <code>functions.py</code> file, so you have to run that first. <br />
-(You can convert the <code>med_of_act_ns_[…].csv</code> to a list of arrays with the help of ChatGPT really quickly.)<br />
+<p><code>coords_list</code> is an array which holds the med values of the activated rois as np.arrays within the individual blocks (tiffs), these values are from the <code>med_of_act_ns_[…].csv</code> which is saved in the <code>analyze_merged_activation_and_save</code> function of <code>functions.py</code> file, so you have to run that first. (You can convert the <code>med_of_act_ns_[…].csv</code> to a list of arrays with the help of ChatGPT really quickly.)<br />
 In the <code>plot_order</code> list, you are to specify the order of recordings based on the experiment records. This is important because the plot is created according to the order of the files. Also pay attention to the inverted axis’ (it’s tricky because of Suite2p’s <code>stat.npy</code> output. The y is inverted. So be sure to double check it and reference it back to the original recording.</p>
 <hr />
 <h2 id="cellreg_processpy"><code>cellreg_process.py</code></h2>

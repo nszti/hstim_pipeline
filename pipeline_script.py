@@ -58,6 +58,7 @@ PLOTS = True #Analysis plotok, utolso 3 a relevans
 PLOT_BTW_EXP = False
 RUN_CELLREG_PREP = False #cellreghez mat fileokat ment ki
 #cellreg hasznalat: CellReg.m run > GUIban load new dataval berakod a mat fileokat & 1.07 micront megadod> Non-rigid alignment futtatas > 12 micronos probabilistc modeling futtatas > a tobbit csak megnyomkodod sorban
+RUN_CELLREG = False
 RUN_CELLREG_ANALYSIS = False
 VIDEO = False
 
@@ -95,12 +96,13 @@ if PLOT_BTW_EXP:
 
 if RUN_CELLREG_PREP:
   cellreg_preprocess.suite2p_to_cellreg_masks(tiff_directory, list_of_file_nums)
-
 # manual: run cellreg pipeline
+if RUN_CELLREG:
+  cellreg_analysis.run_cellreg_matlab(tiff_directory)
 if RUN_CELLREG_ANALYSIS:
   #cellreg_preprocess.cellreg_analysis_overlap(tiff_directory, mat_file, list_of_file_nums, postfix)
   #cellreg_preprocess.single_block_activation(tiff_directory,postfix, mat_file,  30.97, 10, list_of_file_nums, 2.4,200, 3 )
-  cellreg_analysis.run_cellreg_matlab(tiff_directory)
+
 if VIDEO:
   #functions.get_stim_frames_to_video(root_directory, tiff_directory,list_of_file_nums)
   functions.create_video_from_mesc_tiffs(root_directory, list_of_file_nums)

@@ -1610,7 +1610,7 @@ Saves frequency info: into <code>FREQUENCIES.NYP</code>: have 3 options (single 
 <hr />
 <h2 id="mesc_data_handlingpy"><code>mesc_data_handling.py</code></h2>
 <h4 id="tiff_merge"><code>tiff_merge()</code></h4>
-<p>Merges multiple TIFFs based on experimental parameters. Saves merged TIFFs and associated frequency and ROI info.</p>
+<p>Merges multiple TIFFs based on experimental parameters, needs <code>mesc_data.npy</code> to match file names with frequency positions. Saves merged TIFFs and associated frequency and ROI info.</p>
 <p>It creates the <code>merged_tiffs</code> folder, receives the numbers given in <code>pipeline_script.py</code> and merges (concatenates) the corresponding tiffs, which are saved to their own separate folders. The nomenclature of them as follows: <br />
 Folder name: <code>merged_expreimentname_MUnit_number1_number2</code><br />
 Tiff file name: <code>merged_expreimentname_MUnit_number1_number2.tif</code><br />

@@ -593,6 +593,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#example-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      example code:
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#as-a-rule-of-thumb-we-can-say-that-any-function-with-the-_val-suffix-is-used-for-validation-experiments-and-has-been-developed-thus-replaced-with-other-functions-in-case-of-the-more-advanced-experiments" class="md-nav__link">
     <span class="md-ellipsis">
       As a rule of thumb, we can say that any function with the _val() suffix is used for validation experiments and has been developed, thus replaced with other functions in case of the more advanced experiments.
@@ -675,6 +684,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#example-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      example code:
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#as-a-rule-of-thumb-we-can-say-that-any-function-with-the-_val-suffix-is-used-for-validation-experiments-and-has-been-developed-thus-replaced-with-other-functions-in-case-of-the-more-advanced-experiments" class="md-nav__link">
     <span class="md-ellipsis">
       As a rule of thumb, we can say that any function with the _val() suffix is used for validation experiments and has been developed, thus replaced with other functions in case of the more advanced experiments.
@@ -726,7 +744,11 @@ You can leave out any part which need stimulation times for calculation. This us
 <code>functions.spontaneous_baseline_val()</code><br />
 <code>cellreg_preprocess.suite2p_to_cellreg_masks()</code><br />
 <code>cellreg_analysis.run_cellreg_matlab()</code></p>
-<pre><code class="language-bash">mesc_tiff_extract.analyse_mesc_file()
+<h6 id="example-code">example code:</h6>
+<pre><code class="language-python">mesc_tiff_extract.analyse_mesc_file(Path(root_directory)/mesc_file_name, root_directory, print_all_attributes=True, plot_curves = True)
+mesc_data_handling.tiff_merge(mesc_file_name, list_of_file_nums, root_directory, False)
+suite2p_script.run_suite2p(tiff_directory, list_of_file_nums, False, gcamp) 
+
 </code></pre>
 <hr />
 <p><strong>"Validation" Experiments</strong></p>
@@ -741,11 +763,13 @@ You can leave out any part which need stimulation times for calculation. This us
 <h6 id="in-case-of-overlap-footprint">in case of overlap footprint</h6>
 <p><code>cellreg_preprocess.suite2p_to_cellreg_mask()</code></p>
 <hr />
-<p><strong>Bipolar Experiments</strong>
- In bipolar experiments, for one set of parameters we usually have 1 recording. So there is no need to concatenate the tiffs, you can handle them individually.
+<p><strong>Advanced Experiments</strong>
+Experiments where one set of parameters is recorded in 1 recording (usually bipolar stimulation experiments). So there is no need to concatenate the tiffs, you can handle them individually and stimulation calculations can be made from the first calculation timepoint.
 You can use the following functions:<br />
-<code>mesc_tiff_extract.analyse_mesc_file()</code><br />
+<code>mesc_tiff_extract.analyse_mesc_file()</code>
+<code>frequency_to_save.frequency_electrodeRoi_to_save()</code>
 <code>mesc_data_handling.tiff_merge(stimulation=True)</code><br />
+<code>mesc_data_handling.extract_stim_frame()</code>
 <code>suite2p_script.run_suite2p()</code> <br />
 <code>functions.baseline_val()</code><br />
 <code>functions.plot_stim_traces()</code> - Pay attention to the parameter values. 

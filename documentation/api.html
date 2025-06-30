@@ -563,6 +563,39 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="pipeline_script.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pre-process-section" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pre-process section
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analysis-section" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analysis section
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cellreg-section" class="md-nav__link">
+    <span class="md-ellipsis">
+      CellReg section
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1060,6 +1093,39 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="pipeline_script.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pre-process-section" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pre-process section
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analysis-section" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analysis section
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cellreg-section" class="md-nav__link">
+    <span class="md-ellipsis">
+      CellReg section
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1507,11 +1573,20 @@
 <h2 id="pipeline_scriptpy"><code>pipeline_script.py</code></h2>
 <p>The main script to run the data processing pipeline. Configure paths and parameters here.
 The meaning of changeable values are explained more within the script.</p>
+<h6 id="pre-process-section">Pre-process section</h6>
 <ul>
 <li><code>RUN_MESC_PREPROCESS</code>: calls <code>mesc_tiff_extract.analyse_mesc_file()</code></li>
 <li><code>RUN_PREPROCESS</code>: runs <code>frequency_to_save.frequency_electrodeRoi_to_save</code>, <code>mesc_data_handling.tiff_merge</code>, <code>mesc_data_handling.extract_stim_frame</code></li>
+<li><code>S2P</code>: runs <code>suite2p_script.run_suite2p()</code></li>
+</ul>
+<h6 id="analysis-section">Analysis section</h6>
+<ul>
 <li><code>RUN_ANALYSIS_PREP</code>: calls various analysis-related functions from <code>functions.py</code></li>
-<li><code>PLOTS</code>, <code>PLOT_BTW_EXP</code>, <code>RUN_CELLREG_PREP</code>, <code>RUN_CELLREG</code>, <code>RUN_CELLREG_ANALYSIS</code>: control plotting and CellReg-related processes</li>
+<li><code>PLOTS</code>, <code>PLOT_BTW_EXP</code>: control plotting and further calculations for analysis</li>
+</ul>
+<h6 id="cellreg-section">CellReg section</h6>
+<ul>
+<li><code>RUN_CELLREG_PREP</code>, <code>RUN_CELLREG</code>, <code>RUN_CELLREG_ANALYSIS</code> : CellReg-related processes like <code>.mat</code> file creation, running CellReg, and analyzing overlaps</li>
 </ul>
 <hr />
 <h2 id="generalpy"><code>general.py</code></h2>
@@ -1757,7 +1832,7 @@ If that is done then you only need to run this function to run the CellReg analy
     
     
       
-      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "toggle"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "toggle", "content.code.copy"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../assets/javascripts/bundle.13a4f30d.min.js"></script>

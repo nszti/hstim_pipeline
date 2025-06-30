@@ -78,6 +78,7 @@ def tiff_merge(mesc_file_name, list_of_file_nums, output_root_directory, mesc_DA
 
             selected_electrode_ROIs = elec_ROIs[selected_indices]
             np.save(os.path.join(output_filepath, 'selected_elec_ROI.npy'), selected_electrode_ROIs)
+
             print(f"Saved selected frequency and electrode ROI info for group {numbers_to_merge}")
 
 

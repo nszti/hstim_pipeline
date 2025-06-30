@@ -592,6 +592,24 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#as-a-rule-of-thumb-we-can-say-that-any-function-with-the-_val-suffix-is-used-for-validation-experiments-and-has-been-developed-thus-replaced-with-other-functions-in-case-of-the-more-advanced-experiments" class="md-nav__link">
+    <span class="md-ellipsis">
+      As a rule of thumb, we can say that any function with the _val() suffix is used for validation experiments and has been developed, thus replaced with other functions in case of the more advanced experiments.
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#in-case-of-overlap-footprint" class="md-nav__link">
+    <span class="md-ellipsis">
+      in case of overlap footprint
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -656,6 +674,24 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#as-a-rule-of-thumb-we-can-say-that-any-function-with-the-_val-suffix-is-used-for-validation-experiments-and-has-been-developed-thus-replaced-with-other-functions-in-case-of-the-more-advanced-experiments" class="md-nav__link">
+    <span class="md-ellipsis">
+      As a rule of thumb, we can say that any function with the _val() suffix is used for validation experiments and has been developed, thus replaced with other functions in case of the more advanced experiments.
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#in-case-of-overlap-footprint" class="md-nav__link">
+    <span class="md-ellipsis">
+      in case of overlap footprint
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -689,7 +725,21 @@ You can leave out any part which need stimulation times for calculation. This us
 <code>suite2p_script.run_suite2p()</code><br />
 <code>functions.spontaneous_baseline_val()</code><br />
 <code>cellreg_preprocess.suite2p_to_cellreg_masks()</code><br />
-<code>cellreg_analysis.run_cellreg_matlab()</code>  </p>
+<code>cellreg_analysis.run_cellreg_matlab()</code></p>
+<pre><code class="language-bash">mesc_tiff_extract.analyse_mesc_file()
+</code></pre>
+<hr />
+<p><strong>"Validation" Experiments</strong></p>
+<h6 id="as-a-rule-of-thumb-we-can-say-that-any-function-with-the-_val-suffix-is-used-for-validation-experiments-and-has-been-developed-thus-replaced-with-other-functions-in-case-of-the-more-advanced-experiments">As a rule of thumb, we can say that any function with the <code>_val()</code> suffix is used for validation experiments and has been developed, thus replaced with other functions in case of the more advanced experiments.</h6>
+<p><code>functions.stim_dur_val()</code><br />
+<code>funcitons.electROI_val()</code><br />
+<code>functions.dist_val()</code><br />
+<code>functions.balseine_val()</code><br />
+<code>functions.activated_neurons_val()</code><br />
+<code>functions.timecourse_vals()</code><br />
+<code>functions.data_analysis_values()</code></p>
+<h6 id="in-case-of-overlap-footprint">in case of overlap footprint</h6>
+<p><code>cellreg_preprocess.suite2p_to_cellreg_mask()</code></p>
 <hr />
 <p><strong>Bipolar Experiments</strong>
  In bipolar experiments, for one set of parameters we usually have 1 recording. So there is no need to concatenate the tiffs, you can handle them individually.

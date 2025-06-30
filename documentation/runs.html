@@ -580,17 +580,17 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="This page provides examples on how to run the pipeline for different experimental conditions.">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#note-this-is-still-under-revision" class="md-nav__link">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spontaneous-activity-recordings" class="md-nav__link">
     <span class="md-ellipsis">
-      Note: This is still under revision
+      Spontaneous Activity Recordings
     </span>
   </a>
   
-</li>
+    <nav class="md-nav" aria-label="Spontaneous Activity Recordings">
+      <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#example-code" class="md-nav__link">
@@ -601,14 +601,20 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#as-a-rule-of-thumb-we-can-say-that-any-function-with-the-_val-suffix-is-used-for-validation-experiments-and-has-been-developed-thus-replaced-with-other-functions-in-case-of-the-more-advanced-experiments" class="md-nav__link">
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validation-experiments" class="md-nav__link">
     <span class="md-ellipsis">
-      As a rule of thumb, we can say that any function with the _val() suffix is used for validation experiments and has been developed, thus replaced with other functions in case of the more advanced experiments.
+      "Validation" Experiments
     </span>
   </a>
   
-</li>
+    <nav class="md-nav" aria-label="&#34;Validation&#34; Experiments">
+      <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#in-case-of-overlap-footprint" class="md-nav__link">
@@ -621,6 +627,24 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-experiments" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Experiments
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#current-steering-experiments" class="md-nav__link">
+    <span class="md-ellipsis">
+      Current steering Experiments
+    </span>
+  </a>
   
 </li>
       
@@ -671,17 +695,17 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="This page provides examples on how to run the pipeline for different experimental conditions.">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#note-this-is-still-under-revision" class="md-nav__link">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spontaneous-activity-recordings" class="md-nav__link">
     <span class="md-ellipsis">
-      Note: This is still under revision
+      Spontaneous Activity Recordings
     </span>
   </a>
   
-</li>
+    <nav class="md-nav" aria-label="Spontaneous Activity Recordings">
+      <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#example-code" class="md-nav__link">
@@ -692,14 +716,20 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#as-a-rule-of-thumb-we-can-say-that-any-function-with-the-_val-suffix-is-used-for-validation-experiments-and-has-been-developed-thus-replaced-with-other-functions-in-case-of-the-more-advanced-experiments" class="md-nav__link">
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validation-experiments" class="md-nav__link">
     <span class="md-ellipsis">
-      As a rule of thumb, we can say that any function with the _val() suffix is used for validation experiments and has been developed, thus replaced with other functions in case of the more advanced experiments.
+      "Validation" Experiments
     </span>
   </a>
   
-</li>
+    <nav class="md-nav" aria-label="&#34;Validation&#34; Experiments">
+      <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#in-case-of-overlap-footprint" class="md-nav__link">
@@ -712,6 +742,24 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-experiments" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Experiments
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#current-steering-experiments" class="md-nav__link">
+    <span class="md-ellipsis">
+      Current steering Experiments
+    </span>
+  </a>
   
 </li>
       
@@ -734,10 +782,12 @@
   <h1>Examples</h1>
 
 <h3 id="this-page-provides-examples-on-how-to-run-the-pipeline-for-different-experimental-conditions">This page provides examples on how to run the pipeline for different experimental conditions.</h3>
-<h6 id="note-this-is-still-under-revision"><strong>Note</strong>: This is still under revision</h6>
+<div style="font-size: 0.9em; color: gray; margin-top: 1em;" >
+Note: This is still under revision
+</div>
 <hr />
-<p><strong>Spontaneous Activity Recordings</strong><br />
-You can leave out any part which need stimulation times for calculation. This usually leaves us with the following functions:<br />
+<h3 id="spontaneous-activity-recordings">Spontaneous Activity Recordings</h3>
+<p>You can leave out any part which need stimulation times for calculation. This usually leaves us with the following functions:<br />
 <code>mesc_tiff_extract.analyse_mesc_file()</code><br />
 <code>mesc_data_handling.tiff_merge(stimulation=False)</code><br />
 <code>suite2p_script.run_suite2p()</code><br />
@@ -751,8 +801,10 @@ suite2p_script.run_suite2p(tiff_directory, list_of_file_nums, False, gcamp)
 
 </code></pre>
 <hr />
-<p><strong>"Validation" Experiments</strong></p>
-<h6 id="as-a-rule-of-thumb-we-can-say-that-any-function-with-the-_val-suffix-is-used-for-validation-experiments-and-has-been-developed-thus-replaced-with-other-functions-in-case-of-the-more-advanced-experiments">As a rule of thumb, we can say that any function with the <code>_val()</code> suffix is used for validation experiments and has been developed, thus replaced with other functions in case of the more advanced experiments.</h6>
+<h3 id="validation-experiments">"Validation" Experiments</h3>
+<div style="font-size: 0.9em; color: gray; margin-top: 1em;" >
+As a rule of thumb, we can say that any function with the `_val()` suffix is used for validation experiments and has been developed, thus replaced with other functions in case of the more advanced experiments. 
+</div>
 <p><code>functions.stim_dur_val()</code><br />
 <code>funcitons.electROI_val()</code><br />
 <code>functions.dist_val()</code><br />
@@ -763,8 +815,8 @@ suite2p_script.run_suite2p(tiff_directory, list_of_file_nums, False, gcamp)
 <h6 id="in-case-of-overlap-footprint">in case of overlap footprint</h6>
 <p><code>cellreg_preprocess.suite2p_to_cellreg_mask()</code></p>
 <hr />
-<p><strong>Advanced Experiments</strong><br />
-Experiments where one set of parameters is recorded in 1 recording (usually bipolar stimulation experiments). So there is no need to concatenate the tiffs, you can handle them individually and stimulation calculations can be made from the first calculation timepoint.
+<h3 id="advanced-experiments">Advanced Experiments</h3>
+<p>Experiments where one set of parameters is recorded in 1 recording (usually bipolar stimulation experiments). So there is no need to concatenate the tiffs, you can handle them individually and stimulation calculations can be made from the first calculation timepoint.
 You can use the following functions:<br />
 <code>mesc_tiff_extract.analyse_mesc_file()</code>
 <code>frequency_to_save.frequency_electrodeRoi_to_save()</code>
@@ -776,8 +828,8 @@ You can use the following functions:<br />
 <code>cellreg_preprocess.run_cellreg_matlab()</code>
 <code>cellreg_preprocess.cellreg_analysis_overlap()</code></p>
 <hr />
-<p><strong>Current steering Experiments</strong> <br />
-Similarly to bipolar experiments, in current steering experiments we usually have 1 recording for one set of parameters.<br />
+<h3 id="current-steering-experiments">Current steering Experiments</h3>
+<p>Similarly to bipolar experiments, in current steering experiments we usually have 1 recording for one set of parameters.<br />
 In these cases usually you can run the following functions: <br />
 <code>mesc_tiff_extract.analyse_mesc_file()</code> <br />
 <code>mesc_data_handling.tiff_merge(stimulation=True)</code> <br />

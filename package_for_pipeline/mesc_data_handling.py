@@ -7,7 +7,7 @@ import tifftools
 import pandas as pd
 import pickle
 
-def tiff_merge(mesc_file_name, list_of_file_nums, output_root_directory, stimulation):
+def tiff_merge(mesc_file_name, list_of_file_nums, output_root_directory, mesc_DATA_file, stimulation):
     '''
     Parameters
     ----------
@@ -27,11 +27,17 @@ def tiff_merge(mesc_file_name, list_of_file_nums, output_root_directory, stimula
     os.makedirs(outer_directory, exist_ok=True)
     print(f"MESc file name: {mesc_file_name}")
 
+    mesc_data = np.load(os.path.join(outer_directory, mesc_DATA_file), allow_pickle=True)
+    fileIds = mesc_data[:, 0]
+    file_nums = [int(fid.split('_')[-1]) for fid in fileIds]
+    file_index_map = {num: idx for idx, num in enumerate(file_nums)}
+    #filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+
     if stimulation:
-        freq_path = os.path.join(outer_directory, 'frequencies.npy')
-        frequencies = np.load(freq_path)
-        electrodeROI_path = os.path.join(outer_directory, 'electrode_rois.npy')
-        elec_ROIs = np.load(electrodeROI_path)
+    freq_path = os.path.join(outer_directory, 'frequencies.npy')
+    frequencies = np.load(freq_path)
+    electrodeROI_path = os.path.join(outer_directory, 'electrode_rois.npy')
+    elec_ROIs = np.load(electrodeROI_path)
 
     for numbers_to_merge in list_of_file_nums:
         base_filename = mesc_file_name + suffix
@@ -60,12 +66,21 @@ def tiff_merge(mesc_file_name, list_of_file_nums, output_root_directory, stimula
         print(f"Files {tiff_files_li} merged into {output_fpath}")
 
         if stimulation:
-            selected_freqs = frequencies[numbers_to_merge]
+            try:
+                selected_indices = [file_index_map[num] for num in numbers_to_merge]
+            except KeyError as e:
+                print(f"File number {e} not found in MESc metadata.")
+                exit(1)
+
+            selected_freqs = frequencies[selected_indices]
             print(f"Used frequency: {selected_freqs}")
             np.save(os.path.join(output_filepath, 'selected_freqs.npy'), selected_freqs)
 
-            selected_electrode_ROIs = elec_ROIs[numbers_to_merge]
+            selected_electrode_ROIs = elec_ROIs[selected_indices]
             np.save(os.path.join(output_filepath, 'selected_elec_ROI.npy'), selected_electrode_ROIs)
+            print(f"Saved selected frequency and electrode ROI info for group {numbers_to_merge}")
+
+
 
 def extract_stim_frame(root_directory, mesc_DATA_file, list_of_file_nums):
     '''

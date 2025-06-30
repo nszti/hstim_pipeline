@@ -69,7 +69,7 @@ if RUN_MESC_PREPROCESS:
 #-----1.2.step: frequency_to_save, electrode_roi_to_save-->automatization pending-----
 if RUN_PREPROCESS:
   #frequency_to_save.frequency_electrodeRoi_to_save(root_directory, tiff_directory)
-  mesc_data_handling.tiff_merge(mesc_file_name, list_of_file_nums, root_directory, True)
+  mesc_data_handling.tiff_merge(mesc_file_name, list_of_file_nums, root_directory, mesc_DATA_file, True)
   #mesc_data_handling.extract_stim_frame(root_directory, mesc_DATA_file, list_of_file_nums) #--> saves stimTimes.npy needed for baseline
 if S2P:
   suite2p_script.run_suite2p(tiff_directory, list_of_file_nums, False, gcamp)
@@ -84,8 +84,7 @@ if RUN_ANALYSIS_PREP:
   functions.baseline_val(root_directory, tiff_directory, list_of_file_nums) #--> saves F0.npy : if suite2p files changes make sure to rerun
   # functions.activated_neurons_val(root_directory, tiff_directory, list_of_file_nums, 1)
   # functions.timecourse_vals(tiff_directory, list_of_file_nums, 5)
-  #functions.analyze_merged_activation_and_save(root_directory, mesc_file_name, tiff_directory, list_of_file_nums)
-
+  functions.analyze_merged_activation_and_save(root_directory, mesc_file_name, tiff_directory, list_of_file_nums, 6, 3.0, 10, 4.2,30.97)
 if PLOTS:
   functions.plot_stim_traces(tiff_directory, 30.97, 6, 5, list_of_file_nums, 8, 5.2, 2) #5.165
   #functions.data_analysis_values(stim_type, tiff_directory, list_of_file_nums)

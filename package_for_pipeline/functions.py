@@ -254,7 +254,7 @@ def dist_vals (tiff_dir, list_of_file_nums):
             np.save(tiff_dir + '/' + dir + '/suite2p/plane0/ROI_numbers.npy', roi_numbers)
 
 
-def spontaneous_baseline_val(tiff_dir, list_of_file_nums, list_of_roi_nums, frame_rate = 30.97, baseline_frame=3, plot_start_frame = 0, plot_end_frame=None ):
+def spontaneous_baseline(tiff_dir, list_of_file_nums, list_of_roi_nums, frame_rate = 30.97, baseline_frame=3, plot_start_frame = 0, plot_end_frame=None ):
     '''
 
     Parameters
@@ -566,7 +566,7 @@ def timecourse_vals(tiff_dir, list_of_file_nums, num_trials):
     '''
     base_dir = Path(tiff_dir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
-    frame_rate = 31
+    frame_rate = 30.97
 
     for numbers_to_merge in list_of_file_nums:
         suffix = '_'.join(map(str, numbers_to_merge))
@@ -987,7 +987,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             plt.show()
 
 
-def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list_of_file_nums, start_btw_stim, trial_delay,roi_idx, stim_dur=200, threshold_value = 3):
+def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list_of_file_nums, start_btw_stim, trial_delay, roi_idx, stim_dur=200, threshold_value = 3):
     '''
 
     Parameters
@@ -1182,6 +1182,8 @@ def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list
                         avg_y = np.nan
                     x_coords_per_repeat_stim[repeat][stim_idx] = avg_x
                     y_coords_per_repeat_stim[repeat][stim_idx] = avg_y
+
+
                     med_df = pd.DataFrame({
                         'ROI': activated_rois_csv,
                         'X_coord': x_coords,
@@ -1765,9 +1767,9 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
             if masks:
                 out = os.path.join(tiff_dir, matched_file)
                 mask_stack = np.stack(masks, axis=0).astype(np.double)
-                '''mat_path = os.path.join(out, f'cellreg_input_{mesc_file_name}_{file_num}.mat')
+                mat_path = os.path.join(out, f'cellreg_input_{mesc_file_name}_{file_num}.mat')
                 savemat(mat_path, {'cells_map': mask_stack})
-                '''
+
             # Save activation info
             activation_df = pd.DataFrame({
                 'ROI_Index': activated_roi_indices,

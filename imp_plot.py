@@ -1,47 +1,59 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 
 # Load the Excel file
-file_path = 'nanoz_data.xlsx'  # Change if needed
+file_path = 'nanoz_data.xlsx'  # <-- update with your filename
 df = pd.read_excel(file_path)
 
-# Prepare long-format data with Frequency + Type (M/P)
-long_data = []
+# Convert wide format to long format
+long_df = df.melt(var_name='Frequency_Hz', value_name='Impedance_kOhm')
 
-for col in df.columns:
-    if '_M' in col or '_P' in col:
-        freq = col.split('Hz')[0]
-        kind = 'Magnitude' if '_M' in col else 'Phase'
-        for val in df[col].dropna():
-            long_data.append({
-                'Frequency': freq,
-                'Type': kind,
-                'Value': val,
-                'Label': f"{freq}Hz_{kind[0]}"  # e.g., "1Hz_M" or "1Hz_P"
-            })
+# Clean frequency labels and convert to numeric
+long_df['Frequency_Hz'] = long_df['Frequency_Hz'].str.replace('Hz', '', regex=False)
+long_df['Frequency_Hz'] = long_df['Frequency_Hz'].replace('1E4', '10000')  # if needed
+long_df['Frequency_Hz'] = pd.to_numeric(long_df['Frequency_Hz'])
 
-# Create DataFrame
-long_df = pd.DataFrame(long_data)
-long_df['Label'] = long_df['Label'].astype(str)
+# Drop NaNs
+long_df = long_df.dropna()
 
-
-# Create a custom x-label order: each freq appears twice (M then P)
-# This helps with ordering in the plot
-frequency_order = ['1E4','7500','5000','2000','1000', '500','200', '100', '50', '20','10','2',  '5',  '1']
-
-x_order = [f"{str(f)}Hz_M" for f in frequency_order] + [f"{str(f)}Hz_P" for f in frequency_order]
-
-
-# Set up plot
-plt.figure(figsize=(16, 6))
+# Set up Seaborn style
 sns.set(style="whitegrid")
-sns.boxplot(x='Label', y='Value', data=long_df, order=x_order, palette='Set2')
 
-# Style
-plt.title('NanoZ Impedance: Magnitude and Phase per Frequency')
-plt.xlabel('Frequency and Type')
-plt.ylabel('Value')
-plt.xticks(rotation=45)
+# Create boxplot
+plt.figure(figsize=(12, 6))
+ax = sns.boxplot(
+    x='Frequency_Hz',
+    y='Impedance_kOhm',
+    data=long_df,
+    showfliers=False
+)
+
+# Overlay mean impedance per frequency
+means = long_df.groupby('Frequency_Hz')['Impedance_kOhm'].mean().reset_index()
+sns.scatterplot(
+    x='Frequency_Hz',
+    y='Impedance_kOhm',
+    data=means,
+    color='red',
+    label='Mean',
+    zorder=10,
+    marker='o',
+    s=70,
+    ax=ax
+)
+
+# Logarithmic axes
+plt.yscale('log')
+plt.xscale('log')
+plt.ylim(1e0, 1e6)
+plt.xlim(1, 10000)
+
+# Labels and styling
+plt.title('Impedance Boxplots by Frequency (log-log)')
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Impedance (kΩ)')
+plt.legend()
 plt.tight_layout()
 plt.show()

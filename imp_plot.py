@@ -2,10 +2,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Load Excel data
-df = pd.read_excel('/mnt/data/nanoz_imp.xlsx')
+# Reload the Excel file
+file_path = '/mnt/data/nanoz_imp.xlsx'
+df = pd.read_excel(file_path)
 
-# Extract and clean frequencies
+# Extract frequencies and impedance data
 frequencies = []
 impedance_data = []
 
@@ -18,38 +19,35 @@ for col in df.columns:
     except:
         continue
 
-# Sort frequencies
+# Sort by frequency
 sorted_idx = np.argsort(frequencies)
 frequencies = np.array(frequencies)[sorted_idx]
 impedance_data = [impedance_data[i] for i in sorted_idx]
 
-# Plot each boxplot manually with log-scale positioning
-plt.figure(figsize=(12, 6))
-for freq, data in zip(frequencies, impedance_data):
-    log_pos = np.log10(freq)
-    log_width = 0.05  # adjust this to control box spacing in log scale
-    left = 10**(log_pos - log_width / 2)
-    right = 10**(log_pos + log_width / 2)
-    center = 10**log_pos
-    plt.boxplot(data, positions=[center], widths=[right - left],
+# Convert frequencies to log10 for plotting on a linear axis
+log_freqs = np.log10(frequencies)
+labels = [f"{f:.0f}Hz" if f >= 10 else f"{f:.3f}Hz" for f in frequencies]
+
+# Plot using linear scale (manual log x-axis)
+plt.figure(figsize=(14, 6))
+positions = log_freqs
+
+# Boxplots at log-scaled x positions
+for pos, data in zip(positions, impedance_data):
+    plt.boxplot(data, positions=[pos], widths=0.05,
                 patch_artist=True, showfliers=False,
                 boxprops=dict(facecolor='skyblue', alpha=0.7))
 
-# Plot mean points
-means = [np.mean(vals) for vals in impedance_data]
-plt.scatter(frequencies, means, color='red', s=60, zorder=3, label='Mean')
+# Overlay means
+means = [np.mean(d) for d in impedance_data]
+plt.scatter(positions, means, color='red', label='Mean', zorder=3, s=60)
 
-# Log-log scale
-plt.xscale('log')
-plt.yscale('log')
-plt.xlim(1, 1.5e4)
-plt.ylim(1, 1e6)
-
-# Labeling
-plt.xticks(frequencies, [f"{f:.0f}Hz" if f >= 10 else f"{f:.3f}Hz" for f in frequencies], rotation=45)
+# Manual log x-ticks
+plt.xticks(positions, labels, rotation=45)
 plt.xlabel('Frequency (Hz)')
 plt.ylabel('Impedance (kΩ)')
-plt.title('NanoZ Impedance Boxplots per Frequency (Log–Log)')
+plt.title('NanoZ Impedance Boxplots with Manual Log Frequency Axis')
+plt.yscale('log')
 plt.grid(True, which='both', linestyle='--', linewidth=0.5)
 plt.legend()
 plt.tight_layout()

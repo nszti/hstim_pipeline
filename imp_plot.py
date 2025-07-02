@@ -23,15 +23,15 @@ for col in df.columns:
 
 # Create DataFrame
 long_df = pd.DataFrame(long_data)
+long_df['Label'] = long_df['Label'].astype(str)
+
 
 # Create a custom x-label order: each freq appears twice (M then P)
 # This helps with ordering in the plot
 frequency_order = ['1E4','7500','5000','2000','1000', '500','200', '100', '50', '20','10','2',  '5',  '1']
 
-x_order = []
-for f in frequency_order:
-    x_order.append(f"{f}Hz_M")
-    x_order.append(f"{f}Hz_P")
+x_order = [f"{str(f)}Hz_M" for f in frequency_order] + [f"{str(f)}Hz_P" for f in frequency_order]
+
 
 # Set up plot
 plt.figure(figsize=(16, 6))

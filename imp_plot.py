@@ -1,9 +1,9 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-
+from matplotlib.ticker import LogLocator, NullFormatter
 # Reload the Excel file
-file_path = '/mnt/data/nanoz_imp.xlsx'
+file_path = 'c:/Hyperstim/2025_07_01/nanoz_imp.xlsx'
 df = pd.read_excel(file_path)
 
 # Extract frequencies and impedance data
@@ -29,26 +29,30 @@ log_freqs = np.log10(frequencies)
 labels = [f"{f:.0f}Hz" if f >= 10 else f"{f:.3f}Hz" for f in frequencies]
 
 # Plot using linear scale (manual log x-axis)
-plt.figure(figsize=(14, 6))
+plt.figure(figsize=(10, 6))
 positions = log_freqs
 
 # Boxplots at log-scaled x positions
 for pos, data in zip(positions, impedance_data):
-    plt.boxplot(data, positions=[pos], widths=0.05,
+    plt.boxplot(data, positions=[pos], widths=0.12,
                 patch_artist=True, showfliers=False,
                 boxprops=dict(facecolor='skyblue', alpha=0.7))
 
 # Overlay means
 means = [np.mean(d) for d in impedance_data]
-plt.scatter(positions, means, color='red', label='Mean', zorder=3, s=60)
+plt.scatter(positions, means, color='red', label='Mean', zorder=3, s=15)
 
 # Manual log x-ticks
 plt.xticks(positions, labels, rotation=45)
 plt.xlabel('Frequency (Hz)')
+plt.gca().invert_yaxis()
 plt.ylabel('Impedance (kΩ)')
-plt.title('NanoZ Impedance Boxplots with Manual Log Frequency Axis')
+plt.title('NanoZ N17_P3')
 plt.yscale('log')
-plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+'''plt.gca().yaxis.set_major_locator(LogLocator(base = 10.0, numticks = 10))
+plt.gca().yaxis.set_minor_formatter(NullFormatter())'''
+#plt.grid(True, which='both', linestyle='-', linewidth=0.5)
+plt.grid(False)
 plt.legend()
 plt.tight_layout()
 plt.show()

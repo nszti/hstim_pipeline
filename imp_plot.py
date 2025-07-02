@@ -58,71 +58,60 @@ plt.legend()
 plt.tight_layout()
 plt.show()
 '''
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Load Excel file
-import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
-
-# Load your Excel data
+# Load your actual Excel data
 file_path = '/mnt/data/nanoz_imp.xlsx'
 df = pd.read_excel(file_path)
 
-# Extract frequency values and impedance lists
+# Extract frequencies and data
 frequencies = []
-impedance_lists = []
+impedance_data = []
 
 for col in df.columns:
-    freq_str = col.replace('Hz', '').replace('E', 'e')
     try:
-        freq = float(freq_str)
-        values = df[col].dropna().values
+        freq = float(col.replace('Hz', '').replace('E', 'e'))
+        val = df[col].dropna().values
         frequencies.append(freq)
-        impedance_lists.append(values)
-    except ValueError:
+        impedance_data.append(val)
+    except:
         continue
 
 # Sort by frequency
-freqs = np.array(frequencies)
-sorted_indices = np.argsort(freqs)
-freqs = freqs[sorted_indices]
-impedance_lists = [impedance_lists[i] for i in sorted_indices]
+sorted_idx = np.argsort(frequencies)
+frequencies = np.array(frequencies)[sorted_idx]
+impedance_data = [impedance_data[i] for i in sorted_idx]
 
-# Create plot
+# Define positions for boxplots (on log scale)
+positions = frequencies
+labels = [f"{int(f)}Hz" if f.is_integer() else f"{f}Hz" for f in frequencies]
+
+# Plot
 plt.figure(figsize=(12, 6))
 
-# Plot each box manually at the correct log-scaled x-position
-for i, (freq, imp) in enumerate(zip(freqs, impedance_lists)):
-    # Shift box width in log space
-    box = plt.boxplot(imp,
-                      positions=[freq],
-                      widths=[freq * 0.2],  # scale width to freq
-                      patch_artist=True,
-                      showfliers=False)
+# Create boxplots
+plt.boxplot(impedance_data, positions=positions, widths=np.array(positions)*0.2, patch_artist=True)
+# Overlay means
+means = [np.mean(vals) for vals in impedance_data]
+plt.scatter(positions, means, color='red', s=60, label='Mean', zorder=3)
 
-    # Style the boxes
-    for patch in box['boxes']:
-        patch.set(facecolor='skyblue', alpha=0.7)
-
-# Overlay mean values
-means = [np.mean(x) for x in impedance_lists]
-plt.scatter(freqs, means, color='red', s=80, label='Mean', zorder=3)
-
-# Set log-log scale
+# Log scales
 plt.xscale('log')
 plt.yscale('log')
-plt.xlim(1, 1e4)
 plt.ylim(1, 1e6)
+plt.xlim(1, 1.5e4)
 
-# Labels and formatting
+# Labels
+plt.xticks(positions, labels, rotation=45)
 plt.xlabel('Frequency (Hz)')
 plt.ylabel('Impedance (kΩ)')
-plt.title('NanoZ Impedance Boxplots (Log–Log)')
-plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+plt.title('NanoZ Impedance Boxplots per Frequency (Log–Log)')
 plt.legend()
+plt.grid(True, which='both', linestyle='--', linewidth=0.5)
 plt.tight_layout()
 plt.show()
+
 

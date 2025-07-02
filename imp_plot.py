@@ -48,11 +48,21 @@ plt.xlabel('Frequency (Hz)')
 plt.gca().invert_yaxis()
 plt.ylabel('Impedance (kΩ)')
 plt.title('NanoZ N17_P3')
-plt.yscale('log')
-'''plt.gca().yaxis.set_major_locator(LogLocator(base = 10.0, numticks = 10))
-plt.gca().yaxis.set_minor_formatter(NullFormatter())'''
-#plt.grid(True, which='both', linestyle='-', linewidth=0.5)
-plt.grid(False)
+
+ax = plt.gca()
+# Logarithmic scale for Y-axis
+ax.set_yscale('log')
+# Major ticks at 10^0 to 10^6
+ax.yaxis.set_major_locator(LogLocator(base=10.0, numticks=7))
+ax.yaxis.set_major_formatter(FormatStrFormatter("10^%d"))
+# Optional: hide minor ticks completely
+ax.yaxis.set_minor_locator(LogLocator(base=10.0, subs=[], numticks=0))
+ax.yaxis.set_minor_formatter(NullFormatter())
+# Grid only at major ticks
+ax.yaxis.grid(True, which='major', linestyle='--', linewidth=0.6)
+
+# Correct Y-limits
+ax.set_ylim(1e0, 1e6)
 plt.legend()
 plt.tight_layout()
 plt.show()

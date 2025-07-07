@@ -20,7 +20,7 @@ def frequency_electrodeRoi_to_save(root_directory, tiff_directory):
     print("2 - Repeating pattern (50,100,200)")  #not sure if it's feasible
     print("3 - Enter values manually")
 
-    choice = input("Enter 1, 2, or 3: ")
+    choice = input("Enter 1, 2, 3 or 4: ")
 
     if choice == '1':
         freq = int(input("Enter frequency value: "))
@@ -38,7 +38,21 @@ def frequency_electrodeRoi_to_save(root_directory, tiff_directory):
             val = int(input(f"Frequency for file {i + 1}: "))
             frequency.append(val)
         frequency = np.array(frequency)
-
+    elif choice == '4':
+        base_freq = int(input("Enter base frequency value: "))
+        frequency = np.full(num_files, base_freq)
+        print("Base frequencies set.")
+        while True:
+            idx = int(input(f"Enter index (0 to {num_files - 1}) to overwrite: "))
+            if 0 <= idx < num_files:
+                new_freq = int(input(f"Enter new frequency for index {idx}: "))
+                frequency[idx] = new_freq
+                print(f"Frequency at index {idx} updated to {new_freq}.")
+                more = input("Do you want to overwrite another value? (y/n): ").lower()
+                if more != 'y':
+                    break
+            else:
+                print("Index out of range. Try again.")
     else:
         raise ValueError("Invalid choice. Try again")
 

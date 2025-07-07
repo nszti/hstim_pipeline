@@ -1607,7 +1607,8 @@ NB! Don’t forget to check the <code>stim_trig_channel</code> value and match i
 <p>Saves frequency and electrode ROI info into <code>.npy</code> files.
 Saves electrode ROI info: all zeros automatically into <code>ELECTRODE_ROIS.NPY</code>
 Saves frequency info: into <code>FREQUENCIES.NYP</code>: have 4 options (single frequency for all, repeating pattern, manual enter, overwrite specific index values) on how to fill the container, which will be asked in the command line.
-Using the 4th option is a bit tricky as of now, pay attention to the order of the frequencies and their correct indices. You have to give the index number matched to the MESc file, because the frequencies.npy holds as many places as the MESc file has videos, so if there are random pictures among the videos, you have to pay attention to the numbering of the places.</p>
+Using the 4th option is a bit tricky as of now, pay attention to the order of the frequencies and their correct indices. You have to give the index number matched to the MESc file, because the frequencies.npy holds as many places as the MESc file has videos, so if there are random pictures among the videos, you have to pay attention to the numbering of the places.
+Good to know: Ideally you only have to run this script once, so you can save yourself the trouble and comment out this line after the first run if you want to rerun anything else.</p>
 <hr />
 <h2 id="mesc_data_handlingpy"><code>mesc_data_handling.py</code></h2>
 <h4 id="tiff_merge"><code>tiff_merge()</code></h4>

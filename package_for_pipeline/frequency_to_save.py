@@ -19,6 +19,7 @@ def frequency_electrodeRoi_to_save(root_directory, tiff_directory):
     print("1 - Single frequency for all")
     print("2 - Repeating pattern (50,100,200)")  #not sure if it's feasible
     print("3 - Enter values manually")
+    print("4 - Single base frequency for all and overwrite values on specific index")
 
     choice = input("Enter 1, 2, 3 or 4: ")
 

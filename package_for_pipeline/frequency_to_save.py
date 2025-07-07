@@ -48,8 +48,12 @@ def frequency_electrodeRoi_to_save(root_directory, tiff_directory):
                 new_freq = int(input(f"Enter new frequency for index {idx}: "))
                 frequency[idx] = new_freq
                 print(f"Frequency at index {idx} updated to {new_freq}.")
-                more = input("Do you want to overwrite another value? (y/n): ").lower()
-                if more != 'y':
+                while True:
+                    more = input("Do you want to overwrite another value? (y/n): ").lower()
+                    if more in ('y', 'n'):
+                        break
+                    print("Invalid input. Please enter 'y' or 'n'.")
+                if more == 'n':
                     break
             else:
                 print("Index out of range. Try again.")

@@ -94,7 +94,7 @@ def analyse_mesc_file(filepath, output_path,  plot_curves=False, print_all_attri
                                     if y_data[i] > y_data[i-1]:
                                         stim_start_indices.append(int(np.round(i/20))) # after 2025.04.07
                                         stim_start.append(i)
-                                print(f"Stimulation start indices (ms): {stim_start_indices}")
+                                #print(f"Stimulation start indices (ms): {stim_start_indices}")
 
                 # ---Printing Unit attributes---
                 '''if print_all_attributes:
@@ -114,7 +114,7 @@ def analyse_mesc_file(filepath, output_path,  plot_curves=False, print_all_attri
                 params = extract_useful_xml_params(ascii_to_str(selected_unit._f_getattr('MeasurementParamsXML')))
                 params['framerate'] = 1 / (frame_time_ms / 1000)
                 pprint(params)
-                print(params['framerate'])
+                #print(params['framerate'])
 
                 # ---Load recording in Unit---
                 # Load and invert image array (in all test files the recording was in Channnel_0 and there were no other channels)
@@ -123,11 +123,11 @@ def analyse_mesc_file(filepath, output_path,  plot_curves=False, print_all_attri
                 #print(image_seq.shape, image_seq.dtype)
 
                 frame_timestamps = np.arange(0, frame_time_ms * image_seq.shape[0], frame_time_ms)
-                print(image_seq.shape)
+                #print(image_seq.shape)
                 try:
                     if len(stim_start_indices) > 0:
                         stim_start_frame_indices = [find_frame_index_from_timestamp(timestamp, frame_timestamps) for timestamp in stim_start_indices]
-                        print(stim_start_frame_indices)
+                        #print(stim_start_frame_indices)
                         triggers.append(stim_start_frame_indices[0])
                         files_ids.append(unit_id)
                         frame_nos.append(len(image_seq))
@@ -138,7 +138,7 @@ def analyse_mesc_file(filepath, output_path,  plot_curves=False, print_all_attri
                         f2.write("\n")
                         f3.write(str(len(image_seq)))
                         f3.write("\n")
-                        print(f"Stimulation start 2p frame indices:{stim_start_frame_indices}")
+                        #print(f"Stimulation start 2p frame indices:{stim_start_frame_indices}")
 
                 except UnboundLocalError:
                    pass

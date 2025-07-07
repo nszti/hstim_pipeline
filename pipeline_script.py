@@ -33,16 +33,15 @@ from package_for_pipeline import frequency_to_save
 
 #------VALUES TO CHANGE------
 
-root_directory = 'e:/test/'
-tiff_directory = 'e:/test/merged_tiffs/'
-mesc_file_name ='2025-03-25-Amouse-invivo-GCaMP6f'
+root_directory = 'e:/2025-07-02-Amouse-invivo-GCaMP6f/'
+tiff_directory = 'e:/2025-07-02-Amouse-invivo-GCaMP6f/merged_tiffs/'
+mesc_file_name ='2025-07-02-Amouse-invivo-GCaMP6f'
 mesc_DATA_file = 'mesc_data.npy' #from mesc_tiff_extract
 mat_file = ''
 postfix = ''
 list_of_file_nums = [
-  [24,25,26]
+[51,52,53,54,55,56,57,58]
 ]
-
 gcamp = 'f' #for GCaMP6s: 's'
 stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
 
@@ -50,12 +49,13 @@ stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
 
 RUN_MESC_PREPROCESS = False  #tiff extraction
 RUN_PREPROCESS = False # osszefuz listaban megadott tifeket
-S2P = False #suite2p futtatás
+S2P = True #suite2p futtatás
 #--------
 
 RUN_ANALYSIS_PREP = False  #F0 savelodik, ha modositod a suite2p barmelyik propertyet, akkor ezt ujra kell futtatni h frissuljon az F0
-PLOTS = True #Analysis plotok, utolso 3 a relevans
+PLOTS = False #Analysis plotok, utolso 3 a relevans
 PLOT_BTW_EXP = False
+
 RUN_CELLREG_PREP = False #cellreghez mat fileokat ment ki
 #cellreg hasznalat: CellReg.m run > GUIban load new dataval berakod a mat fileokat & 1.07 micront megadod> Non-rigid alignment futtatas > 12 micronos probabilistc modeling futtatas > a tobbit csak megnyomkodod sorban
 RUN_CELLREG = False
@@ -68,9 +68,9 @@ if RUN_MESC_PREPROCESS:
 
 #-----1.2.step: frequency_to_save, electrode_roi_to_save-->automatization pending-----
 if RUN_PREPROCESS:
-  #frequency_to_save.frequency_electrodeRoi_to_save(root_directory, tiff_directory)
+  frequency_to_save.frequency_electrodeRoi_to_save(root_directory, tiff_directory)
   mesc_data_handling.tiff_merge(mesc_file_name, list_of_file_nums, root_directory, mesc_DATA_file, True)
-  #mesc_data_handling.extract_stim_frame(root_directory, mesc_DATA_file, list_of_file_nums) #--> saves stimTimes.npy needed for baseline
+  mesc_data_handling.extract_stim_frame(root_directory, mesc_DATA_file, list_of_file_nums) #--> saves stimTimes.npy needed for baseline
 if S2P:
   suite2p_script.run_suite2p(tiff_directory, list_of_file_nums, False, gcamp)
 
@@ -99,7 +99,7 @@ if RUN_CELLREG_PREP:
 if RUN_CELLREG:
   cellreg_analysis.run_cellreg_matlab(tiff_directory)
 if RUN_CELLREG_ANALYSIS:
-  #cellreg_preprocess.cellreg_analysis_overlap(tiff_directory, mat_file, list_of_file_nums, postfix)
+  cellreg_preprocess.cellreg_analysis_overlap(tiff_directory, mat_file, list_of_file_nums, postfix)
   #cellreg_preprocess.single_block_activation(tiff_directory,postfix, mat_file,  30.97, 10, list_of_file_nums, 2.4,200, 3 )
 
 if VIDEO:

@@ -36,5 +36,6 @@ dependencies:
   - pip:
       - suite2p[gui]
       - git+https://github.com/hillierdani/hdf5io.git
+      # ide a clean pipeline
 
 

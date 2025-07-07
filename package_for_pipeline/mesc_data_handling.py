@@ -34,10 +34,10 @@ def tiff_merge(mesc_file_name, list_of_file_nums, output_root_directory, mesc_DA
     #filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
 
     if stimulation:
-    freq_path = os.path.join(outer_directory, 'frequencies.npy')
-    frequencies = np.load(freq_path)
-    electrodeROI_path = os.path.join(outer_directory, 'electrode_rois.npy')
-    elec_ROIs = np.load(electrodeROI_path)
+        freq_path = os.path.join(outer_directory, 'frequencies.npy')
+        frequencies = np.load(freq_path)
+        electrodeROI_path = os.path.join(outer_directory, 'electrode_rois.npy')
+        elec_ROIs = np.load(electrodeROI_path)
 
     for numbers_to_merge in list_of_file_nums:
         base_filename = mesc_file_name + suffix

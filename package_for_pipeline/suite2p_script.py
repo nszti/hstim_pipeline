@@ -97,7 +97,7 @@ def run_suite2p(tiff_dir, list_of_file_nums, reused_params, gcamp):
                               base_db.update({
                                     'tau': 0.5,
                                     'spatial_scale': 0,
-                                    'threshold_scaling': 0.46,
+                                    'threshold_scaling': 0.26,
                                     'max_overlap': 0.75
                               })
                               print(f'Using parameters given for GCaMP6f')

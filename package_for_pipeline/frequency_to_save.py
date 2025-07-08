@@ -15,19 +15,29 @@ def frequency_electrodeRoi_to_save(root_directory, tiff_directory, mesc_DATA_fil
             raise ValueError(f"FileID format {row_id} is not right")
     frame_nos = mesc_data[:,1]
     trigger  = mesc_data[:,2]
-    fileid_to_index = {}
-    for idx, fid in enumerate(file_ids):
-        fileid_to_index[fid] = idx
 
     file_id_path = root_directory + '/fileID.txt'
     # Check if the file exists
     if not os.path.isfile(file_id_path):
         raise FileNotFoundError(f"File {file_id_path} does not exist.")
-    # Read the file to count the number of lines
+
+    file_ids_fromtxt = []
     with open(file_id_path, 'r') as f:
-        num_files = sum(1 for _ in f)
+        for line in f:
+            line = line.strip()
+            if line.startswith("MUnit_"):
+                line = line.replace("MUnit_", "")
+            if line:
+                file_ids_fromtxt.append(int(line))
+    num_files = len(file_ids_fromtxt)
     print(f'Number of values to save: {num_files}')
-    print(f'List of the FileIDs: {file_ids}')
+    print(f'List of the FileIDs: {file_ids_fromtxt}')
+
+
+    fileid_to_index = {}
+    for idx, fid in enumerate(file_ids_fromtxt):
+        fileid_to_index[fid] = idx
+
     # Create an array to hold the electrode ROI values
     electrodeROI = np.zeros((num_files,), dtype=int)
 
@@ -63,8 +73,9 @@ def frequency_electrodeRoi_to_save(root_directory, tiff_directory, mesc_DATA_fil
         while True:
             file_num = int(input(f"Enter FileID to overwrite: "))
             print(file_num)
-            if 0 <= file_num < num_files:
-                idx = fileid_to_index[file_num] + 1
+            if file_num in file_ids_fromtxt:
+                idx = fileid_to_index[file_num] +1
+                print(file_num, idx)
                 new_freq = int(input(f"Enter new frequency for FileID {file_num} which is index {idx}: "))
                 frequency[idx] = new_freq
                 print(f"Frequency for FileID {file_num} updated to {new_freq}.")

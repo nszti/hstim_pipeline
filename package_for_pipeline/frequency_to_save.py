@@ -1,8 +1,24 @@
 import numpy as np
 import os
-def frequency_electrodeRoi_to_save(root_directory, tiff_directory):
+def frequency_electrodeRoi_to_save(root_directory, tiff_directory, mesc_DATA_file):
     # Set the output directory
     output_path = tiff_directory
+    mesc_data_path = os.path.join(tiff_directory, mesc_DATA_file)
+    mesc_data = np.load(mesc_data_path,allow_pickle=True)
+    file_ids = []
+    for row in mesc_data:
+        row_id = row[0]
+        if isinstance(row_id, str) and row_id.startswith("MUnit_"):
+            file_num = int(row_id.replace("MUnit_", ""))
+            file_ids.append(file_num)
+        else:
+            raise ValueError(f"FileID format {row_id} is not right")
+    frame_nos = mesc_data[:,1]
+    trigger  = mesc_data[:,2]
+    fileid_to_index = {}
+    for idx, fid in enumerate(file_ids):
+        fileid_to_index[fid] = idx
+
     file_id_path = root_directory + '/fileID.txt'
     # Check if the file exists
     if not os.path.isfile(file_id_path):
@@ -11,6 +27,7 @@ def frequency_electrodeRoi_to_save(root_directory, tiff_directory):
     with open(file_id_path, 'r') as f:
         num_files = sum(1 for _ in f)
     print(f'Number of values to save: {num_files}')
+    print(f'List of the FileIDs: {file_ids}')
     # Create an array to hold the electrode ROI values
     electrodeROI = np.zeros((num_files,), dtype=int)
 
@@ -36,7 +53,7 @@ def frequency_electrodeRoi_to_save(root_directory, tiff_directory):
         frequency = []
         print(f"Enter {num_files} values:")
         for i in range(num_files):
-            val = int(input(f"Frequency for file {i + 1}: "))
+            val = int(input(f"Frequency for file {i + 1} (FileID {num_files[i]}: "))
             frequency.append(val)
         frequency = np.array(frequency)
     elif choice == '4':
@@ -44,11 +61,13 @@ def frequency_electrodeRoi_to_save(root_directory, tiff_directory):
         frequency = np.full(num_files, base_freq)
         print("Base frequencies set.")
         while True:
-            idx = int(input(f"Enter index (0 to {num_files - 1}) to overwrite: "))
-            if 0 <= idx < num_files:
-                new_freq = int(input(f"Enter new frequency for index {idx}: "))
+            file_num = int(input(f"Enter FileID to overwrite: "))
+            print(file_num)
+            if 0 <= file_num < num_files:
+                idx = fileid_to_index[file_num] + 1
+                new_freq = int(input(f"Enter new frequency for FileID {file_num} which is index {idx}: "))
                 frequency[idx] = new_freq
-                print(f"Frequency at index {idx} updated to {new_freq}.")
+                print(f"Frequency for FileID {file_num} updated to {new_freq}.")
                 while True:
                     more = input("Do you want to overwrite another value? (y/n): ").lower()
                     if more in ('y', 'n'):
@@ -57,7 +76,7 @@ def frequency_electrodeRoi_to_save(root_directory, tiff_directory):
                 if more == 'n':
                     break
             else:
-                print("Index out of range. Try again.")
+                print("FileID out of range. Try again.")
     else:
         raise ValueError("Invalid choice. Try again")
 

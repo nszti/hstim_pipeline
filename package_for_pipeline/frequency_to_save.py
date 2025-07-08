@@ -72,11 +72,9 @@ def frequency_electrodeRoi_to_save(root_directory, tiff_directory, mesc_DATA_fil
         print("Base frequencies set.")
         while True:
             file_num = int(input(f"Enter FileID to overwrite: "))
-            print(file_num)
             if file_num in file_ids_fromtxt:
-                idx = fileid_to_index[file_num] +1
-                print(file_num, idx)
-                new_freq = int(input(f"Enter new frequency for FileID {file_num} which is index {idx}: "))
+                idx = fileid_to_index[file_num]
+                new_freq = int(input(f"Enter new frequency for FileID {file_num} which is index {idx+1}: "))
                 frequency[idx] = new_freq
                 print(f"Frequency for FileID {file_num} updated to {new_freq}.")
                 while True:

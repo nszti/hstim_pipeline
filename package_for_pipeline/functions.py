@@ -14,10 +14,11 @@ from sklearn.metrics import euclidean_distances
 from suite2p.gui.io import load_files
 import subprocess
 
+from hstim_pipeline.pipeline_script import tiff_directory
 
 
 #stim_dur
-def stim_dur_val(tiff_dir, list_of_file_nums):
+def stim_dur_val(root_directory, tiff_dir, list_of_file_nums):
     '''
 
     Parameters
@@ -29,9 +30,24 @@ def stim_dur_val(tiff_dir, list_of_file_nums):
     stimDurations.npy calculated from frequencies
     '''
 
+    fileid_txt_path = os.path.join(root_directory, '/fileID.txt')
+
+    file_ids_txt = []
+    with open(fileid_txt_path, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith("MUnit_"):
+                line = line.replace("MUnit_", "")
+            if line:
+                file_ids_txt.append(int(line))
+    fileid_to_index = {}
+    for idx, fid in enumerate(file_ids_txt):
+        fileid_to_index[fid] = idx
+
     base_dir = Path(tiff_dir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
     #print(filenames)
+
     for numbers_to_merge in list_of_file_nums:
         suffix = '_'.join(map(str, numbers_to_merge))
         num_to_search = []
@@ -49,10 +65,10 @@ def stim_dur_val(tiff_dir, list_of_file_nums):
 
         if matched_file:
             dir_path = base_dir / matched_file
-            frequency_path = os.path.join(dir_path, 'selected_freqs.npy')
+            frequency_path = os.path.join(tiff_dir, 'frequencies.npy')
             frequency = np.load(frequency_path, allow_pickle=True)
             print(frequency)
-            if not os.path.exists(frequency_path):
+            '''if not os.path.exists(frequency_path):
                 print(f"Frequency file not found")
                 exit(1)
             else:
@@ -65,7 +81,25 @@ def stim_dur_val(tiff_dir, list_of_file_nums):
                     stim_duration.append(stim_dur)
                 print(stim_duration)
                 print(f"Stimulation durations for {matched_file}: {stim_duration}")
-                np.save(dir_path /'stimDurations.npy', stim_duration)
+                np.save(dir_path /'stimDurations.npy', stim_duration)'''
+            stim_duration = []
+            for file_num in numbers_to_merge:
+                if file_num not in fileid_to_index:
+                    print(f"FileID {file_num} not found in fileID.txt. Skipping.")
+                    stim_duration.append(np.nan)
+                    continue
+                idx = fileid_to_index[file_num]
+                freq = frequency[idx]
+                ref_freq = 100
+                ref_dur = 1
+                stim_dur = ref_freq / (ref_dur * freq)  # float
+                stim_duration.append(stim_dur)
+            print(stim_duration)
+            print(f'Stimulation durations for {matched_file}: {stim_duration}')
+            np.save(dir_path / 'stimDurations.npy', stim_duration)
+
+
+
 
 #electrodeROI
 def electROI_val(tiff_dir,list_of_file_nums):

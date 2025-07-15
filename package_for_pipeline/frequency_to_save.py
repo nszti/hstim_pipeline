@@ -67,14 +67,30 @@ def frequency_electrodeRoi_to_save(root_directory, tiff_directory, mesc_DATA_fil
             frequency.append(val)
         frequency = np.array(frequency)
     elif choice == '4':
-        base_freq = int(input("Enter base frequency value: "))
+        while True:
+            try:
+                base_freq = int(input("Enter base frequency value: "))
+                break
+            except ValueError:
+                print("Invalid input. Please enter an integer value for the base frequency.")
         frequency = np.full(num_files, base_freq)
         print("Base frequencies set.")
         while True:
-            file_num = int(input(f"Enter FileID to overwrite: "))
+            try:
+                file_num = int(input(f"Enter FileID to overwrite: "))
+            except ValueError:
+                print("Invalid input. Please enter a valid FileID.")
+                continue
+            print(file_num)
+
             if file_num in file_ids_fromtxt:
                 idx = fileid_to_index[file_num]
-                new_freq = int(input(f"Enter new frequency for FileID {file_num} which is index {idx+1}: "))
+                while True:
+                    try:
+                        new_freq = int(input(f"Enter new frequency for FileID {file_num} which is index {idx}: "))
+                        break
+                    except ValueError:
+                        print("Invalid input. Please enter an integer.")
                 frequency[idx] = new_freq
                 print(f"Frequency for FileID {file_num} updated to {new_freq}.")
                 while True:

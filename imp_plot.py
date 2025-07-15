@@ -4,7 +4,7 @@ import numpy as np
 from matplotlib.ticker import LogLocator, NullFormatter
 
 # Reload the Excel file
-file_path = 'c:/Hyperstim/2025_07_01/nanoz_p_imp.xlsx'
+file_path = 'c:/Hyperstim/2025_07_01/nanoz_m_imp.xlsx'
 df = pd.read_excel(file_path)
 
 # Extract frequencies and impedance data
@@ -43,15 +43,15 @@ for pos, data in zip(positions, impedance_data):
 
 # Overlay means
 means = [np.mean(d) for d in impedance_data]
-plt.scatter(positions, means, color='blue', marker = '*', label='Mean', zorder=3, s=15)
+plt.scatter(positions, means, color='black', marker = 'x', label='Mean', zorder=3, s=15)
 
 # Manual log x-ticks
 plt.xticks(positions, labels, rotation=45)
 plt.xlabel('Frequency (Hz)')
-plt.ylabel('Phase (°)')
-plt.title('Nanoz phase values')
-#plt.yscale('log')
-#plt.ylim(1e0, 1e4)
+plt.ylabel('Impedance (KΩ)')
+plt.title('Nanoz magnitude values')
+plt.yscale('log')
+plt.ylim(1e0, 1e4)
 #ax.set_yscale('log')
 #plt.grid(True, which='both', linestyle='-', linewidth=0.5)
 plt.grid(False)

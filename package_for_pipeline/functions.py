@@ -754,7 +754,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             container = np.load(tiff_dir + matched_file + '/results.npz', allow_pickle=True)
             distances = np.load(tiff_dir +  matched_file + '/suite2p/plane0/distances.npy', allow_pickle=True)
             ROI_IDs = np.load(tiff_dir + matched_file + '/suite2p/plane0/ROI_numbers.npy', allow_pickle=True)
-            electrode_ROI = np.load(tiff_dir +  matched_file + '/electrodeROI.npy', allow_pickle=True)
+            #electrode_ROI = np.load(tiff_dir +  matched_file + '/electrodeROI.npy', allow_pickle=True)
 
             distanceFromElectrode = distances[:, 2]
             stimResults = container["stimResults"]
@@ -765,7 +765,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             baselineAvgs = container["baselineAvgs"]
             full_trial_traces = container["full_trial_traces"]
 
-            # remove electrode ROI from data
+            '''# remove electrode ROI from data
             for i in ROI_IDs:
                 if i == electrode_ROI[0]:
                     electrode_ROI_index = i
@@ -775,7 +775,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             stimAvgs = np.delete(stimAvgs, electrode_ROI_index, axis=0)
             restAvgs = np.delete(restAvgs, electrode_ROI_index, axis=0)
             baselineAvgs = np.delete(baselineAvgs, electrode_ROI_index, axis=0)
-            full_trial_traces = np.delete(full_trial_traces, electrode_ROI_index, axis=0)
+            full_trial_traces = np.delete(full_trial_traces, electrode_ROI_index, axis=0)'''
 
             # collect ROI, block and trial numbers
             ROI_No = stimResults.shape[0]
@@ -783,14 +783,15 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             trial_No = stimResults.shape[2]
 
             if stim_type == 'amp':
-                legend = ['10', '20', '30', '15', '25']
+                legend = ['1', '2', '5', '10', '20','30','40']
             elif stim_type == 'freq':
                 legend = ['50', '100', '200']
             elif stim_type == 'pulse_dur':
                 legend = ['50', '100', '200', '400']
             else:
                 legend = ['20', '50', '100', '200']
-            trialLabels = ['1', '2', '3', '4', '5']
+
+            trialLabels = ['1', '2', '3', '4', '5', '6', '7','8','9','10']
 
             # collect neurons activated during a block
             activatedNeurons = np.empty([ROI_No, block_No], 'int')
@@ -909,7 +910,8 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             ymin = -0.01
             ymax = 0.35
 
-            fig3, axs = plt.subplots(2, 5, figsize = (12,8))
+            #NB! modify nclos value for number of sublpots for stimulations
+            fig3, axs = plt.subplots(2, 10, figsize = (12,8))
             for iBlock in range(block_No):
                 for iTrial in range(trial_No):
                     axs[0, iBlock].plot(avgTracePerBlock[iBlock, iTrial, 0:plot_dur])
@@ -923,6 +925,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             axs[0, 0].set_ylabel('Mean dF/F0')
             axs[1, 0].set_ylabel('Mean dF/F0')
 
+            '''
             # distance calculation and plot
             binSize = 50
             maxDistance = 600
@@ -1018,7 +1021,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             np.save(output_dir + '/avgCaPerTrial', avgCAperTrial)
             np.savez(output_dir + '/results_GCaMP6s_09_17_freq.npz', activeNeuronsPerBlock=activeNeuronsPerBlock, avgCAperBlock=avgCAperBlock,
                      avgCAperTrial=avgCAperTrial)
-
+            '''
             plt.show()
 
 
@@ -1761,7 +1764,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         all_x_coords = []
         all_block_indices = []
         all_masks = []
-
+        all_count = 0
         for block_idx, file_num in enumerate(file_group):
             activated_roi_count = 0
             block_stim_time = fileid_to_info[file_num]['trigger']
@@ -1788,6 +1791,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                 active = stim_avg > threshold
                 if active:
                     activated_roi_count +=1
+                    all_count += 1
                     all_activated_roi_indices.append(roi)
                     all_traces.append(F_block)
                     all_block_indices.append(file_num)
@@ -1808,7 +1812,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                 mask_stack = np.stack(all_masks, axis=0).astype(np.double)
                 mat_path = os.path.join(out, f'cellreg_input_{mesc_file_name}_{file_num}.mat')
                 savemat(mat_path, {'cells_map': mask_stack})
-
+        print(f'for {matched_file}: {all_count}')
         out_path = os.path.join(tiff_dir, matched_file)
         activation_df = pd.DataFrame({
             'FileID': all_block_indices,

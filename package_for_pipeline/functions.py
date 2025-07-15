@@ -14,9 +14,6 @@ from sklearn.metrics import euclidean_distances
 from suite2p.gui.io import load_files
 import subprocess
 
-from hstim_pipeline.pipeline_script import tiff_directory
-
-
 #stim_dur
 def stim_dur_val(root_directory, tiff_dir, list_of_file_nums):
     '''
@@ -30,7 +27,8 @@ def stim_dur_val(root_directory, tiff_dir, list_of_file_nums):
     stimDurations.npy calculated from frequencies
     '''
 
-    fileid_txt_path = os.path.join(root_directory, '/fileID.txt')
+    fileid_txt_path = os.path.join(root_directory, 'fileID.txt')
+    print(fileid_txt_path)
 
     file_ids_txt = []
     with open(fileid_txt_path, 'r') as f:
@@ -88,6 +86,7 @@ def stim_dur_val(root_directory, tiff_dir, list_of_file_nums):
                     print(f"FileID {file_num} not found in fileID.txt. Skipping.")
                     stim_duration.append(np.nan)
                     continue
+                idx = fileid_to_index[file_num]
                 idx = fileid_to_index[file_num]
                 freq = frequency[idx]
                 ref_freq = 100
@@ -489,7 +488,9 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
         file_dir = Path(base_dir / matched_dir)
         baseline_durations = []
         for num_id in file_nums_to_search:
-            stim_times_path = os.path.join(file_dir, f'stimTime_{num_id}.npy')
+            stim_times_path = os.path.join(file_dir, f'sti'
+                                                     f''
+                                                     f'mTime_{num_id}.npy')
             if os.path.exists(stim_times_path):
                 stim_times = np.load(stim_times_path, allow_pickle=True)
                 if stim_times.size > 0:
@@ -533,7 +534,7 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
             # Iterate through all ROIs
             print(len(baseline_durations))
             for i in range(len(F0)):
-                print(i)
+                #print(i)
                 roi_thresholds = []
                 roi_results = []
                 for baseline_duration, (start_time, end_time) in zip(baseline_durations, tif_triggers):
@@ -595,7 +596,7 @@ def timecourse_vals(tiff_dir, list_of_file_nums, num_trials):
     '''
     :param expDir:
     :param frame_rate: 31Hz
-    :param num_trials: 5
+    :param num_trials: 5, number of stimulation in one repeat
     :return: saves 'results.npz'
     '''
     base_dir = Path(tiff_dir)
@@ -1670,7 +1671,7 @@ def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums, frame_r
     #plt.show()
 
 
-def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_of_file_nums,  stim_segm = 6 , threshold_value=3.0, trialNo = 10,trialDur = 4.2, frameRate = 30.97):
+def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_of_file_nums,  stim_segm, threshold_value, trialNo, trialDur, frameRate):
     '''
 
     Parameters
@@ -1679,14 +1680,17 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
     mesc_file_name
     tiff_dir
     list_of_file_nums
-    stim_segm
+    stim_segm: how many frames to look at for the stim_avg
     threshold_value
     trialNo
-    trialDur
+    trialDur: trial delay and stimulatio
     frameRate
 
     Returns
     -------
+    mask_stack for cellreg
+    activation_df
+    med_val_df
 
     '''
 
@@ -1737,7 +1741,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         if matched_file is None:
             print(f"No matched directory for MUnit_{suffix}")
             continue
-        print(matched_file)
+        #print(matched_file)
         exp_dir = os.path.join(base_dir, matched_file)
         suite2p_dir = os.path.join(exp_dir, 'suite2p', 'plane0')
         # Load base data
@@ -1750,6 +1754,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         Ly, Lx = ops['Ly'], ops['Lx']
         valid_rois = np.where(iscell[:, 0] == 1)[0]
 
+        activated_roi_count = 0
         for block_idx in range(len(file_group)):
             file_num = file_group[block_idx]
             block_stim_time = fileid_to_info[file_num]['trigger']
@@ -1783,6 +1788,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                 activation = 1 if stim_avg > threshold else 0
                 if activation == 1:
                     active = True
+                    activated_roi_count +=1
                 if active:
                     activated_roi_indices.append(roi)
                     traces.append(F_block)
@@ -1804,8 +1810,10 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                 mat_path = os.path.join(out, f'cellreg_input_{mesc_file_name}_{file_num}.mat')
                 savemat(mat_path, {'cells_map': mask_stack})
 
+            out_path = os.path.join(tiff_dir, matched_file)
             # Save activation info
             activation_df = pd.DataFrame({
+                'ROI_Count' : activated_roi_count,
                 'ROI_Index': activated_roi_indices,
                 'Trace': traces,
 
@@ -1815,10 +1823,12 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                 'Y_coord': y_coords,
                 'X_coord': x_coords
             })
-            '''csv_path = os.path.join(tiff_dir, f'activated_neurons_{mesc_file_name}_{list_of_file_nums[0][block_idx]}.csv')
-            activation_df.to_csv(csv_path, index=False)'''
-            med_csv_path = os.path.join(tiff_dir, f'med_of_act_ns_{mesc_file_name}_{list_of_file_nums[0][block_idx]}.csv')
-            med_val_df.to_csv(med_csv_path, index=False)
+            csv_path = os.path.join(out_path, f'activated_neurons_{mesc_file_name}_{file_num}.csv')
+            activation_df.to_csv(csv_path, index=True)
+            med_csv_path = os.path.join(out_path, f'med_of_act_ns_{mesc_file_name}_{file_num}.csv')
+            med_val_df.to_csv(med_csv_path, index=True)
+
+        print(f'Processed finished for {matched_file}')
 
 
 def collect_file_paths_for_blocks(tiff_dir, list_of_file_nums):

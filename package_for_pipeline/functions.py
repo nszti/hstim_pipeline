@@ -1754,7 +1754,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         Ly, Lx = ops['Ly'], ops['Lx']
         valid_rois = np.where(iscell[:, 0] == 1)[0]
 
-        activated_roi_count = 0
+
         all_activated_roi_indices = []
         all_traces = []
         all_y_coords = []
@@ -1763,6 +1763,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         all_masks = []
 
         for block_idx, file_num in enumerate(file_group):
+            activated_roi_count = 0
             block_stim_time = fileid_to_info[file_num]['trigger']
             block_len = fileid_to_info[file_num]['block_len']
 
@@ -1784,50 +1785,47 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                     stim_segments.append(stim_segment)
 
                 stim_avg = np.mean(stim_segments)
-                '''active = False
-                activation = 1 if stim_avg > threshold else 0'''
                 active = stim_avg > threshold
                 if active:
-                    #active = True
                     activated_roi_count +=1
-                #if active:
                     all_activated_roi_indices.append(roi)
                     all_traces.append(F_block)
-                    all_block_indices.append(block_idx)
+                    all_block_indices.append(file_num)
 
                     #centroid coords:
                     roi_stat = stat[roi]
                     #print(roi_stat)
-                    all_x_coords.append(roi_stat[roi]['med'][1])
-                    all_y_coords.append(roi_stat[roi]['med'][0])
+                    all_x_coords.append(roi_stat['med'][1])
+                    all_y_coords.append(roi_stat['med'][0])
 
                     mask = np.zeros((Ly, Lx), dtype=np.uint8)
                     mask[roi_stat['ypix'], roi_stat['xpix']] = 1
                     all_masks.append(mask)
 
+            print(f'Activated ROI in File MUnit_{file_num}: {activated_roi_count}')
+            if all_masks:
+                out = os.path.join(tiff_dir, matched_file)
+                mask_stack = np.stack(all_masks, axis=0).astype(np.double)
+                mat_path = os.path.join(out, f'cellreg_input_{mesc_file_name}_{file_num}.mat')
+                savemat(mat_path, {'cells_map': mask_stack})
+
         out_path = os.path.join(tiff_dir, matched_file)
-        if all_masks:
-            mask_stack = np.stack(all_masks, axis=0).astype(np.double)
-            mat_path = os.path.join(out_path, f'cellreg_input_{mesc_file_name}_{file_num}.mat')
-            savemat(mat_path, {'cells_map': mask_stack})
         activation_df = pd.DataFrame({
-            'Block_Index': all_block_indices,
-            'ROI_Count': activated_roi_count,
-            'ROI_Index': all_activated_roi_indices,
-            'Trace': all_traces
+            'FileID': all_block_indices,
+            'ROI_Index': all_activated_roi_indices
         })
 
         med_val_df = pd.DataFrame({
-            'Block_Index': all_block_indices,
+            'FileID': all_block_indices,
             'ROI_Index': all_activated_roi_indices,
             'Y_coord': all_y_coords,
             'X_coord': all_x_coords
             })
 
-            csv_path = os.path.join(out_path, f'activated_neurons_{mesc_file_name}_{file_num}.csv')
-            activation_df.to_csv(csv_path, index=False)
-            med_csv_path = os.path.join(out_path, f'med_of_act_ns_{mesc_file_name}_{file_num}.csv')
-            med_val_df.to_csv(med_csv_path, index=False)
+        csv_path = os.path.join(out_path, f'activated_neurons_{mesc_file_name}_{matched_file}.csv')
+        activation_df.to_csv(csv_path, index=False)
+        med_csv_path = os.path.join(out_path, f'med_of_act_ns_{mesc_file_name}_{matched_file}.csv')
+        med_val_df.to_csv(med_csv_path, index=False)
 
         print(f'Processed finished for {matched_file}')
 

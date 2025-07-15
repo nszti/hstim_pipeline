@@ -44,9 +44,9 @@ def frequency_electrodeRoi_to_save(root_directory, tiff_directory, mesc_DATA_fil
     print(f"Detected {num_files} TIFF files.")
     print("Choose input method for frequencies:")
     print("1 - Single frequency for all")
-    print("2 - Repeating pattern (50,100,200)")  #not sure if it's feasible
+    print("2 - Single base frequency for all and overwrite values on specific index")  #not sure if it's feasible
     print("3 - Enter values manually")
-    print("4 - Single base frequency for all and overwrite values on specific index")
+    print("4 - Repeating pattern (50,100,200)")
 
     choice = input("Enter 1, 2, 3 or 4: ")
 
@@ -55,18 +55,6 @@ def frequency_electrodeRoi_to_save(root_directory, tiff_directory, mesc_DATA_fil
         frequency = np.full(num_files, freq)
 
     elif choice == '2':
-        pattern_input = input("Enter comma-separated values (e.g., 50,100,200): ")
-        pattern = [int(x.strip()) for x in pattern_input.split(',')]
-        frequency = np.tile(pattern, int(np.ceil(num_files / len(pattern))))[:num_files]
-
-    elif choice == '3':
-        frequency = []
-        print(f"Enter {num_files} values:")
-        for i in range(num_files):
-            val = int(input(f"Frequency for file {i + 1} (FileID {num_files[i]}: "))
-            frequency.append(val)
-        frequency = np.array(frequency)
-    elif choice == '4':
         while True:
             try:
                 base_freq = int(input("Enter base frequency value: "))
@@ -102,8 +90,23 @@ def frequency_electrodeRoi_to_save(root_directory, tiff_directory, mesc_DATA_fil
                     break
             else:
                 print("FileID out of range. Try again.")
+
+    elif choice == '3':
+        frequency = []
+        print(f"Enter {num_files} values:")
+        for i in range(num_files):
+            val = int(input(f"Frequency for file {i + 1} (FileID {num_files[i]}: "))
+            frequency.append(val)
+        frequency = np.array(frequency)
+
+    elif choice == '4':
+        pattern_input = input("Enter comma-separated values (e.g., 50,100,200): ")
+        pattern = [int(x.strip()) for x in pattern_input.split(',')]
+        frequency = np.tile(pattern, int(np.ceil(num_files / len(pattern))))[:num_files]
+
     else:
         raise ValueError("Invalid choice. Try again")
+
 
     # Save and print
     save_path_e = output_path + '/electrode_rois.npy'

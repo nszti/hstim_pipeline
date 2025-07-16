@@ -12,6 +12,7 @@ gain = 0.195  # μV per bit
 offset = 0
 filter_band = (500, 5000)  # Bandpass in Hz
 time_range = (60, 120)  # seconds to load and plot
+channels_to_plot = [2,3,4,5,6,7,8,9,10,11,12,13,14,15]  # change as needed
 
 # === Select .dat file via dialog ===
 Tk().withdraw()
@@ -69,10 +70,22 @@ for i,rms in enumerate(rms_per_ch):
     print(f'ch{i+1}: {rms}uV')
 print(f'Mean RMS of filtered data: {mean_rms:.2f} μV\n')
 
+import pandas as pd
+
+# === Save filtered RMS of selected channels to csv ===
+filtered_rms_dict = {
+    'Channel': [f'Ch{ch}' for ch in channels_to_plot],
+    'RMS (µV)': [rms_per_ch[ch] for ch in channels_to_plot]
+}
+rms_df = pd.DataFrame(filtered_rms_dict)
+
+output_csv_path = os.path.splitext(dat_path)[0] + '_filtered_rms.csv'
+rms_df.to_csv(output_csv_path, index=False)
+print(f"\nFiltered RMS values saved to: {output_csv_path}")
+
 # === Plot a few channels ===
 plt.figure(figsize=(15, 10))
 time_axis = np.arange(filtered_data.shape[0]) / sampling_rate
-channels_to_plot = [2,3,4,5,6,7,8,9,10,11,12,13,14,15]  # change as needed
 
 for i, ch in enumerate(channels_to_plot):
     plt.plot(time_axis, filtered_data[:, ch] + i * 500, label=f"Ch {ch}")  # offset each channel vertically

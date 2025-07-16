@@ -1686,7 +1686,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
     stim_segm: how many frames to look at for the stim_avg
     threshold_value
     trialNo
-    trialDur: trial delay and stimulatio
+    trialDur: duration of stimulation
     frameRate
 
     Returns
@@ -1765,14 +1765,17 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         all_block_indices = []
         all_masks = []
         all_count = 0
+
         for block_idx, file_num in enumerate(file_group):
             activated_roi_count = 0
             block_stim_time = fileid_to_info[file_num]['trigger']
             block_len = fileid_to_info[file_num]['block_len']
-
-            start_frame = block_idx * block_len
-            end_frame = start_frame + block_len
-
+            if block_idx == 0:
+                start_frame = block_stim_time
+                end_frame = block_len
+            else:
+                start_frame = block_stim_time + (block_len * block_idx)
+                end_frame = block_len * (block_idx+1)
             for i, roi in enumerate(valid_rois):
                 F_block = F[i, start_frame:end_frame]
                 baseline = F_block[:block_stim_time]
@@ -1783,14 +1786,23 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                 trialDurInFrames = int(round(trialDur * frameRate))
                 stim_segments = []
                 for j in range(trialNo):
-                    seg_start = block_stim_time + (trialDurInFrames * j)
-                    stim_segment = F_block[seg_start: seg_start + stim_segm]
-                    stim_segments.append(stim_segment)
-
+                    print(block_stim_time, trialDurInFrames, block_idx, j, file_num)
+                    # j == 0 and block_idx == 0 kulon?
+                    if j == 0:
+                        seg_start = block_stim_time + block_idx * block_len
+                        seg_end = seg_start + trialDurInFrames
+                        stim_segment = F_block[seg_start: seg_start + stim_segm]  #trialdurinframes biztos nem kell?
+                        stim_segments.append(stim_segment)
+                    else:
+                        seg_start = block_stim_time + (trialDurInFrames * j) + (block_idx * block_len)
+                        seg_end = seg_start + trialDurInFrames*(j+1)
+                        stim_segment = F_block[seg_start: seg_start + stim_segm]
+                        stim_segments.append(stim_segment)
+                    print(seg_start, seg_end)
                 stim_avg = np.mean(stim_segments)
                 active = stim_avg > threshold
                 if active:
-                    activated_roi_count +=1
+                    activated_roi_count += 1
                     all_count += 1
                     all_activated_roi_indices.append(roi)
                     all_traces.append(F_block)
@@ -1805,7 +1817,6 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                     mask = np.zeros((Ly, Lx), dtype=np.uint8)
                     mask[roi_stat['ypix'], roi_stat['xpix']] = 1
                     all_masks.append(mask)
-
             print(f'Activated ROI in File MUnit_{file_num}: {activated_roi_count}')
             if all_masks:
                 out = os.path.join(tiff_dir, matched_file)

@@ -107,9 +107,10 @@ def cellreg_analysis_overlap(expDir, mat_file, list_of_file_nums, postfix):
         else:
             continue
         matched_file = matched_file + '/'
+        postfix = 'cellreg_files'
         found_file = os.path.join(expDir, matched_file)
         cell_reg_path = found_file
-        cell_reg_path_input = cell_reg_path + postfix
+        cell_reg_path_input = os.path.join(cell_reg_path,postfix)
         input_file = os.path.join(cell_reg_path_input, mat_file)
         print(input_file)
         with h5py.File(input_file, 'r') as file:

@@ -62,6 +62,7 @@ def bandpass_filtfilt(traces, fs, fmin, fmax, order=3):
     return filtfilt(b, a, traces, axis=0)
 filtered_data = bandpass_filtfilt(data, sampling_rate, filter_band[0], filter_band[1])
 
+
 # === RMS of filtered data ===
 rms_per_ch = np.sqrt(np.mean(filtered_data**2, axis =0))
 mean_rms = np.mean(rms_per_ch)
@@ -96,3 +97,4 @@ plt.title("Filtered Traces")
 plt.legend()
 plt.tight_layout()
 plt.show()
+

@@ -65,34 +65,90 @@ def rms_load(file_path):
     plt.show()
 
 # ======= rms boxplot =======
-def plot_single_boxplot(file_path, condition_label='Condition A'):
+def plot_single_boxplot_lfp(file_path_1,file_path_2,label='Condition A', label_2 = 'Condition A'):
     # Load Excel file (only one column of numbers)
-    df = pd.read_excel(file_path, header=None)
+    df = pd.read_excel(file_path_1, header=None)
     df.columns = ['Noise (μV RMS)']
-    df['Condition'] = condition_label
+    #df['Condition'] = condition_label
 
     plt.figure(figsize=(4, 6))
+    sns.color_palette('pastel')
     sns.boxplot(
-        x='Condition',
+        #x=' ',
         y='Noise (μV RMS)',
         data=df,
-        width=0.4,
-        showfliers=False,
-        color='skyblue'
+        width=0.12,
+        showfliers=True,
+        whis=(0, 100),
+        color='white'
     )
+    sns.stripplot(
+        #x=' ',
+        y='Noise (μV RMS)',
+        data=df,
+        color = 'orange',
+        size = 4,
+        jitter = 0.03,
+        alpha = 0.7
 
+    )
     # Add mean and median
     mean_val = df['Noise (μV RMS)'].mean()
     median_val = df['Noise (μV RMS)'].median()
-    plt.plot(0, mean_val, 'ko', markersize=8, zorder=10)
-    plt.plot([-0.2, 0.2], [median_val, median_val], color='red', linewidth=2, zorder=9)
+    plt.plot(0, mean_val, 'ko', markersize=5, zorder=10)
+    plt.plot([-0.06, 0.06], [median_val, median_val], color='red', linewidth=2, zorder=3)
+    plt.xlabel(label)
 
+    plt.ylim(1.2, 2.6)
     plt.ylabel("Noise (μV$_{RMS}$)", fontsize=12)
+    plt.title("lfp")
+    sns.despine()
+    plt.tight_layout()
+
+
+    # ==== ua ===
+
+    df = pd.read_excel(file_path_2, header=None)
+    df.columns = ['Noise (μV RMS)']
+    #df['Condition'] = condition_label
+
+    plt.figure(figsize=(4, 6))
+    sns.color_palette('pastel')
+    sns.boxplot(
+        #x=' ',
+        y='Noise (μV RMS)',
+        data=df,
+        width=0.12,
+        showfliers=True,
+        whis= (0,100),
+        color='white'
+    )
+    sns.stripplot(
+        #x=' ',
+        y='Noise (μV RMS)',
+        data=df,
+        color = 'blue',
+        size = 4,
+        jitter = 0.03,
+        alpha = 0.7
+
+    )
+    # Add mean and median
+    mean_val = df['Noise (μV RMS)'].mean()
+    median_val = df['Noise (μV RMS)'].median()
+    plt.plot(0, mean_val, 'ko', markersize=5, zorder=10)
+    plt.plot([-0.06, 0.06], [median_val, median_val], color='red', linewidth=2, zorder=3)
+    plt.xlabel(label_2)
+
+    plt.ylim(1.2, 2.6)
+    plt.ylabel("Noise (μV$_{RMS}$)", fontsize=12)
+    plt.title("ua")
     sns.despine()
     plt.tight_layout()
     plt.show()
 
 if __name__ == "__main__":
-    rms_load("")
-    plot_single_boxplot("", condition_label='In vitro \n (1–500 Hz)')
+    #rms_load("")
+    plot_single_boxplot_lfp("c:/Hyperstim/2025_07_01/collect/rms_lfp.xlsx", "c:/Hyperstim/2025_07_01/collect/rms_ua.xlsx",label ='In vitro \n (1-500 Hz)' , label_2='In vitro \n (500-5000 Hz)')
+
 

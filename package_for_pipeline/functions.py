@@ -1674,7 +1674,7 @@ def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums, frame_r
     #plt.show()
 
 
-def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_of_file_nums, threshold_value, frequency, nb_pulses, trial_delay, trialNo, frameRate):
+def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_of_file_nums, frameRate, frequency, nb_pulses, trial_delay, trialNo,threshold_value):
     '''
 
     Parameters
@@ -1687,7 +1687,6 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
     threshold_value
     trialNo
     trialDur: duration of stimulation
-    trial_delay: in seconds
     frameRate
 
     Returns
@@ -1705,8 +1704,6 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
     file_ids = []
     triggers = []
     frame_lens = []
-
-    pulse_interval_frames = int(round(frameRate / frequency))  # e.g. 30.97 / 100 = 0.3097 frames
 
     with open(fileId_path, 'r') as f_ids, open(trigger_path, 'r') as f_triggers, open(frameNo_path, 'r') as f_frames:
         for id_line, trig_line, frame_line in zip(f_ids, f_triggers, f_frames):
@@ -1733,11 +1730,6 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
     cellreg_dir = Path(os.path.join(base_dir, '/cellreg_files'))
     cellreg_dir.mkdir(exist_ok=True)
 
-    # calculations from given stimulation variables
-    stim_duration_f = int(round(nb_pulses / frequency * frameRate))
-    trial_delay_f = int(round(trial_delay * frameRate))
-    single_stim_period = stim_duration_f + trial_delay_f
-
     for group_idx, file_group in enumerate(list_of_file_nums):
         for block_idx in range(len(file_group)):
             file_num = file_group[block_idx]
@@ -1761,81 +1753,88 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         iscell = np.load(os.path.join(suite2p_dir, 'iscell.npy'), allow_pickle=True)
         stat = np.load(os.path.join(suite2p_dir, 'stat.npy'), allow_pickle=True)
         ops = np.load(os.path.join(suite2p_dir, 'ops.npy'), allow_pickle=True).item()
+
         Ly, Lx = ops['Ly'], ops['Lx']
         valid_rois = np.where(iscell[:, 0] == 1)[0]
 
-        # global block start frames
-        block_start_frames = []
-        for prev_file in file_group[:-1]:
-            prev_len = fileid_to_info[prev_file]['block_len']
-            block_start_frames.append(block_start_frames[-1] + prev_len)
-
         # containers
-        all_file_ids = []
-        all_roi_indices = []
+        all_activated_roi_indices = []
         all_traces = []
         all_y_coords, all_x_coords = [], []
         all_block_indices = []
         all_masks = []
-        active_count = 0
+        all_count = 0
+
+        # calculation from stimulation variables to frames
+        stimualtion_duration_f =int(round(nb_pulses / frequency * frameRate))
+        trial_delay_f = int(round(trialNo*frameRate))
+        single_trial_period = int(round(stimualtion_duration_f + trial_delay_f))
 
         for block_idx, file_num in enumerate(file_group):
             activated_roi_count = 0
-            start_frame = block_start_frames[block_idx]
+            block_stim_time = fileid_to_info[file_num]['trigger']
             block_len = fileid_to_info[file_num]['block_len']
-            local_trigger = fileid_to_info[file_num]['trigger']
-            global_trigger = start_frame + local_trigger
-
-            # stim time calc in full recording
-            stim_start_frames = []
-            for i in range(nb_pulses):
-                iter = global_trigger + i * single_stim_period
-                stim_start_frames.append(iter)
-
-            for roi in valid_rois:
-                baseline = F[roi, start_frame:global_trigger]
+            if block_idx == 0:
+                start_frame = block_stim_time
+                end_frame = block_len
+            else:
+                start_frame = block_stim_time + (block_len * block_idx)
+                end_frame = block_len * (block_idx+1)
+            for i, roi in enumerate(valid_rois):
+                F_block = F[i, start_frame:end_frame]
+                baseline = F_block[:block_stim_time]
                 baseline_avg = np.mean(baseline)
                 baseline_std = np.std(baseline)
                 threshold = baseline_avg + threshold_value * baseline_std
 
                 stim_segments = []
-                for stim_start in stim_start_frames:
-                    stim_end = stim_start + stim_duration_f
-                    stim_segment = F[roi, stim_start:stim_end]
-                    stim_segments.append(stim_segment)
-
+                for j in range(trialNo):
+                    print(block_idx, j, file_num)
+                    if j == 0:
+                        seg_start = block_stim_time + block_idx * block_len
+                        seg_end = seg_start + single_trial_period
+                        stim_segment = F_block[seg_start: seg_end]  #trialdurinframes biztos nem kell?
+                        stim_segments.append(stim_segment)
+                    else:
+                        seg_start = block_stim_time + (single_trial_period * j) + (block_idx * block_len)
+                        seg_end = seg_start + single_trial_period
+                        stim_segment = F_block[seg_start: seg_end]
+                        stim_segments.append(stim_segment)
+                    print(seg_start, seg_end)
                 stim_avg = np.mean(stim_segments)
-                if stim_avg > threshold: #active
-                    active_count += 1
-                    all_roi_indices.append(roi)
-                    all_traces.append(F[roi])
-                    all_file_ids.append(file_num)
+                active = stim_avg > threshold
+                if active:
+                    activated_roi_count += 1
+                    all_count += 1
+                    all_activated_roi_indices.append(roi)
+                    all_traces.append(F_block)
+                    all_block_indices.append(file_num)
 
-                    # centroid coords:
+                    #centroid coords:
                     roi_stat = stat[roi]
+                    #print(roi_stat)
                     all_x_coords.append(roi_stat['med'][1])
                     all_y_coords.append(roi_stat['med'][0])
 
                     mask = np.zeros((Ly, Lx), dtype=np.uint8)
                     mask[roi_stat['ypix'], roi_stat['xpix']] = 1
                     all_masks.append(mask)
-
-                print(f'Activated ROI in File MUnit_{file_num}: {active_count}')
-
+            print(f'Activated ROI in File MUnit_{file_num}: {activated_roi_count}')
             if all_masks:
                 out = os.path.join(tiff_dir, matched_file)
                 mask_stack = np.stack(all_masks, axis=0).astype(np.double)
                 mat_path = os.path.join(out, f'cellreg_input_{mesc_file_name}_{file_num}.mat')
                 savemat(mat_path, {'cells_map': mask_stack})
-
+        print(f'for {matched_file}: {all_count}')
         out_path = os.path.join(tiff_dir, matched_file)
         activation_df = pd.DataFrame({
-            'FileID': all_file_ids,
-            'ROI_Index': all_roi_indices
+            'FileID': all_block_indices,
+            'ROI_Index': all_activated_roi_indices
         })
+
         med_val_df = pd.DataFrame({
-            'FileID': all_file_ids,
-            'ROI_Index': all_roi_indices,
+            'FileID': all_block_indices,
+            'ROI_Index': all_activated_roi_indices,
             'Y_coord': all_y_coords,
             'X_coord': all_x_coords
             })
@@ -1846,6 +1845,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         med_val_df.to_csv(med_csv_path, index=False)
 
         print(f'Processed finished for {matched_file}')
+
 
 
 def collect_file_paths_for_blocks(tiff_dir, list_of_file_nums):

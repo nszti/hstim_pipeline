@@ -1770,44 +1770,63 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         trial_delay_f = int(round(trialNo*frameRate))
         single_trial_period = int(round(stimualtion_duration_f + trial_delay_f))
 
+        #cummulative start frames
+        block_start_frames = [0]
+        for prev_num in file_group[:]:
+            prev_len = fileid_to_info[prev_num]['block_len']
+            block_start_frames.append(block_start_frames[-1] + prev_len)
+        print(block_start_frames)
+        start_frame, end_frame = [], []
         for block_idx, file_num in enumerate(file_group):
-            activated_roi_count = 0
-            block_stim_time = fileid_to_info[file_num]['trigger']
+            trigger = fileid_to_info[file_num]['trigger']
             block_len = fileid_to_info[file_num]['block_len']
             if block_idx == 0:
-                start_frame = block_stim_time
-                end_frame = block_len
+                ind_start_frame = trigger
+                ind_end_frame = block_len
+                start_frame.append(ind_start_frame)
+                end_frame.append(ind_end_frame)
             else:
-                start_frame = block_stim_time + (block_len * block_idx)
-                end_frame = block_len * (block_idx+1)
+                ind_start_frame = trigger + block_start_frames[block_idx]
+                ind_end_frame = block_start_frames[block_idx + 1]
+                start_frame.append(ind_start_frame)
+                end_frame.append(ind_end_frame)
+
+        for block_idx, file_num in enumerate(file_group):
+            block_stim_time = fileid_to_info[file_num]['trigger']
+            block_len = fileid_to_info[file_num]['block_len']
+            print(block_stim_time)
             for i, roi in enumerate(valid_rois):
-                F_block = F[i, start_frame:end_frame]
-                baseline = F_block[:block_stim_time]
+                if block_idx == 0:
+                    baseline = F[i, :start_frame[block_idx]]
+                else:
+                    baseline = F[i, end_frame[-1]:start_frame[block_idx]]
+
                 baseline_avg = np.mean(baseline)
                 baseline_std = np.std(baseline)
                 threshold = baseline_avg + threshold_value * baseline_std
 
                 stim_segments = []
                 for j in range(trialNo):
-                    print(block_idx, j, file_num)
+                    #print(block_idx, i, j, file_num)
                     if j == 0:
                         seg_start = block_stim_time + block_idx * block_len
                         seg_end = seg_start + single_trial_period
-                        stim_segment = F_block[seg_start: seg_end]  #trialdurinframes biztos nem kell?
+                        stim_segment = F[i, seg_start: seg_end]
                         stim_segments.append(stim_segment)
+                        #print(len(stim_segment))
                     else:
                         seg_start = block_stim_time + (single_trial_period * j) + (block_idx * block_len)
                         seg_end = seg_start + single_trial_period
-                        stim_segment = F_block[seg_start: seg_end]
+                        stim_segment = F[i, seg_start: seg_end]
                         stim_segments.append(stim_segment)
-                    print(seg_start, seg_end)
+                        #print(len(stim_segment))
+                    #print(seg_start, seg_end)
                 stim_avg = np.mean(stim_segments)
                 active = stim_avg > threshold
                 if active:
-                    activated_roi_count += 1
+                    all_count += 1
                     all_count += 1
                     all_activated_roi_indices.append(roi)
-                    all_traces.append(F_block)
                     all_block_indices.append(file_num)
 
                     #centroid coords:
@@ -1819,7 +1838,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                     mask = np.zeros((Ly, Lx), dtype=np.uint8)
                     mask[roi_stat['ypix'], roi_stat['xpix']] = 1
                     all_masks.append(mask)
-            print(f'Activated ROI in File MUnit_{file_num}: {activated_roi_count}')
+            print(f'Activated ROI in File MUnit_{file_num}: {all_count}')
             if all_masks:
                 out = os.path.join(tiff_dir, matched_file)
                 mask_stack = np.stack(all_masks, axis=0).astype(np.double)

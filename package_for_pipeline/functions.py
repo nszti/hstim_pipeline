@@ -1767,7 +1767,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
 
         # calculation from stimulation variables to frames
         stimualtion_duration_f =int(round(nb_pulses / frequency * frameRate))
-        trial_delay_f = int(round(trialNo*frameRate))
+        trial_delay_f = int(round(trial_delay*frameRate))
         single_trial_period = int(round(stimualtion_duration_f + trial_delay_f))
 
         #cummulative start frames
@@ -1794,16 +1794,18 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         for block_idx, file_num in enumerate(file_group):
             block_stim_time = fileid_to_info[file_num]['trigger']
             block_len = fileid_to_info[file_num]['block_len']
-            print(block_stim_time)
+            #print(block_stim_time)
             for i, roi in enumerate(valid_rois):
                 if block_idx == 0:
                     baseline = F[i, :start_frame[block_idx]]
+                    print(len(baseline))
                 else:
                     baseline = F[i, end_frame[-1]:start_frame[block_idx]]
-
+                    print(len(baseline))
                 baseline_avg = np.mean(baseline)
                 baseline_std = np.std(baseline)
                 threshold = baseline_avg + threshold_value * baseline_std
+                print(baseline_avg, baseline_std)
 
                 stim_segments = []
                 for j in range(trialNo):
@@ -1823,8 +1825,8 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                     #print(seg_start, seg_end)
                 stim_avg = np.mean(stim_segments)
                 active = stim_avg > threshold
+                #print(stim_avg, threshold)
                 if active:
-                    all_count += 1
                     all_count += 1
                     all_activated_roi_indices.append(roi)
                     all_block_indices.append(file_num)

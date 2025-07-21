@@ -1674,7 +1674,7 @@ def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums, frame_r
     #plt.show()
 
 
-def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_of_file_nums, frameRate, frequency, nb_pulses, trial_delay, trialNo,threshold_value):
+def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_of_file_nums, frameRate, frequency, nb_pulses, trial_delay, trialNo, threshold_value):
     '''
 
     Parameters
@@ -1763,7 +1763,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         all_y_coords, all_x_coords = [], []
         all_block_indices = []
         all_masks = []
-        all_count = 0
+
 
         # calculation from stimulation variables to frames
         stimualtion_duration_f =int(round(nb_pulses / frequency * frameRate))
@@ -1776,6 +1776,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
             prev_len = fileid_to_info[prev_num]['block_len']
             block_start_frames.append(block_start_frames[-1] + prev_len)
         print(block_start_frames)
+        #print(block_start_frames)
         start_frame, end_frame = [], []
         for block_idx, file_num in enumerate(file_group):
             trigger = fileid_to_info[file_num]['trigger']
@@ -1792,20 +1793,20 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                 end_frame.append(ind_end_frame)
 
         for block_idx, file_num in enumerate(file_group):
+            all_count = 0
+            print(block_idx)
             block_stim_time = fileid_to_info[file_num]['trigger']
             block_len = fileid_to_info[file_num]['block_len']
-            #print(block_stim_time)
+            print(len(valid_rois))
             for i, roi in enumerate(valid_rois):
-                if block_idx == 0:
-                    baseline = F[i, :start_frame[block_idx]]
-                    print(len(baseline))
-                else:
-                    baseline = F[i, end_frame[-1]:start_frame[block_idx]]
-                    print(len(baseline))
+                #print(roi)
+                #baseline = F[i, end_frame[-1]:start_frame[block_idx]]
+                stim_time_global = block_start_frames[block_idx] + block_stim_time
+                baseline = F[i, block_start_frames[block_idx]:stim_time_global]
                 baseline_avg = np.mean(baseline)
                 baseline_std = np.std(baseline)
                 threshold = baseline_avg + threshold_value * baseline_std
-                print(baseline_avg, baseline_std)
+                #print(baseline_avg, baseline_std)
 
                 stim_segments = []
                 for j in range(trialNo):
@@ -1825,7 +1826,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                     #print(seg_start, seg_end)
                 stim_avg = np.mean(stim_segments)
                 active = stim_avg > threshold
-                #print(stim_avg, threshold)
+                #print(stim_avg, threshold, active)
                 if active:
                     all_count += 1
                     all_activated_roi_indices.append(roi)
@@ -1846,7 +1847,6 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                 mask_stack = np.stack(all_masks, axis=0).astype(np.double)
                 mat_path = os.path.join(out, f'cellreg_input_{mesc_file_name}_{file_num}.mat')
                 savemat(mat_path, {'cells_map': mask_stack})
-        print(f'for {matched_file}: {all_count}')
         out_path = os.path.join(tiff_dir, matched_file)
         activation_df = pd.DataFrame({
             'FileID': all_block_indices,
@@ -1860,9 +1860,9 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
             'X_coord': all_x_coords
             })
 
-        csv_path = os.path.join(out_path, f'activated_neurons_{mesc_file_name}_{matched_file}.csv')
+        csv_path = os.path.join(out_path, f'activated_neurons_{matched_file}.csv')
         activation_df.to_csv(csv_path, index=False)
-        med_csv_path = os.path.join(out_path, f'med_of_act_ns_{mesc_file_name}_{matched_file}.csv')
+        med_csv_path = os.path.join(out_path, f'med_of_act_ns_{matched_file}.csv')
         med_val_df.to_csv(med_csv_path, index=False)
 
         print(f'Processed finished for {matched_file}')

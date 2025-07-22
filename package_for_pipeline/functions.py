@@ -1677,7 +1677,7 @@ def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums, frame_r
 def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_of_file_nums, frameRate, nb_pulses, trial_delay, trialNo, threshold_value):
     '''
 
-    Parameters
+    Parameters : frameRate: 30.97, frameRate: 100, nb_pulses: 100, trial_delay: 3, trialNo: 10, threshold_value: 3
     ----------
     exp_dir
     mesc_file_name
@@ -1811,6 +1811,17 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                 baseline_avg = np.mean(baseline)
                 baseline_std = np.std(baseline)
                 threshold = baseline_avg + threshold_value * baseline_std
+
+                plt.figure(figsize=(8, 4))
+                plt.plot(baseline, color='gray', alpha=0.7, label='Baseline Trace')
+                plt.axhline(baseline_avg, color='blue', linestyle='--', label='Baseline Avg')
+                plt.axhline(threshold, color='red', linestyle='--', label=f'Threshold ({threshold_value}σ)')
+                plt.title(f'ROI {roi} - Baseline and Threshold')
+                plt.xlabel('Frame')
+                plt.ylabel('Fluorescence')
+                plt.legend()
+                plt.tight_layout()
+                plt.show()
 
                 #print(baseline_avg, baseline_std)
 

@@ -1674,7 +1674,7 @@ def plot_across_experiments(root_directory, tiff_dir, list_of_file_nums, frame_r
     #plt.show()
 
 
-def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_of_file_nums, frameRate, frequency, nb_pulses, trial_delay, trialNo, threshold_value):
+def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_of_file_nums, frameRate, nb_pulses, trial_delay, trialNo, threshold_value):
     '''
 
     Parameters
@@ -1725,6 +1725,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         file_id: {'trigger': trig, 'block_len': frame_len}
         for file_id, trig, frame_len in zip(file_ids, triggers, frame_lens)
     }
+
     base_dir = Path(tiff_dir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
     cellreg_dir = Path(os.path.join(base_dir, '/cellreg_files'))
@@ -1753,6 +1754,8 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         iscell = np.load(os.path.join(suite2p_dir, 'iscell.npy'), allow_pickle=True)
         stat = np.load(os.path.join(suite2p_dir, 'stat.npy'), allow_pickle=True)
         ops = np.load(os.path.join(suite2p_dir, 'ops.npy'), allow_pickle=True).item()
+        frequencies = np.load(os.path.join(tiff_dir, 'frequencies.npy'), allow_pickle=True)
+        fileid_to_freq = dict(zip(file_ids,frequencies))
 
         Ly, Lx = ops['Ly'], ops['Lx']
         valid_rois = np.where(iscell[:, 0] == 1)[0]
@@ -1764,21 +1767,16 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         all_block_indices = []
         all_masks = []
 
-
-        # calculation from stimulation variables to frames
-        stimualtion_duration_f =int(round(nb_pulses / frequency * frameRate))
-        trial_delay_f = int(round(trial_delay*frameRate))
-        single_trial_period = int(round(stimualtion_duration_f + trial_delay_f))
-
         #cummulative start frames
         block_start_frames = [0]
         for prev_num in file_group[:]:
             prev_len = fileid_to_info[prev_num]['block_len']
             block_start_frames.append(block_start_frames[-1] + prev_len)
-        print(block_start_frames)
+        #print(block_start_frames)
         #print(block_start_frames)
         start_frame, end_frame = [], []
         for block_idx, file_num in enumerate(file_group):
+            #---
             trigger = fileid_to_info[file_num]['trigger']
             block_len = fileid_to_info[file_num]['block_len']
             if block_idx == 0:
@@ -1793,23 +1791,31 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                 end_frame.append(ind_end_frame)
 
         for block_idx, file_num in enumerate(file_group):
+            # calculation from stimulation variables to frames
+            frequency = fileid_to_freq[file_num]
+            print(block_idx, frequency)
+            stimualtion_duration_f = int(round(nb_pulses / frequency * frameRate))
+            trial_delay_f = int(round(trial_delay * frameRate))
+            single_trial_period = int(round(stimualtion_duration_f + trial_delay_f))
+
             all_count = 0
-            print(block_idx)
+            #print(block_idx)
             block_stim_time = fileid_to_info[file_num]['trigger']
             block_len = fileid_to_info[file_num]['block_len']
-            print(len(valid_rois))
             for i, roi in enumerate(valid_rois):
-                #print(roi)
+
                 #baseline = F[i, end_frame[-1]:start_frame[block_idx]]
                 stim_time_global = block_start_frames[block_idx] + block_stim_time
+                #print(block_start_frames[block_idx], stim_time_global)
                 baseline = F[i, block_start_frames[block_idx]:stim_time_global]
                 baseline_avg = np.mean(baseline)
                 baseline_std = np.std(baseline)
                 threshold = baseline_avg + threshold_value * baseline_std
+
                 #print(baseline_avg, baseline_std)
 
                 stim_segments = []
-                for j in range(trialNo):
+                for j in range(1):
                     #print(block_idx, i, j, file_num)
                     if j == 0:
                         seg_start = block_stim_time + block_idx * block_len
@@ -1827,6 +1833,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                 stim_avg = np.mean(stim_segments)
                 active = stim_avg > threshold
                 #print(stim_avg, threshold, active)
+                print(roi,active)
                 if active:
                     all_count += 1
                     all_activated_roi_indices.append(roi)

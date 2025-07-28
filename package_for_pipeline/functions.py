@@ -11,7 +11,7 @@ import ast
 from pprint import pprint
 
 from sklearn.metrics import euclidean_distances
-from suite2p.gui.io import load_files
+#from suite2p.gui.io import load_files
 import subprocess
 
 #stim_dur
@@ -331,8 +331,10 @@ def spontaneous_baseline(tiff_dir, list_of_file_nums, list_of_roi_nums, frame_ra
             dir_path = os.path.join(tiff_dir, dir)
 
             baseline_frames = max(baseline_frame, int(10 / 1000 * frame_rate))  # ~10ms
+            valid_rois = np.where(iscell[:, 0] == 1)[0]
 
             all_norm_traces = []
+
 
             for roi_trace in F:
                 baseline_value = np.mean(roi_trace[:baseline_frames])
@@ -370,6 +372,60 @@ def spontaneous_baseline(tiff_dir, list_of_file_nums, list_of_roi_nums, frame_ra
                     #plt.show()
                 else:
                     print(f"ROI {roi_index} is out of bounds. Max index: {len(all_norm_traces) - 1}")
+
+def F_extract(tiff_dir, list_of_file_nums, list_of_roi_nums, frame_rate=30.97, baseline_frame=3, plot_start_frame=0, plot_end_frame=None):
+    base_dir = Path(tiff_dir)
+    filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+    print(filenames)
+    for numbers_to_merge in list_of_file_nums:
+        # print(numbers_to_merge)
+        suffix = '_'.join(map(str, numbers_to_merge))
+        for dir in filenames:
+            print(dir)
+            num_to_search_split = dir.split('MUnit_')
+            if len(num_to_search_split) > 1:
+                file_suffix = num_to_search_split[1].rsplit('.', 1)[0]
+                if file_suffix == suffix:
+                    matched_file = dir
+                    print(f'Found file: {matched_file}')
+                    # print(matched_file)
+                    break
+        else:
+            continue
+
+        if matched_file:
+
+            dir_path = os.path.join(tiff_dir, dir)
+            s2p_path = os.path.join(dir_path, 'suite2p', 'plane0')
+
+            F_path = tiff_dir + dir + '/suite2p/plane0/F.npy'
+            F = np.load(F_path, allow_pickle=True)  # shape: (n_rois, n_timepoints)
+            iscell_path = tiff_dir + dir + '/suite2p/plane0/iscell.npy'
+            iscell = np.load(iscell_path, allow_pickle=True)
+            valid_rois = np.where(iscell[:, 0] == 1)[0]
+
+
+            for roi_index in list_of_roi_nums:
+                if roi_index in valid_rois:
+
+                    raw_trace = F[roi_index]
+                    print(len(raw_trace))
+                    raw_out_path = os.path.join(s2p_path, f'F_{roi_index}_raw.npy')
+                    np.save(raw_out_path, raw_trace)
+                    print(f"Raw trace saved to: {raw_out_path}")
+
+
+                    trace = raw_trace[plot_start_frame:]
+                    if plot_end_frame is not None:
+                        trace = trace[:plot_end_frame - plot_start_frame]
+                    plot_path = os.path.join(dir_path, f'roi_{roi_index}.svg')
+                    plt.figure()
+                    plt.plot(trace)
+                    plt.xlabel('Time (frames)')
+                    plt.ylim(-0.3, 1.8)
+                    plt.tight_layout()
+                    plt.savefig(plot_path)
+                    plt.show()
 
 def baseline_val(root_directory,tiff_dir, list_of_file_nums ):
     '''

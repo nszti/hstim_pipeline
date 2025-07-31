@@ -701,7 +701,7 @@ def timecourse_vals(tiff_dir, list_of_file_nums, num_trials):
     '''
     base_dir = Path(tiff_dir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
-    frame_rate = 30.97
+    frame_rate = 31
 
     for numbers_to_merge in list_of_file_nums:
         suffix = '_'.join(map(str, numbers_to_merge))
@@ -749,11 +749,11 @@ def timecourse_vals(tiff_dir, list_of_file_nums, num_trials):
             end_f = []
 
             for s in stimulation_duration:
-                frameNo = math.floor(s * frame_rate)
+                frameNo = s * frame_rate
                 stim_dur_f.append(frameNo)
                 print(stim_dur_f)
                 end_f.append(frameNo + rest_dur_f)
-                print(end_f)
+                #print(end_f)
 
             blocks_start = []
             for i in range(len(time_block)):
@@ -775,12 +775,13 @@ def timecourse_vals(tiff_dir, list_of_file_nums, num_trials):
                     baseline_avg = np.mean(baseline_dur)
                     baselineAvgs[iTrace, iBlock] = baseline_avg
                     baseline_std = np.std(baseline_dur)
-                    threshold = baseline_std * 3 + baseline_avg
+                    threshold = baseline_std * 3.5 + baseline_avg
+                    roi_trace = []
                     for iTrial in range(num_trials):
                         trial_start = blocks_start[iBlock] + (int(start_timepoints[iBlock]) + iTrial * int(end_f[iBlock]))
                         trial_end = int(trial_start) + stim_dur_f[iBlock]
-                        stim_trace_plot = F[iTrace, int(trial_start)-31:int(trial_end)]
-                        stim_trace = F[iTrace, int(trial_start):int(trial_end)]
+                        stim_trace_plot = F[iTrace, int(trial_start)-31:int(trial_end)+rest_dur_f-2]
+                        stim_trace = F[iTrace, int(trial_start):int(trial_end-5)]
                         avg_stim = np.mean(stim_trace)
                         stimAvgs[iTrace][iBlock][iTrial] = avg_stim
 
@@ -805,10 +806,11 @@ def timecourse_vals(tiff_dir, list_of_file_nums, num_trials):
                             rest_above_thr = False
                         restResults[iTrace, iBlock, iTrial] = rest_above_thr
 
-                        full_trial = np.concatenate((stim_trace_plot, rest_trace))
+                        full_trial = stim_trace_plot
+                        roi_trace.append(full_trial)
+
                         trial_length = len(full_trial)
                         full_trial_traces[iTrace, iBlock, iTrial, :trial_length] = full_trial[:trial_length]
-
 
             numRows = math.ceil(math.sqrt(len(F)))
             fig, axs = plt.subplots(numRows, numRows, squeeze=False)
@@ -823,10 +825,25 @@ def timecourse_vals(tiff_dir, list_of_file_nums, num_trials):
                         #axs[i][j].set_title('ROI' + str(roi_num[i * numRows + j]))
                     else:
                         print()
-            #plt.show()
             np.savez(tiff_dir + dir + '/results.npz', stimResults=stimResults, restResults=restResults,
                      stimAvgs=stimAvgs, restAvgs=restAvgs, baselineAvgs=baselineAvgs,full_trial_traces=full_trial_traces)
             print(f"results.npz saved to {tiff_dir + dir + '/' + 'results.npz'}")
+
+            activated_mask = np.any(stimResults ==1, axis = (1,2)) # shape: (nROIs,)
+            activated_indices = np.where(activated_mask[0])  #list of ROI idx
+
+            stimResults_activated = stimResults[activated_indices]
+            restResults_activated = restResults[activated_indices]
+            stimAvgs_activated = stimAvgs[activated_indices]
+            restAvgs_acitvated = restAvgs[activated_indices]
+            baselineAvgs_activated = baselineAvgs[activated_indices]
+            full_trial_traces_activated = full_trial_traces[activated_indices]
+            roi_num_activated = roi_num[activated_indices]
+
+            np.savez(tiff_dir+dir+ '/results_activated.npz', stimResults_activated = stimResults_activated, restResults_activated = restResults_activated,
+                     stimAvgs_activated = stimAvgs_activated, restAvgs_acitvated = restAvgs_acitvated, baselineAvgs_activated = baselineAvgs_activated,
+                     full_trial_traces_activated = full_trial_traces_activated, roi_num_activated = roi_num_activated)
+
 
 
 #data_analysis
@@ -910,6 +927,31 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             activeNeuronsPerBlockFraction = np.empty(block_No)
             silentNeuronsPerBlockFraction = np.empty(block_No)
 
+            avg_traces_per_roi_block = np.mean(full_trial_traces, axis=2)
+
+            n_Frames = avg_traces_per_roi_block.shape[2]
+            time_axis = np.arange(n_Frames)
+            for iBlock in range(block_No):
+                active_rois = np.where(activatedNeurons[:, iBlock] == 1)[0]
+                n_active = len(active_rois)
+                print(n_active)
+                if n_active == 0:
+                    continue
+                cols = 4
+                rows = math.ceil(n_active / cols)
+                fig, axs = plt.subplots(rows, cols, figsize=(cols * 4, rows * 3), squeeze=False)
+
+                for i, roi_idx in enumerate(active_rois):
+                    row_idx = i // cols
+                    col_idx = i % cols
+                    ax = axs[row_idx, col_idx]
+                    trace = avg_traces_per_roi_block[roi_idx, iBlock, :]
+                    ax.plot(time_axis, trace)
+                    ax.set_title(roi_idx)
+                #plt.savefig(output_dir + f'/roi_for_{iBlock + 1}.svg')
+                #plt.show()
+                plt.close()
+
             for iBlock in range(block_No):
                 activeNeuronsPerBlock[iBlock] = sum(activatedNeurons[:, iBlock])
                 activeNeuronsPerBlockFraction[iBlock] = activeNeuronsPerBlock[iBlock] / ROI_No
@@ -937,41 +979,6 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
                 for iTrial in range(trial_No):
                     activeNeuronsPerBlockPerTrial[iTrial][iBlock] = sum(stimResults[:, iBlock, iTrial])
                     activeNeuronsPerBlockPerTrialFraction[iTrial][iBlock] = sum(stimResults[:, iBlock, iTrial]) / ROI_No
-            avg_traces_per_roi_block = np.mean(full_trial_traces, axis=2)
-
-            n_Frames = avg_traces_per_roi_block.shape[2]
-            time_axis = np.arange(n_Frames)
-
-            '''for roi_idx in range(ROI_No):
-                if np.any(activatedNeurons[roi_idx, :] == 1):  # only plot if ROI is active in at least one block
-                    plt.figure(figsize=(10, 5))
-                    for iBlock in range(block_No):
-                        if activatedNeurons[roi_idx, iBlock] == 1:
-                            trace = avg_traces_per_roi_block[roi_idx, iBlock, :]
-                            plt.plot(time_axis, trace, label=f'Block {iBlock + 1}')
-
-                    plt.show()'''
-            for iBlock in range(block_No):
-                active_rois = np.where(activatedNeurons[:, iBlock] == 1)[0]
-                n_active = len(active_rois)
-                if n_active == 0:
-                    continue
-                cols = 4
-                rows = math.ceil(n_active / cols)
-                fig, axs = plt.subplots(rows, cols, figsize=(cols * 4, rows * 3), squeeze=False)
-
-                for i, roi_idx in enumerate(active_rois):
-                    row_idx = i // cols
-                    col_idx = i % cols
-                    ax = axs[row_idx, col_idx]
-                    trace = avg_traces_per_roi_block[roi_idx, iBlock, :]
-                    ax.plot(time_axis, trace)
-                plt.save(fig, output_dir + f'/09_17_amp_fig1_{iBlock + 1}.svg')
-                plt.close(fig)
-
-
-
-
 
 
                     # plot the number and fraction of neurons activated during trials of a block
@@ -1041,12 +1048,15 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             # plot calcium traces during stimulation
             tracesPerBlock = np.empty([ROI_No, 217])
             avgTracePerBlock = np.empty([block_No, trial_No, 217])
+            avgTracePerTrial = np.empty([ROI_No, block_No,217])
             for iBlock in range(block_No):
                 for iTrial in range(trial_No):
                     tracesPerBlock = full_trial_traces[:, iBlock, iTrial, :]
                     avgTracePerBlock[iBlock, iTrial, :] = np.mean(tracesPerBlock, axis=0)  #
+                #avgTracePerTrial[:,iBlock,:, :] = np.mean(full_trial_traces, axis = 2)
 
-            plot_dur = 7 * 31
+
+            plot_dur = (5 * 31)-2
             ymin = -0.01
             ymax = 0.35
 
@@ -1057,7 +1067,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
                     axs[0, iBlock].plot(avgTracePerBlock[iBlock, iTrial, 0:plot_dur])
                     axs[0, iBlock].set_title(legend[iBlock])
                     axs[0, iBlock].set_ylim([ymin, ymax])
-                    axs[0, iBlock].legend(trialLabels)
+                    #axs[0, iBlock].legend(trialLabels)
                     axs[1, iTrial].plot(avgTracePerBlock[iBlock, iTrial, 0:plot_dur])
                     axs[1, iTrial].set_title(trialLabels[iTrial])
                     axs[1, iTrial].set_ylim([ymin, ymax])
@@ -1069,10 +1079,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             axs[0, 0].set_ylabel('Mean dF/F0')
             axs[1, 0].set_ylabel('Mean dF/F0')
             axs[2,0].set_ylabel('Mean dF/F0')
-            axs[2,0].legend()
-
-
-
+            #axs[2,0].legend()
 
             avg_over_trials = np.mean(avgTracePerBlock[iBlock, :, :], axis=0)
             axs[2, 0].plot(avg_over_trials[0:plot_dur], label=legend[iBlock])  # Overlaid in first column of third row
@@ -2161,24 +2168,23 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                         stim_segments.append(stim_segment)
                         #print(len(stim_segment),threshold, stim_segment_mean)
 
-
                     #print(seg_start, seg_end)
-                #stim_avg = np.mean(stim_segments)
-                #active = stim_avg > threshold
-                #print(stim_avg, threshold, active)
+                    stim_avg = np.mean(stim_segments)
+                    #active = stim_avg > threshold
+                    #print(stim_avg, threshold, active)
                     #print(trial_active)
                     if any(trial_active):
                         active = True
-                '''plt.figure(figsize=(8, 4))
-                plt.plot(F[i,:], color='gray', alpha=0.7, label='Baseline Trace')
-                plt.axhline(baseline_avg, color='blue', linestyle='--', label='Baseline Avg')
-                plt.axhline(threshold, color='red', linestyle='--', label=f'Threshold ({threshold_value})')
-                plt.title(f'ROI {roi} - Baseline and Threshold')
-                plt.xlabel('Frame')
-                plt.ylabel('Fluorescence')
-                plt.legend()
-                plt.tight_layout()
-                plt.show()'''
+                    '''plt.figure(figsize=(8, 4))
+                    plt.plot(F[i,:], color='gray', alpha=0.7, label='Baseline Trace')
+                    plt.axhline(baseline_avg, color='blue', linestyle='--', label='Baseline Avg')
+                    plt.axhline(threshold, color='red', linestyle='--', label=f'Threshold ({threshold_value})')
+                    plt.title(f'ROI {roi} - Baseline and Threshold')
+                    plt.xlabel('Frame')
+                    plt.ylabel('Fluorescence')
+                    plt.legend()
+                    plt.tight_layout()
+                    plt.show()'''
                 #print(roi,active)
                 if active:
                     all_count += 1
@@ -2198,6 +2204,10 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                     mask[roi_stat['ypix'], roi_stat['xpix']] = 1
 
                     all_masks.append(mask)
+
+                else:
+                    print(roi)
+            print(len(all_masks))
             print(f'Activated ROI in File MUnit_{file_num}: {all_count}')
 
             # --plot fig for FOV per block--

@@ -143,10 +143,6 @@ def electROI_val(tiff_dir,list_of_file_nums):
                     electrodeROI.append(roi)
                 print(f"Used electrode ROI for {dir}: {electrodeROI}")
                 np.save(dir_path / 'electrodeROI.npy', electrodeROI)
-from pathlib import Path
-import numpy as np
-import os
-
 def save_roi_numbers_only(tiff_dir, list_of_file_nums):
     """
     Loads merged iscell.npy files, extracts ROI numbers for cells & saves them to ROI_numbers.npy for each suite2p folder

@@ -406,10 +406,9 @@ def F_extract(tiff_dir, list_of_file_nums, list_of_roi_nums, frame_rate=30.97, b
             iscell = np.load(iscell_path, allow_pickle=True)
             valid_rois = np.where(iscell[:, 0] == 1)[0]
 
+            filtered_rois = [roi for roi in list_of_roi_nums if roi in valid_rois]
 
-            for roi_index in list_of_roi_nums:
-                if roi_index in valid_rois:
-
+            for roi_index in filtered_rois:
                     raw_trace = F[roi_index]
                     print(len(raw_trace))
                     raw_out_path = os.path.join(s2p_path, f'F_{roi_index}_raw.npy')
@@ -1084,9 +1083,155 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             '''
             plt.show()
 
+def plot_stim_traces_2(expDir, mesc_file_name, tiff_dir, list_of_file_nums, frameRate, nb_pulses, trial_delay, trialNo, threshold_value):
+    base_dir = Path(expDir)
+    filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+    for numbers_to_merge in list_of_file_nums:
+        suffix = '_'.join(map(str, numbers_to_merge))
+        for dir in filenames:
+            num_to_search_split = dir.split('MUnit_')
+            if len(num_to_search_split) > 1:
+                file_suffix = num_to_search_split[1].rsplit('.', 1)[0]
+                if file_suffix == suffix:
+                    matched_file = dir
+                    print(matched_file)
+                    break
+        else:
+            continue
+
+        if matched_file:
+            print(f"\nAnalyzing directory: {dir}")
+            # Load required data
+            F_path = expDir + dir + '/suite2p/plane0/F0.npy'
+            iscelll_path = expDir + dir + '/suite2p/plane0/iscell.npy'
+            stim_start_times_path = expDir + dir + '/stimTimes.npy'
+            stat_path = expDir + dir + '/suite2p/plane0/stat.npy'
+            ops_path = expDir + dir + '/suite2p/plane0/ops.npy'
+            print(f"Loading data from: {F_path}")
+            print(f"Loading stim times from: {stim_start_times_path}")
+
+            F = np.load(F_path, allow_pickle=True)
+            iscell = np.load(iscelll_path, allow_pickle=True)
+            stim_start_times = np.load(stim_start_times_path, allow_pickle=True)
+            stat = np.load(stat_path, allow_pickle=True)
+            ops = np.load(ops_path, allow_pickle=True).item()
+
+            fileId_path = os.path.join(expDir, 'fileId.txt')
+            trigger_path = os.path.join(expDir, 'trigger.txt')
+            frameNo_path = os.path.join(expDir, 'frameNo.txt')
+
+            file_ids = []
+            triggers = []
+            frame_lens = []
+
+            with open(fileId_path, 'r') as f_ids, open(trigger_path, 'r') as f_triggers, open(frameNo_path,
+                                                                                              'r') as f_frames:
+                for id_line, trig_line, frame_line in zip(f_ids, f_triggers, f_frames):
+                    trig_line = trig_line.strip()
+                    frame_line = frame_line.strip()
+                    if trig_line.lower() == 'none' or trig_line == '' or frame_line == '':
+                        # print(f" Skipping invalid line: trigger={trig_line}, frame={frame_line}")
+                        continue
+                    unit_id = int(id_line.strip().replace('MUnit_', ''))
+                    trigger_val = int(trig_line)
+                    frame_len = int(frame_line)
+
+                    file_ids.append(unit_id)
+                    triggers.append(trigger_val)
+                    frame_lens.append(frame_len)
+
+            # unit_number --> (trigger, block_len)
+            fileid_to_info = {
+                file_id: {'trigger': trig, 'block_len': frame_len}
+                for file_id, trig, frame_len in zip(file_ids, triggers, frame_lens)
+            }
+
+        #-- cellreg masks per amplitude--
+        #--------CALCULATIONS--------
+
+            # Extract the ROI indexes for cells
+            cell_indices = np.where(iscell[:, 0] == 1)[0]  # Get indices of valid ROIs
+            print(f'cells{cell_indices}')
+            num_cells = len(cell_indices)
+            for group_idx, file_group in enumerate(list_of_file_nums):
+                for block_idx, file_num in enumerate(file_group):
+                    block_len = fileid_to_info[file_num]['block_len']
+                    trigger = fileid_to_info[file_num]['trigger']
+                    frequency = fileid_to_freq[file_num]
+
+                    print(f"[Block {block_idx}] File: MUnit_{file_num}, Frequency: {frequency}")
+
+                    stim_duration_f = int(round(nb_pulses / frequency * frameRate))
+                    trial_delay_f = int(round(trial_delay * frameRate))
+                    single_trial_period = stim_duration_f + trial_delay_f
+
+                    block_stim_time = trigger
+                    block_start_offset = block_start_frames[block_idx]
+
+                    Ly, Lx = ops['Ly'], ops['Lx']
+                    active_rois = []
+                    masks = []
+                    y_coords, x_coords = [], []
+
+                    for roi in valid_rois:
+                        stim_segments = []
+                        stim_time_global = block_start_offset + block_stim_time
+                        baseline = F[roi, block_start_offset:stim_time_global]
+                        baseline_avg = np.mean(baseline)
+                        baseline_std = np.std(baseline)
+                        threshold = baseline_avg + threshold_value * baseline_std
+
+                        for j in range(trialNo):
+                            seg_start = stim_time_global + j * single_trial_period
+                            seg_end = seg_start + single_trial_period
+                            stim_segment = F[roi, seg_start:seg_end]
+                            stim_segments.append(stim_segment)
+
+                        stim_avg = np.mean(stim_segments)
+
+                        if stim_avg > threshold:
+                            active_rois.append(roi)
+                            roi_stat = stat[roi]
+
+                            mask = np.zeros((Ly, Lx), dtype=np.uint8)
+                            mask[roi_stat['ypix'], roi_stat['xpix']] = 1
+                            masks.append(mask)
+
+                            y_coords.append(roi_stat['med'][0])
+                            x_coords.append(roi_stat['med'][1])
+
+                    # Save results for this block
+                    if masks:
+                        matched_file = f"MUnit_{'_'.join(map(str, file_group))}"
+                        out_dir = os.path.join(tiff_dir, matched_file)
+                        os.makedirs(out_dir, exist_ok=True)
+
+                        mask_stack = np.stack(masks, axis=0).astype(np.double)
+                        mat_path = os.path.join(out_dir, f'cellreg_input_{mesc_file_name}_{file_num}.mat')
+                        savemat(mat_path, {'cells_map': mask_stack})
+
+                        activation_df = pd.DataFrame({
+                            'FileID': [file_num] * len(active_rois),
+                            'ROI_Index': active_rois
+                        })
+                        activation_df.to_csv(os.path.join(out_dir, f'activated_neurons_{file_num}.csv'), index=False)
+
+                        med_val_df = pd.DataFrame({
+                            'FileID': [file_num] * len(active_rois),
+                            'ROI_Index': active_rois,
+                            'Y_coord': y_coords,
+                            'X_coord': x_coords
+                        })
+                        med_val_df.to_csv(os.path.join(out_dir, f'med_of_act_ns_{file_num}.csv'), index=False)
+
+                        print(f"Saved {len(active_rois)} activated ROIs for MUnit_{file_num} to {out_dir}")
+                    else:
+                        print(f"No activated ROIs found for MUnit_{file_num}")
+
 
 def plot_stim_traces(expDir, frame_rate, num_repeats, num_stims_per_repeat, list_of_file_nums, start_btw_stim, trial_delay, roi_idx, stim_dur=200, threshold_value = 3):
     '''
+
 
     Parameters
     ----------
@@ -1972,6 +2117,43 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         activation_df.to_csv(csv_path, index=False)
         med_csv_path = os.path.join(out_path, f'med_of_act_ns_{matched_file}.csv')
         med_val_df.to_csv(med_csv_path, index=False)
+
+        # fig for fov
+        from matplotlib.patches import Polygon
+        from matplotlib.collections import PatchCollection
+
+        fig, ax = plt.subplots(figsize=(10, 10))
+        ax.set_title(f'Activated ROIs - {matched_file}')
+        #ax.set_xlim(0, Lx)
+        #ax.set_ylim(Ly, 0)  # y-axis inverted for image coordinates
+        ax.set_aspect('equal')
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+
+        #act ROI as a vector polygon
+        for roi_idx in all_activated_roi_indices:
+            roi_stat = stat[roi_idx]
+            xpix = roi_stat['xpix']
+            ypix = roi_stat['ypix']
+            #if len(xpix) < 3:
+                #continue  # Skip invalid polygons
+
+            polygon_coords = np.column_stack((xpix, ypix))
+            polygon = Polygon(polygon_coords, closed=True, edgecolor='black', facecolor='none', linewidth=1)
+            ax.add_patch(polygon)
+            '''# label roi ?
+            ax.text(roi_stat['med'][1], roi_stat['med'][0], str(roi_idx),
+                    fontsize=6, color='red', ha='center', va='center')'''
+
+        plot_path = os.path.join(out_path, f'activated_rois_{matched_file}.svg')
+        plt.tight_layout()
+        plt.savefig(plot_path, format='svg')
+        plt.close(fig)
+
+        print(f'ROI figure saved at {plot_path}')
+
+
+
 
         print(f'Processed finished for {matched_file}')
 

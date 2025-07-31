@@ -818,7 +818,8 @@ def timecourse_vals(tiff_dir, list_of_file_nums, num_trials):
                     #print(j)
                     if i * numRows + j < len(F):
                         axs[i][j].imshow(stimResults[i * numRows + j, :, :])
-                        axs[i][j].set_title('ROI' + str(roi_num[i * numRows + j]))
+                        #print(str(roi_num[i+1 * numRows + j]))
+                        #axs[i][j].set_title('ROI' + str(roi_num[i * numRows + j]))
                     else:
                         print()
             #plt.show()
@@ -851,11 +852,11 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
         if matched_file:
             output_dir = tiff_dir + matched_file
             container = np.load(tiff_dir + matched_file + '/results.npz', allow_pickle=True)
-            distances = np.load(tiff_dir +  matched_file + '/suite2p/plane0/distances.npy', allow_pickle=True)
+            #distances = np.load(tiff_dir +  matched_file + '/suite2p/plane0/distances.npy', allow_pickle=True)
             ROI_IDs = np.load(tiff_dir + matched_file + '/suite2p/plane0/ROI_numbers.npy', allow_pickle=True)
             #electrode_ROI = np.load(tiff_dir +  matched_file + '/electrodeROI.npy', allow_pickle=True)
 
-            distanceFromElectrode = distances[:, 2]
+            #distanceFromElectrode = distances[:, 2]
             stimResults = container["stimResults"]
             restResults = container["restResults"]
             stimAvgs = container["stimAvgs"]
@@ -882,7 +883,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             trial_No = stimResults.shape[2]
 
             if stim_type == 'amp':
-                legend = ['1', '2', '5', '10', '20','30','40']
+                legend = ['10', '20','30','40']
             elif stim_type == 'freq':
                 legend = ['50', '100', '200']
             elif stim_type == 'pulse_dur':
@@ -949,7 +950,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             avgCA = np.empty([block_No, trial_No])
             avgCAperBlock = np.empty([block_No])
             for iBlock in range(block_No):
-                if stim_type == 'freq' and iBlock == 0:
+                if stim_type == stim_type and iBlock == 0:
                     for iTrial in range(trial_No):
                         avgCA[iBlock][iTrial] = np.mean(stimAvgs[:, iBlock, iTrial])
                     avgCAperBlock[iBlock] = np.mean(avgCA[iBlock, :3])
@@ -1010,7 +1011,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             ymax = 0.35
 
             #NB! modify nclos value for number of sublpots for stimulations
-            fig3, axs = plt.subplots(2, 10, figsize = (12,8))
+            fig3, axs = plt.subplots(3, 10, figsize = (12,8))
             for iBlock in range(block_No):
                 for iTrial in range(trial_No):
                     axs[0, iBlock].plot(avgTracePerBlock[iBlock, iTrial, 0:plot_dur])
@@ -1021,8 +1022,17 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
                     axs[1, iTrial].set_title(trialLabels[iTrial])
                     axs[1, iTrial].set_ylim([ymin, ymax])
                     axs[1, iTrial].legend(legend)
+
+                avg_over_trials = np.mean(avgTracePerBlock[iBlock,:,:], axis=0)
+                axs[2,0].plot(avg_over_trials[0:plot_dur],label=legend[iBlock]) #
+
             axs[0, 0].set_ylabel('Mean dF/F0')
             axs[1, 0].set_ylabel('Mean dF/F0')
+            axs[2,0].set_ylabel('Mean dF/F0')
+            axs[2,0].legend()
+
+
+
 
             '''
             # distance calculation and plot

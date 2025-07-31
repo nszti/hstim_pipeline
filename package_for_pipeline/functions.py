@@ -143,6 +143,50 @@ def electROI_val(tiff_dir,list_of_file_nums):
                     electrodeROI.append(roi)
                 print(f"Used electrode ROI for {dir}: {electrodeROI}")
                 np.save(dir_path / 'electrodeROI.npy', electrodeROI)
+from pathlib import Path
+import numpy as np
+import os
+
+def save_roi_numbers_only(tiff_dir, list_of_file_nums):
+    """
+    Loads merged iscell.npy files, extracts ROI numbers for cells & saves them to ROI_numbers.npy for each suite2p folder
+
+    Parameters
+    ----------
+    tiff_dir : path to merged_tiffs folder
+    list_of_file_nums : list of ints --> number of tiff MUnit number
+    -----
+    Saves : ROI_numbers.npy
+    """
+    base_dir = Path(tiff_dir)
+    filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+
+    for numbers_to_merge in list_of_file_nums:
+        suffix = '_'.join(map(str, numbers_to_merge))
+        matched_file = None
+
+        for dir in filenames:
+            split_name = dir.split('MUnit_')
+            if len(split_name) > 1:
+                file_suffix = split_name[1].rsplit('.', 1)[0]
+                if file_suffix == suffix:
+                    matched_file = dir
+                    print(f"Matched file: {matched_file}")
+                    break
+        else:
+            continue
+
+        if matched_file:
+            iscell_path = os.path.join(tiff_dir, matched_file, 'suite2p/plane0/iscell.npy')
+            save_path = os.path.join(tiff_dir, matched_file, 'suite2p/plane0/ROI_numbers.npy')
+
+            if os.path.exists(iscell_path):
+                iscell = np.load(iscell_path, allow_pickle=True)
+                roi_numbers = np.where(iscell[:, 0] == 1)[0]
+                np.save(save_path, roi_numbers)
+                print(f"Saved ROI_numbers.npy to {save_path}")
+            else:
+                print(f"iscell.npy not found at {iscell_path}")
 
 #distance
 def dist_vals (tiff_dir, list_of_file_nums):
@@ -2130,7 +2174,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
 
-        #act ROI as a vector polygon
+        #act  ROI as a vector polygon
         for roi_idx in all_activated_roi_indices:
             roi_stat = stat[roi_idx]
             xpix = roi_stat['xpix']

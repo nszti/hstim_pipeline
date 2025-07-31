@@ -2203,13 +2203,6 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         med_csv_path = os.path.join(out_path, f'med_of_act_ns_{matched_file}.csv')
         med_val_df.to_csv(med_csv_path, index=False)
 
-        # fig for fov
-        from matplotlib.patches import Polygon
-        from matplotlib.collections import PatchCollection
-
-
-
-
 
 
         print(f'Processed finished for {matched_file}')

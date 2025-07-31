@@ -1958,7 +1958,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
     med_val_df
 
     '''
-
+    from matplotlib.patches import Polygon
     fileId_path = os.path.join(exp_dir, 'fileId.txt')
     trigger_path = os.path.join(exp_dir, 'trigger.txt')
     frameNo_path = os.path.join(exp_dir, 'frameNo.txt')
@@ -2054,7 +2054,9 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
 
         for block_idx, file_num in enumerate(file_group):
             all_masks = []
-            block_mask= []
+            block_activated_roi = []
+            block_x_coords = []
+            block_y_coords =[]
             # calculation from stimulation variables to frames
             frequency = fileid_to_freq[file_num]
             #print(block_idx, frequency)
@@ -2127,29 +2129,62 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                     all_count += 1
                     all_activated_roi_indices.append(roi)
                     all_block_indices.append(file_num)
+                    block_activated_roi.append(roi)
 
                     #centroid coords:
                     roi_stat = stat[roi]
                     #print(roi_stat)
                     all_x_coords.append(roi_stat['med'][1])
                     all_y_coords.append(roi_stat['med'][0])
+                    block_x_coords.append(roi_stat['med'][1])
+                    block_y_coords.append(roi_stat['med'][0])
 
                     mask = np.zeros((Ly, Lx), dtype=np.uint8)
                     mask[roi_stat['ypix'], roi_stat['xpix']] = 1
 
                     all_masks.append(mask)
-
             print(f'Activated ROI in File MUnit_{file_num}: {all_count}')
+
+            # --plot fig for FOV per block--
+            fig, ax = plt.subplots(figsize=(10, 10))
+            ax.set_title(f'Activated ROIs - {file_num}')
+            ax.set_xlim(0, Lx)
+            ax.set_ylim(Ly, 0)
+            ax.set_aspect('equal')
+            ax.set_xlabel('X')
+            ax.set_ylabel('Y')
+
+            # act  ROI as a vector polygon
+            for roi in block_activated_roi:
+                roi_stat = stat[roi]
+                xpix = roi_stat['xpix']#[~roi_stat['overlap']]
+                ypix = roi_stat['ypix']#[~roi_stat['overlap']]
+                # if len(xpix) < 3:
+                # continue  # Skip invalid polygons
+                polygon_coords = np.column_stack((xpix, ypix))
+                polygon = Polygon(polygon_coords, closed=True, edgecolor='black', facecolor='none', linewidth=1)
+                ax.add_patch(polygon)
+                '''# label roi ?
+                ax.text(roi_stat['med'][1], roi_stat['med'][0], str(roi_idx),
+                        fontsize=6, color='red', ha='center', va='center')'''
+
+            out = os.path.join(tiff_dir, matched_file)
+            plot_path = os.path.join(out, f'activated_rois_{file_num}.svg')
+            plt.tight_layout()
+            #plt.savefig(plot_path, format='svg')
+            #plt.show()
+            plt.close(fig)
+            print(f'ROI figure saved at {plot_path}')
 
             if all_masks:
                 out = os.path.join(tiff_dir, matched_file)
                 mask_stack = np.stack(all_masks, axis=0).astype(np.double)
-                print(mask_stack.shape)
+                #print(mask_stack.shape)
                 mat_path = os.path.join(out, f'cellreg_input_{mesc_file_name}_{file_num}.mat')
                 npy_path = os.path.join(out, f'pixel_data_{mesc_file_name}_{file_num}.npy')
                 savemat(mat_path, {'cells_map': mask_stack})
                 np.save(npy_path, mask_stack)
-                print(mask_stack)
+                #print(mask_stack)
         out_path = os.path.join(tiff_dir, matched_file)
         activation_df = pd.DataFrame({
             'FileID': all_block_indices,
@@ -2172,35 +2207,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         from matplotlib.patches import Polygon
         from matplotlib.collections import PatchCollection
 
-        fig, ax = plt.subplots(figsize=(10, 10))
-        ax.set_title(f'Activated ROIs - {matched_file}')
-        #ax.set_xlim(0, Lx)
-        #ax.set_ylim(Ly, 0)  # y-axis inverted for image coordinates
-        ax.set_aspect('equal')
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
 
-        #act  ROI as a vector polygon
-        for roi_idx in all_activated_roi_indices:
-            roi_stat = stat[roi_idx]
-            xpix = roi_stat['xpix']
-            ypix = roi_stat['ypix']
-            #if len(xpix) < 3:
-                #continue  # Skip invalid polygons
-
-            polygon_coords = np.column_stack((xpix, ypix))
-            polygon = Polygon(polygon_coords, closed=True, edgecolor='black', facecolor='none', linewidth=1)
-            ax.add_patch(polygon)
-            '''# label roi ?
-            ax.text(roi_stat['med'][1], roi_stat['med'][0], str(roi_idx),
-                    fontsize=6, color='red', ha='center', va='center')'''
-
-        plot_path = os.path.join(out_path, f'activated_rois_{matched_file}.svg')
-        plt.tight_layout()
-        plt.savefig(plot_path, format='svg')
-        plt.close(fig)
-
-        print(f'ROI figure saved at {plot_path}')
 
 
 

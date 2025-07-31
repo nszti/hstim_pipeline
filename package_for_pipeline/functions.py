@@ -145,14 +145,15 @@ def electROI_val(tiff_dir,list_of_file_nums):
                 np.save(dir_path / 'electrodeROI.npy', electrodeROI)
 def save_roi_numbers_only(tiff_dir, list_of_file_nums):
     """
-    Loads merged iscell.npy files, extracts ROI numbers for cells & saves them to ROI_numbers.npy for each suite2p folder
+    Loads merged Suite2p files, extracts ROI numbers for cells (iscell[:, 0] == 1),
+    and saves them to ROI_numbers.npy in each corresponding suite2p folder.
 
     Parameters
     ----------
-    tiff_dir : path to merged_tiffs folder
-    list_of_file_nums : list of ints --> number of tiff MUnit number
-    -----
-    Saves : ROI_numbers.npy
+    tiff_dir : str or Path
+        Path to directory containing merged TIFF experiment folders.
+    list_of_file_nums : list of list of ints
+        Each sublist contains file numbers corresponding to one merged folder.
     """
     base_dir = Path(tiff_dir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
@@ -930,12 +931,50 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             activeNeuronsPerBlockPerTrial = np.empty([trial_No, block_No], 'int')
             activeNeuronsPerBlockPerTrialFraction = np.empty([trial_No, block_No])
 
+
+
             for iBlock in range(block_No):
                 for iTrial in range(trial_No):
                     activeNeuronsPerBlockPerTrial[iTrial][iBlock] = sum(stimResults[:, iBlock, iTrial])
                     activeNeuronsPerBlockPerTrialFraction[iTrial][iBlock] = sum(stimResults[:, iBlock, iTrial]) / ROI_No
+            avg_traces_per_roi_block = np.mean(full_trial_traces, axis=2)
 
-            # plot the number and fraction of neurons activated during trials of a block
+            n_Frames = avg_traces_per_roi_block.shape[2]
+            time_axis = np.arange(n_Frames)
+
+            '''for roi_idx in range(ROI_No):
+                if np.any(activatedNeurons[roi_idx, :] == 1):  # only plot if ROI is active in at least one block
+                    plt.figure(figsize=(10, 5))
+                    for iBlock in range(block_No):
+                        if activatedNeurons[roi_idx, iBlock] == 1:
+                            trace = avg_traces_per_roi_block[roi_idx, iBlock, :]
+                            plt.plot(time_axis, trace, label=f'Block {iBlock + 1}')
+
+                    plt.show()'''
+            for iBlock in range(block_No):
+                active_rois = np.where(activatedNeurons[:, iBlock] == 1)[0]
+                n_active = len(active_rois)
+                if n_active == 0:
+                    continue
+                cols = 4
+                rows = math.ceil(n_active / cols)
+                fig, axs = plt.subplots(rows, cols, figsize=(cols * 4, rows * 3), squeeze=False)
+
+                for i, roi_idx in enumerate(active_rois):
+                    row_idx = i // cols
+                    col_idx = i % cols
+                    ax = axs[row_idx, col_idx]
+                    trace = avg_traces_per_roi_block[roi_idx, iBlock, :]
+                    ax.plot(time_axis, trace)
+                plt.save(fig, output_dir + f'/09_17_amp_fig1_{iBlock + 1}.svg')
+                plt.close(fig)
+
+
+
+
+
+
+                    # plot the number and fraction of neurons activated during trials of a block
             axs[1, 0].plot(trialLabels, activeNeuronsPerBlockPerTrial, marker="o")
             axs[1, 0].legend(legend)
             axs[1, 0].set_xlabel('Trial number')
@@ -974,6 +1013,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             axs[1, 0].set_xlabel('Trial number')
             axs[1, 1].set_ylabel('Mean dF/F0')
             axs[1, 1].set_xlabel('Trial number')
+
 
             # calculate and plot the mean amplitudes during stimulation trials of a block
             avgCAduringTrials = np.empty([block_No, trial_No])
@@ -1033,6 +1073,21 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
 
 
 
+
+            avg_over_trials = np.mean(avgTracePerBlock[iBlock, :, :], axis=0)
+            axs[2, 0].plot(avg_over_trials[0:plot_dur], label=legend[iBlock])  # Overlaid in first column of third row
+
+        # Labels for rows
+        axs[0, 0].set_ylabel('Mean dF/F0\nby stim block')
+        axs[1, 0].set_ylabel('Mean dF/F0\nby trial')
+        axs[2, 0].set_ylabel('Mean dF/F0\ntrial avg')
+        axs[2, 0].set_title('All amplitudes (trial-averaged)')
+        axs[2, 0].set_ylim([ymin, ymax])
+        axs[2, 0].legend(title="Amplitude", fontsize=6)
+
+        # Hide unused subplots in third row
+        for col in range(1, 10):
+            axs[2, col].axis('off')
 
             '''
             # distance calculation and plot

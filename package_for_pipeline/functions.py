@@ -835,13 +835,13 @@ def timecourse_vals(tiff_dir, list_of_file_nums, num_trials):
             stimResults_activated = stimResults[activated_indices]
             restResults_activated = restResults[activated_indices]
             stimAvgs_activated = stimAvgs[activated_indices]
-            restAvgs_acitvated = restAvgs[activated_indices]
+            restAvgs_activated = restAvgs[activated_indices]
             baselineAvgs_activated = baselineAvgs[activated_indices]
             full_trial_traces_activated = full_trial_traces[activated_indices]
             roi_num_activated = roi_num[activated_indices]
 
             np.savez(tiff_dir+dir+ '/results_activated.npz', stimResults_activated = stimResults_activated, restResults_activated = restResults_activated,
-                     stimAvgs_activated = stimAvgs_activated, restAvgs_acitvated = restAvgs_acitvated, baselineAvgs_activated = baselineAvgs_activated,
+                     stimAvgs_activated = stimAvgs_activated, restAvgs_activated = restAvgs_activated, baselineAvgs_activated = baselineAvgs_activated,
                      full_trial_traces_activated = full_trial_traces_activated, roi_num_activated = roi_num_activated)
 
 
@@ -883,6 +883,16 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             baselineAvgs = container["baselineAvgs"]
             full_trial_traces = container["full_trial_traces"]
 
+            container_activated = np.load(tiff_dir + matched_file + '/results_activated.npz', allow_pickle=True)
+            stimResults_activated = container_activated["stimResults_activated"]
+            restResults_activated = container_activated["restResults_activated"]
+            stimAvgs_activated = container_activated["stimAvgs_activated"]
+            restAvgs_activated = container_activated["restAvgs_activated"]
+            baselineAvgs_activated = container_activated["baselineAvgs_activated"]
+            baselineAvgs_activated = container_activated["baselineAvgs_activated"]
+            full_trial_traces_activated = container_activated["full_trial_traces_activated"]
+
+
             '''# remove electrode ROI from data
             for i in ROI_IDs:
                 if i == electrode_ROI[0]:
@@ -896,9 +906,9 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             full_trial_traces = np.delete(full_trial_traces, electrode_ROI_index, axis=0)'''
 
             # collect ROI, block and trial numbers
-            ROI_No = stimResults.shape[0]
-            block_No = stimResults.shape[1]
-            trial_No = stimResults.shape[2]
+            ROI_No = stimResults_activated.shape[0]
+            block_No = stimResults_activated.shape[1]
+            trial_No = stimResults_activated.shape[2]
 
             if stim_type == 'amp':
                 legend = ['10', '20','30','40']
@@ -915,7 +925,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
             activatedNeurons = np.empty([ROI_No, block_No], 'int')
             for iROI in range(ROI_No):
                 for iBlock in range(block_No):
-                    sumTrials = sum(stimResults[iROI, iBlock, :])
+                    sumTrials = sum(stimResults_activated[iROI, iBlock, :])
                     if sumTrials > 0:
                         activatedNeurons[iROI][iBlock] = 1
                     else:
@@ -981,7 +991,7 @@ def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
                     activeNeuronsPerBlockPerTrialFraction[iTrial][iBlock] = sum(stimResults[:, iBlock, iTrial]) / ROI_No
 
 
-                    # plot the number and fraction of neurons activated during trials of a block
+            # plot the number and fraction of neurons activated during trials of a block
             axs[1, 0].plot(trialLabels, activeNeuronsPerBlockPerTrial, marker="o")
             axs[1, 0].legend(legend)
             axs[1, 0].set_xlabel('Trial number')

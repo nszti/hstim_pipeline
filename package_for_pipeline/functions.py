@@ -690,8 +690,109 @@ def activated_neurons_val(root_directory, tiff_dir, list_of_file_nums, threshold
         np.save(dir_path + '/suite2p/plane0/activated_neurons.npy', result_df)
         print(f"activated_neurons.npy saved to {dir_path + '/suite2p/plane0/activated_neurons.npy'}")
         #np.save(expDir + '/' + dir + '/suite2p/plane0/activated_neurons.npy', result_df)
+def timecourse_v2(tiff_dir, list_of_file_nums, num_trials):
+    base_dir = Path(tiff_dir)
+    filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+    frame_rate = 30.97
 
-#timecourse
+    for numbers_to_merge in list_of_file_nums:
+        suffix = '_'.join(map(str, numbers_to_merge))
+        matched_file = None
+        for dir in filenames:
+            if f'MUnit_{suffix}' in dir:
+                matched_file = dir
+                break
+        else:
+            continue
+
+        if matched_file:
+            F_path = f"{tiff_dir}{matched_file}/suite2p/plane0/F0.npy"
+            stim_start_times_path = f"{tiff_dir}{matched_file}/stimTimes.npy"
+            stim_duration_path = f"{tiff_dir}{matched_file}/stimDurations.npy"
+            block_frames_path = f"{tiff_dir}{matched_file}/frameNum.npy"
+            roi_number_path = f"{tiff_dir}{matched_file}/suite2p/plane0/unfiltered_ROI_numbers.npy"
+
+            F = np.load(F_path, allow_pickle=True)
+            stim_start = np.load(stim_start_times_path, allow_pickle=True)
+            block_frames = np.load(block_frames_path, allow_pickle=True)
+            stim_duration = np.load(stim_duration_path, allow_pickle=True)
+            roi_num = np.load(roi_number_path, allow_pickle=True)
+
+            num_rois = F.shape[0]
+            num_blocks = len(block_frames)
+
+            resting_period = 3
+            threshold_val = 3.5
+            rest_dur_f = int(resting_period * frame_rate)
+            stim_dur_f = [int(d * frame_rate)for d in stim_duration]
+            trial_dur_f = [s + rest_dur_f for s in stim_dur_f]
+
+            blocks_start =[sum(block_frames[:i]) for i in range(num_blocks)]
+
+            stimResults = np.empty((num_rois, num_blocks, num_trials), dtype=int)
+            restResults = np.empty((num_rois, num_blocks, num_trials), dtype=int)
+            stimAvgs = np.empty((num_rois, num_blocks, num_trials))
+            restAvgs = np.empty((num_rois, num_blocks, num_trials))
+            baselineAvgs = np.empty((num_rois, num_blocks))
+
+            full_trial_traces = [[[] for _ in range(num_blocks)] for _ in range(num_rois)]
+
+            for iBlock in range(num_blocks):
+                for iTrace in range(num_rois):
+                    baseline_end = blocks_start[iBlock] + int(stim_start[iBlock])
+                    baseline_dur = F[iTrace, blocks_start[iBlock]:baseline_end]
+                    baseline_avg = np.mean(baseline_dur)
+                    baseline_std = np.std(baseline_dur)
+                    threshold = baseline_avg + threshold_val * baseline_std
+                    baselineAvgs[iTrace, iBlock] = baseline_avg
+
+                    for iTrial in range(num_trials):
+                        trial_start = blocks_start[iBlock] + int(stim_start[iBlock]) + iTrial * trial_dur_f[iBlock]
+                        trial_end = trial_start + stim_dur_f[iBlock]
+                        stim_trace = F[iTrace, trial_start:trial_end]
+                        stim_avg = np.mean(stim_trace)
+                        stimAvgs[iTrace, iBlock, iTrial] = stim_avg
+                        stimResults[iTrace, iBlock, iTrial] = int(stim_avg > threshold)
+
+                        rest_start = trial_end
+                        rest_end = rest_start + rest_dur_f
+                        rest_trace = F[iTrace, rest_start:rest_end]
+                        rest_avg = np.mean(rest_trace)
+                        restAvgs[iTrace, iBlock, iTrial] = rest_avg
+                        restResults[iTrace, iBlock, iTrial] = int(rest_avg > threshold)
+
+                        full_trial = F[iTrace, trial_start:trial_end]  # this should be dynamically sized
+                        full_trial_traces[iTrace][iBlock].append(full_trial)
+
+            # Save plots
+            numRows = math.ceil(math.sqrt(num_rois))
+            fig, axs = plt.subplots(numRows, numRows, figsize=(15, 15), squeeze=False)
+            for i in range(numRows):
+                for j in range(numRows):
+                    idx = i * numRows + j
+                    if idx < num_rois:
+                        axs[i][j].imshow(stimResults[idx], aspect='auto')
+                    else:
+                        axs[i][j].axis('off')
+            plt.tight_layout()
+            plt.show()
+
+            np.savez(f"{tiff_dir}{matched_file}/results.npz",
+                     stimResults=stimResults, restResults=restResults,
+                     stimAvgs=stimAvgs, restAvgs=restAvgs,
+                     baselineAvgs=baselineAvgs,
+                     full_trial_traces=full_trial_traces)
+
+            print(f"Results saved to {tiff_dir}{matched_file}/results.npz")
+            for iBlock in range(num_blocks):
+                active = np.sum(stimResults[:, iBlock, :] == 1, axis=1)
+                inactive= np.all(stimResults[:, iBlock, :] == 0, axis=1)
+                inactive_rois = roi_num[inactive]
+                print(f"Block {iBlock}: {active}")
+                print(f"Block {iBlock}: {inactive_rois}")
+
+
+        #timecourse
 def timecourse_vals(tiff_dir, list_of_file_nums, num_trials):
     '''
     :param expDir:
@@ -844,7 +945,12 @@ def timecourse_vals(tiff_dir, list_of_file_nums, num_trials):
                      stimAvgs_activated = stimAvgs_activated, restAvgs_activated = restAvgs_activated, baselineAvgs_activated = baselineAvgs_activated,
                      full_trial_traces_activated = full_trial_traces_activated, roi_num_activated = roi_num_activated)
 
+            for iBlock in range(num_blocks):
+                # Get ROIs that are inactive in ALL trials of this block
+                inactive_mask = np.all(stimResults[:, iBlock, :] == 0, axis=1)  # shape: (n_ROIs,)
+                inactive_rois = roi_num[inactive_mask]
 
+                print(f"Block {iBlock}: {inactive_rois}")
 
 #data_analysis
 def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):

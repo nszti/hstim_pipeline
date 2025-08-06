@@ -952,6 +952,264 @@ def timecourse_vals(tiff_dir, list_of_file_nums, num_trials):
 
                 print(f"Block {iBlock}: {inactive_rois}")
 
+def data_analysis_v2(stim_type, tiff_dir, list_of_file_nums):
+    '''
+    :param stim_type: 4 type: 'amp','freq','pulse_no','dur'
+    :return:
+    '''
+    base_dir = Path(tiff_dir)
+    filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
+
+    for numbers_to_merge in list_of_file_nums:
+        suffix = '_'.join(map(str, numbers_to_merge))
+        for dir in filenames:
+            num_to_search_split = dir.split('MUnit_')
+            if len(num_to_search_split) > 1:
+                file_suffix = num_to_search_split[1].rsplit('.', 1)[0]
+                if file_suffix == suffix:
+                    matched_file = dir
+                    break
+        else:
+            continue
+
+        if matched_file:
+            output_dir = tiff_dir + matched_file
+            container = np.load(tiff_dir + matched_file + '/results.npz', allow_pickle=True)
+            #distances = np.load(tiff_dir +  matched_file + '/suite2p/plane0/distances.npy', allow_pickle=True)
+            ROI_IDs = np.load(tiff_dir + matched_file + '/suite2p/plane0/ROI_numbers.npy', allow_pickle=True)
+            #electrode_ROI = np.load(tiff_dir +  matched_file + '/electrodeROI.npy', allow_pickle=True)
+
+            #distanceFromElectrode = distances[:, 2]
+            stimResults = container["stimResults"]
+            restResults = container["restResults"]
+            stimAvgs = container["stimAvgs"]
+            restAvgs = container["restAvgs"]
+            baselineAvgs = container["baselineAvgs"]
+            baselineAvgs = container["baselineAvgs"]
+            full_trial_traces = container["full_trial_traces"]
+
+
+            '''# remove electrode ROI from data
+            for i in ROI_IDs:
+                if i == electrode_ROI[0]:
+                    electrode_ROI_index = i
+            distanceFromElectrode = np.delete(distanceFromElectrode, electrode_ROI_index, axis=0)
+            stimResults = np.delete(stimResults, electrode_ROI_index, axis=0)
+            restResults = np.delete(restResults, electrode_ROI_index, axis=0)
+            stimAvgs = np.delete(stimAvgs, electrode_ROI_index, axis=0)
+            restAvgs = np.delete(restAvgs, electrode_ROI_index, axis=0)
+            baselineAvgs = np.delete(baselineAvgs, electrode_ROI_index, axis=0)
+            full_trial_traces = np.delete(full_trial_traces, electrode_ROI_index, axis=0)'''
+
+            # collect ROI, block and trial numbers
+            ROI_No = stimResults.shape[0]
+            block_No = stimResults.shape[1]
+            trial_No = stimResults.shape[2]
+
+            if stim_type == 'amp':
+                legend = ['10', '20','30','40']
+            elif stim_type == 'freq':
+                legend = ['50', '100', '200']
+            elif stim_type == 'pulse_dur':
+                legend = ['50', '100', '200', '400']
+            else:
+                legend = ['20', '50', '100', '200']
+
+            trialLabels = ['1', '2', '3', '4', '5', '6', '7','8','9','10']
+
+            # collect neurons activated during a block
+            activatedNeurons = np.empty([ROI_No, block_No], 'int')
+            for iROI in range(ROI_No):
+                for iBlock in range(block_No):
+                    sumTrials = sum(stimResults[iROI, iBlock, :])
+                    if sumTrials > 0:
+                        activatedNeurons[iROI][iBlock] = 1
+                    else:
+                        activatedNeurons[iROI][iBlock] = 0
+
+            # compute the number and fraction of neurons activated (or silent) during a block
+            activeNeuronsPerBlock = np.empty(block_No, 'int')
+            silentNeuronsPerBlock = np.empty(block_No, 'int')
+            activeNeuronsPerBlockFraction = np.empty(block_No)
+            silentNeuronsPerBlockFraction = np.empty(block_No)
+
+            #avg_traces_per_roi_block = np.mean(full_trial_traces, axis=2)
+            avg_traces_per_roi_block = [[np.mean(trials, axis=0) if trials else np.array([]) for trials in roi_blocks] for roi_blocks in full_trial_traces] #list shape: [roi][block]
+
+
+
+            #n_Frames = avg_traces_per_roi_block.shape[2]
+            n_Frames = len(avg_traces_per_roi_block[0][0]) if avg_traces_per_roi_block[0][0].size > 0 else 0
+
+            time_axis = np.arange(n_Frames)
+            for iBlock in range(block_No):
+                active_rois = np.where(activatedNeurons[:, iBlock] == 1)[0]
+                n_active = len(active_rois)
+                print(n_active)
+                if n_active == 0:
+                    continue
+                cols = 4
+                rows = math.ceil(n_active / cols)
+                fig, axs = plt.subplots(rows, cols, figsize=(cols * 4, rows * 3), squeeze=False)
+
+                for i, roi_idx in enumerate(active_rois):
+                    row_idx = i // cols
+                    col_idx = i % cols
+                    ax = axs[row_idx, col_idx]
+                    #trace = avg_traces_per_roi_block[roi_idx, iBlock, :]
+                    trace = avg_traces_per_roi_block[roi_idx][iBlock]
+
+                    ax.plot(time_axis, trace)
+                    ax.set_title(roi_idx)
+                #plt.savefig(output_dir + f'/roi_for_{iBlock + 1}.svg')
+                #plt.show()
+                plt.close()
+
+            for iBlock in range(block_No):
+                activeNeuronsPerBlock[iBlock] = sum(activatedNeurons[:, iBlock])
+                activeNeuronsPerBlockFraction[iBlock] = activeNeuronsPerBlock[iBlock] / ROI_No
+                silentNeuronsPerBlock[iBlock] = stimResults.shape[0] - activeNeuronsPerBlock[iBlock]
+                silentNeuronsPerBlockFraction[iBlock] = silentNeuronsPerBlock[iBlock] / ROI_No
+
+            # plot the number and fraction of neurons activated (or silent) during a block
+            fig, axs = plt.subplots(2, 2, figsize = (12,8))
+            axs[0, 0].plot(legend, activeNeuronsPerBlock, marker="o")
+            axs[0, 0].set_xlabel('Stimulation current(uA)')
+            axs[0, 0].set_ylabel('Number of active neurons')
+
+            axs[0, 1].plot(legend, activeNeuronsPerBlockFraction, marker="o")
+            axs[0, 1].set_xlabel('Stimulation current(uA)')
+            axs[0, 1].set_ylabel('Fraction of active neurons')
+
+
+            # compute the number and fraction of neurons activated during trials of a block
+            activeNeuronsPerBlockPerTrial = np.empty([trial_No, block_No], 'int')
+            activeNeuronsPerBlockPerTrialFraction = np.empty([trial_No, block_No])
+
+
+
+            for iBlock in range(block_No):
+                for iTrial in range(trial_No):
+                    activeNeuronsPerBlockPerTrial[iTrial][iBlock] = sum(stimResults[:, iBlock, iTrial])
+                    activeNeuronsPerBlockPerTrialFraction[iTrial][iBlock] = sum(stimResults[:, iBlock, iTrial]) / ROI_No
+
+
+            # plot the number and fraction of neurons activated during trials of a block
+            axs[1, 0].plot(trialLabels, activeNeuronsPerBlockPerTrial, marker="o")
+            axs[1, 0].legend(legend)
+            axs[1, 0].set_xlabel('Trial number')
+            axs[1, 0].set_ylabel('Number of active neurons')
+
+            axs[1, 1].plot(trialLabels, activeNeuronsPerBlockPerTrialFraction, marker="o")
+            axs[1, 1].legend(legend)
+            axs[1, 1].set_xlabel('Trial number')
+            axs[1, 1].set_ylabel('Fraction of active neurons')
+
+            # calculate and plot the mean amplitudes during stimulation trials and blocks
+            avgCA = np.empty([block_No, trial_No])
+            avgCAperBlock = np.empty([block_No])
+            for iBlock in range(block_No):
+                if stim_type == stim_type and iBlock == 0:
+                    for iTrial in range(trial_No):
+                        avgCA[iBlock][iTrial] = np.mean(stimAvgs[:, iBlock, iTrial])
+                    avgCAperBlock[iBlock] = np.mean(avgCA[iBlock, :3])
+                else:
+                    for iTrial in range(trial_No):
+                        avgCA[iBlock][iTrial] = np.mean(stimAvgs[:, iBlock, iTrial])
+                    avgCAperBlock[iBlock] = np.mean(avgCA[iBlock, :])
+            print(avgCA)
+            avgCAperTrial = np.mean(avgCA, axis=0)
+            plt.savefig(output_dir + '/09_17_amp_fig1_2.svg')
+
+
+            fig2, axs = plt.subplots(2, 2, figsize = (12,8))
+            axs[0, 0].plot(legend, avgCAperBlock, marker="o")
+            axs[0, 0].set_ylabel('Mean dF/F0')
+            axs[0, 0].set_xlabel('Stimulation amplitude (uA)')
+            axs[0, 1].plot(trialLabels, avgCAperTrial, marker="o")
+            axs[0, 1].set_ylabel('Mean dF/F0')
+            axs[0, 1].set_xlabel('Trial number')
+            axs[1, 0].set_ylabel('Mean dF/F0')
+            axs[1, 0].set_xlabel('Trial number')
+            axs[1, 1].set_ylabel('Mean dF/F0')
+            axs[1, 1].set_xlabel('Trial number')
+
+
+            # calculate and plot the mean amplitudes during stimulation trials of a block
+            avgCAduringTrials = np.empty([block_No, trial_No])
+            for iBlock in range(block_No):
+                if stim_type == 'freq' and iBlock == 0:
+                    for iTrial in range(trial_No):
+                        avgCAduringTrials[iBlock][iTrial] = np.mean(stimAvgs[:,iBlock, :3 ])
+                else:
+                    for iTrial in range(trial_No):
+                        avgCAduringTrials[iBlock][iTrial] = np.mean(stimAvgs[:, iBlock, iTrial])
+
+                axs[1, 0].plot(trialLabels, avgCAduringTrials[iBlock, :])
+            axs[1, 0].legend(legend)
+
+            # calculate and plot the mean amplitudes during rest periods of a block
+            avgCAduringRest = np.empty([block_No, trial_No])
+            for iBlock in range(block_No):
+                for iTrial in range(trial_No):
+                    avgCAduringRest[iBlock][iTrial] = np.mean(restAvgs[:, iBlock, iTrial])
+
+                axs[1, 1].plot(trialLabels, avgCAduringRest[iBlock, :])
+            axs[1, 1].legend(legend)
+            plt.savefig(output_dir + '/09_17_amp_fig2_2.svg')
+
+            # plot calcium traces during stimulation
+            tracesPerBlock = np.empty([ROI_No, 217])
+            avgTracePerBlock = np.empty([block_No, trial_No, 217])
+            avgTracePerTrial = np.empty([ROI_No, block_No,217])
+            for iBlock in range(block_No):
+                for iTrial in range(trial_No):
+                    #tracesPerBlock = full_trial_traces[:, iBlock, iTrial, :]
+                    tracesPerBlock = [full_trial_traces[iROI][iBlock][iTrial] for iROI in range(ROI_No) if iTrial < len(full_trial_traces[iROI][iBlock])]
+                    avgTracePerBlock[iBlock, iTrial, :] = np.mean(tracesPerBlock, axis=0)
+
+                    #avgTracePerBlock[iBlock, iTrial, :] = np.mean(tracesPerBlock, axis=0)  #
+                #avgTracePerTrial[:,iBlock,:, :] = np.mean(full_trial_traces, axis = 2)
+
+
+            plot_dur = (5 * 31)-2
+            ymin = -0.01
+            ymax = 0.35
+
+            #NB! modify nclos value for number of sublpots for stimulations
+            fig3, axs = plt.subplots(3, 10, figsize = (12,8))
+            for iBlock in range(block_No):
+                for iTrial in range(trial_No):
+                    axs[0, iBlock].plot(avgTracePerBlock[iBlock, iTrial, 0:plot_dur])
+                    axs[0, iBlock].set_title(legend[iBlock])
+                    axs[0, iBlock].set_ylim([ymin, ymax])
+                    #axs[0, iBlock].legend(trialLabels)
+                    axs[1, iTrial].plot(avgTracePerBlock[iBlock, iTrial, 0:plot_dur])
+                    axs[1, iTrial].set_title(trialLabels[iTrial])
+                    axs[1, iTrial].set_ylim([ymin, ymax])
+                    axs[1, iTrial].legend(legend)
+
+                avg_over_trials = np.mean(avgTracePerBlock[iBlock,:,:], axis=0)
+                axs[2,0].plot(avg_over_trials[0:plot_dur],label=legend[iBlock]) #
+
+            axs[0, 0].set_ylabel('Mean dF/F0')
+            axs[1, 0].set_ylabel('Mean dF/F0')
+            axs[2,0].set_ylabel('Mean dF/F0')
+            #axs[2,0].legend()
+
+            avg_over_trials = np.mean(avgTracePerBlock[iBlock, :, :], axis=0)
+            axs[2, 0].plot(avg_over_trials[0:plot_dur], label=legend[iBlock])  # Overlaid in first column of third row
+
+        # Labels for rows
+        axs[0, 0].set_ylabel('Mean dF/F0\nby stim block')
+        axs[1, 0].set_ylabel('Mean dF/F0\nby trial')
+        axs[2, 0].set_ylabel('Mean dF/F0\ntrial avg')
+        axs[2, 0].set_title('All amplitudes (trial-averaged)')
+        axs[2, 0].set_ylim([ymin, ymax])
+        axs[2, 0].legend(title="Amplitude", fontsize=6)
+
+        plt.show()
+
 #data_analysis
 def data_analysis_values (stim_type, tiff_dir, list_of_file_nums):
     '''

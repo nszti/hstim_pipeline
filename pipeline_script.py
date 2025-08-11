@@ -9,7 +9,7 @@ from general import ascii_to_str, find_frame_index_from_timestamp
 from package_for_pipeline import mesc_tiff_extract
 from package_for_pipeline import overlap
 from package_for_pipeline import cellreg_preprocess
-from package_for_pipeline import cellreg_analysis
+#from package_for_pipeline import cellreg_analysis #matlap api cellreg
 from package_for_pipeline import CoM
 import matplotlib.pyplot as plt
 import os
@@ -33,14 +33,14 @@ from package_for_pipeline import frequency_to_save
 
 #------VALUES TO CHANGE------
 
-root_directory = 'e:/2025-07-02-Amouse-invivo-GCaMP6f/'
-tiff_directory = 'e:/2025-07-02-Amouse-invivo-GCaMP6f/merged_tiffs/'
+root_directory = 'c:/Users/Rendszergazda/Documents/ttk/data/'
+tiff_directory = 'c:/Users/Rendszergazda/Documents/ttk/data/merged_tiffs/'
 mesc_file_name ='2025-07-02-Amouse-invivo-GCaMP6f'
 mesc_DATA_file = 'mesc_data.npy' #from mesc_tiff_extract
 mat_file = ''
 postfix = ''
 list_of_file_nums = [
-[51,52,53,54,55,56,57,58]
+  [37,38,39]
 ]
 gcamp = 'f' #for GCaMP6s: 's'
 stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
@@ -49,10 +49,10 @@ stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
 
 RUN_MESC_PREPROCESS = False  #tiff extraction
 RUN_PREPROCESS = False # osszefuz listaban megadott tifeket
-S2P = True #suite2p futtatás
+S2P = False #suite2p futtatás
 #--------
 
-RUN_ANALYSIS_PREP = False  #F0 savelodik, ha modositod a suite2p barmelyik propertyet, akkor ezt ujra kell futtatni h frissuljon az F0
+RUN_ANALYSIS_PREP = True  #F0 savelodik, ha modositod a suite2p barmelyik propertyet, akkor ezt ujra kell futtatni h frissuljon az F0
 PLOTS = False #Analysis plotok, utolso 3 a relevans
 PLOT_BTW_EXP = False
 
@@ -68,8 +68,8 @@ if RUN_MESC_PREPROCESS:
 
 #-----1.2.step: frequency_to_save, electrode_roi_to_save-->automatization pending-----
 if RUN_PREPROCESS:
-  frequency_to_save.frequency_electrodeRoi_to_save(root_directory, tiff_directory)
-  mesc_data_handling.tiff_merge(mesc_file_name, list_of_file_nums, root_directory, mesc_DATA_file, True)
+  #frequency_to_save.frequency_electrodeRoi_to_save(root_directory, tiff_directory, mesc_DATA_file)
+  #mesc_data_handling.tiff_merge(mesc_file_name, list_of_file_nums, root_directory, mesc_DATA_file, True)
   mesc_data_handling.extract_stim_frame(root_directory, mesc_DATA_file, list_of_file_nums) #--> saves stimTimes.npy needed for baseline
 if S2P:
   suite2p_script.run_suite2p(tiff_directory, list_of_file_nums, False, gcamp)
@@ -77,17 +77,26 @@ if S2P:
 #--------------Suite2p manual sorting------------------
 
 if RUN_ANALYSIS_PREP:
-  #functions.stim_dur_val(tiff_directory, list_of_file_nums)
+  functions.stim_dur_val(root_directory,tiff_directory, list_of_file_nums)
+  functions.save_roi_numbers_only(tiff_directory, list_of_file_nums)
   '''functions.electROI_val(tiff_directory, list_of_file_nums)'''
   #functions.dist_vals(tiff_directory, list_of_file_nums)
   #functions.spontaneous_baseline(tiff_directory,list_of_file_nums, [2,3,5,6,8,9,0,1,10,11,12,13,15], frame_rate= 30.97, plot_start_frame = 0, plot_end_frame=None)
-  functions.baseline_val(root_directory, tiff_directory, list_of_file_nums) #--> saves F0.npy : if suite2p files changes make sure to rerun
+  #functions.F_extract(tiff_directory, list_of_file_nums, [0]) #--> saves F.npy : if suite2p files changes make sure to rerun
+  #functions.baseline_val(root_directory, tiff_directory, list_of_file_nums) #--> saves F0.npy : if suite2p files changes make sure to rerun
   # functions.activated_neurons_val(root_directory, tiff_directory, list_of_file_nums, 1)
-  # functions.timecourse_vals(tiff_directory, list_of_file_nums, 5)
-  functions.analyze_merged_activation_and_save(root_directory, mesc_file_name, tiff_directory, list_of_file_nums, 6, 3.0, 10, 4.2,30.97)
+  #functions.timecourse_vals(tiff_directory, list_of_file_nums, 5)
+  functions.analyze_merged_activation_and_save(root_directory, mesc_file_name, tiff_directory, list_of_file_nums, 30.97, 100, 3, 10,3.5)
+
 if PLOTS:
-  functions.plot_stim_traces(tiff_directory, 30.97, 6, 5, list_of_file_nums, 8, 5.2, 2) #5.165
-  #functions.data_analysis_values(stim_type, tiff_directory, list_of_file_nums)
+  #functions.plot_activation_summary(stim_type, tiff_directory, list_of_file_nums)
+  functions.plot_activation_summary(
+    activation_map_path='c:/Users/Rendszergazda/Documents/ttk/data/merged_tiffs/merged_2025-07-02-Amouse-invivo-GCaMP6f_MUnit_39/activation_map_valid_merged_2025-07-02-Amouse-invivo-GCaMP6f_MUnit_39.npy',
+    save_dir='c:/Users/Rendszergazda/Documents/ttk/data/merged_tiffs/merged_2025-07-02-Amouse-invivo-GCaMP6f_MUnit_39/',
+  )
+  #functions.plot_full_traces_and_roi_overlay(tiff_directory, list_of_file_nums)
+  #functions.plot_stim_traces(tiff_directory, 30.97, 6, 5, list_of_file_nums, 8, 5.2, 2) #5.165
+  functions.data_analysis_values(stim_type, tiff_directory, list_of_file_nums)
   #CoM.plot_weighted_com([], [], tiff_directory)
 
 if PLOT_BTW_EXP:

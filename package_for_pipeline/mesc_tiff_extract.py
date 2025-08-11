@@ -6,7 +6,7 @@ import pandas as pd
 from pprint import pprint
 from pathlib import Path
 #import hdf5io
-from hdf5io.hdf5io import Hdf5io
+#from hdf5io.hdf5io import Hdf5io
 from cv2 import bitwise_not
 from mesc_loader import extract_useful_xml_params
 from general import ascii_to_str, find_frame_index_from_timestamp

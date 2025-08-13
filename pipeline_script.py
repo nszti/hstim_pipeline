@@ -33,14 +33,23 @@ from package_for_pipeline import frequency_to_save
 
 #------VALUES TO CHANGE------
 
-root_directory = 'c:/Users/Rendszergazda/Documents/ttk/data/'
-tiff_directory = 'c:/Users/Rendszergazda/Documents/ttk/data/merged_tiffs/'
-mesc_file_name ='2025-07-02-Amouse-invivo-GCaMP6f'
+#root_directory = 'd:/2025-07-02-Amouse-invivo-GCaMP6f/'
+#root_directory = 'd:/kell/GCaMP6f/2023_08_16_in_vivo_test_GCaMP6f/'
+root_directory = 'd:/kell/GCaMP6s/2023_09_11_in_vivo_test_GCAMP6s/'
+#root_directory = 'd:/kell/GCaMP6f/2023_09_25_GCAMP6F/'
+#tiff_directory = 'd:/2025-07-02-Amouse-invivo-GCaMP6f/merged_tiffs/'
+#tiff_directory = 'd:/kell/GCaMP6f/2023_08_16_in_vivo_test_GCaMP6f/merged_tiffs/'
+tiff_directory = 'd:/kell/GCaMP6s/2023_09_11_in_vivo_test_GCAMP6s/merged_tiffs/'
+#tiff_directory = 'd:/kell/GCaMP6f/2023_09_25_GCAMP6F/merged_tiffs/'
+#mesc_file_name ='2025-07-02-Amouse-invivo-GCaMP6f'
+#mesc_file_name = '2023_08_16_in_vivo_test_GCaMP6f'
+mesc_file_name = '2023_09_11_in_vivo_test_GCAMP6s'
+#mesc_file_name = '2023_09_25_in_vivo_test_GCAMP6f'
 mesc_DATA_file = 'mesc_data.npy' #from mesc_tiff_extract
 mat_file = ''
 postfix = ''
 list_of_file_nums = [
-  [37,38,39]
+  [15,16,17,18], [36,37,38,40], [41,42,43]
 ]
 gcamp = 'f' #for GCaMP6s: 's'
 stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
@@ -48,11 +57,11 @@ stim_type = 'amp' # 'freq', 'pulse_dur',  'amp'
 #=========
 
 RUN_MESC_PREPROCESS = False  #tiff extraction
-RUN_PREPROCESS = False # osszefuz listaban megadott tifeket
-S2P = False #suite2p futtatás
-#--------
+RUN_PREPROCESS = True # osszefuz listaban megadott tifeket
+S2P = True #suite2p futtatás
+#--------------Suite2p manual sorting------------------
 
-RUN_ANALYSIS_PREP = True  #F0 savelodik, ha modositod a suite2p barmelyik propertyet, akkor ezt ujra kell futtatni h frissuljon az F0
+RUN_ANALYSIS_PREP = False#F0 savelodik, ha modositod a suite2p barmelyik propertyet, akkor ezt ujra kell futtatni h frissuljon az F0
 PLOTS = False #Analysis plotok, utolso 3 a relevans
 PLOT_BTW_EXP = False
 
@@ -77,8 +86,8 @@ if S2P:
 #--------------Suite2p manual sorting------------------
 
 if RUN_ANALYSIS_PREP:
-  functions.stim_dur_val(root_directory,tiff_directory, list_of_file_nums)
-  functions.save_roi_numbers_only(tiff_directory, list_of_file_nums)
+  #functions.stim_dur_val(root_directory,tiff_directory, list_of_file_nums)
+  #functions.save_roi_numbers_only(tiff_directory, list_of_file_nums)
   '''functions.electROI_val(tiff_directory, list_of_file_nums)'''
   #functions.dist_vals(tiff_directory, list_of_file_nums)
   #functions.spontaneous_baseline(tiff_directory,list_of_file_nums, [2,3,5,6,8,9,0,1,10,11,12,13,15], frame_rate= 30.97, plot_start_frame = 0, plot_end_frame=None)
@@ -86,17 +95,13 @@ if RUN_ANALYSIS_PREP:
   #functions.baseline_val(root_directory, tiff_directory, list_of_file_nums) #--> saves F0.npy : if suite2p files changes make sure to rerun
   # functions.activated_neurons_val(root_directory, tiff_directory, list_of_file_nums, 1)
   #functions.timecourse_vals(tiff_directory, list_of_file_nums, 5)
-  functions.analyze_merged_activation_and_save(root_directory, mesc_file_name, tiff_directory, list_of_file_nums, 30.97, 100, 3, 10,3.5)
+  functions.analyze_merged_activation_and_save(root_directory, mesc_file_name, tiff_directory, list_of_file_nums, 30.97, 100, 2, 5,2)
 
 if PLOTS:
   #functions.plot_activation_summary(stim_type, tiff_directory, list_of_file_nums)
-  functions.plot_activation_summary(
-    activation_map_path='c:/Users/Rendszergazda/Documents/ttk/data/merged_tiffs/merged_2025-07-02-Amouse-invivo-GCaMP6f_MUnit_39/activation_map_valid_merged_2025-07-02-Amouse-invivo-GCaMP6f_MUnit_39.npy',
-    save_dir='c:/Users/Rendszergazda/Documents/ttk/data/merged_tiffs/merged_2025-07-02-Amouse-invivo-GCaMP6f_MUnit_39/',
-  )
-  #functions.plot_full_traces_and_roi_overlay(tiff_directory, list_of_file_nums)
+  functions.plot_full_traces_and_roi_overlay(root_directory,tiff_directory, list_of_file_nums)
   #functions.plot_stim_traces(tiff_directory, 30.97, 6, 5, list_of_file_nums, 8, 5.2, 2) #5.165
-  functions.data_analysis_values(stim_type, tiff_directory, list_of_file_nums)
+  #functions.data_analysis_values(stim_type, tiff_directory, list_of_file_nums)
   #CoM.plot_weighted_com([], [], tiff_directory)
 
 if PLOT_BTW_EXP:

@@ -2486,8 +2486,36 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         iscell = np.load(os.path.join(suite2p_dir, 'iscell.npy'), allow_pickle=True)
         stat = np.load(os.path.join(suite2p_dir, 'stat.npy'), allow_pickle=True)
         ops = np.load(os.path.join(suite2p_dir, 'ops.npy'), allow_pickle=True).item()
-        frequencies = np.load(os.path.join(tiff_dir, 'frequencies.npy'), allow_pickle=True)
-        fileid_to_freq = dict(zip(file_ids,frequencies))
+        #frequencies = np.load(os.path.join(tiff_dir, 'frequencies.npy'), allow_pickle=True)
+        #fileid_to_freq = dict(zip(file_ids,frequencies))
+
+        # read per line
+        raw_ids, raw_trigs, raw_frames = [], [], []
+        with open(fileId_path) as f_ids, open(trigger_path) as f_trigs, open(frameNo_path) as f_frames:
+            for id_line, trig_line, frame_line in zip(f_ids, f_trigs, f_frames):
+                raw_ids.append(int(id_line.strip().replace('MUnit_', '')))
+                raw_trigs.append(trig_line.strip())
+                raw_frames.append(frame_line.strip())
+
+        valid_mask = [
+            (t.lower() != 'none') and (t != '') and (fr != '')
+            for t, fr in zip(raw_trigs, raw_frames)
+        ]
+        #load freqs & apply mask
+        all_freq = np.load(os.path.join(tiff_dir, 'frequencies.npy'), allow_pickle=True)
+        if len(all_freq) != len(raw_ids):
+            raise ValueError(f"frequencies.npy length {len(all_freq)} doesn't match number of lines {len(raw_ids)}")
+
+        file_ids = [fid for fid, ok in zip(raw_ids, valid_mask) if ok]
+        frequencies_kept = [fr for fr, ok in zip(all_freq, valid_mask) if ok]
+
+        print("After masking ->", len(file_ids), len(frequencies_kept))
+
+        fileid_to_freq = dict(zip(file_ids, frequencies_kept))
+
+        # check
+        for fid in [44, 45, 46]:
+            print(f"ID {fid} ->", fileid_to_freq.get(fid, "<MISSING>"))
 
         Ly, Lx = ops['Ly'], ops['Lx']
         valid_rois = np.where(iscell[:, 0] == 1)[0]

@@ -2402,7 +2402,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         return np.moveaxis(mmap, 0, -1)
 
     def _normalize_01(block_movie):
-        vmin = float(block_movie.min()); vmax = float(block_movie.max()); eps = 1e-12
+        vmin = float(block_movie.min()); vmax = float(block_movie.max()); eps = 1e-12 # in case of small contrast
         return (block_movie - vmin) / max(vmax - vmin, eps)
 
     def _mean_img(block_movie, start_f, end_f):
@@ -2465,6 +2465,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
     block_info = []
     for group_idx, file_group in enumerate(list_of_file_nums):
         for block_idx in range(len(file_group)):
+            print(file_group, group_idx,file_group[block_idx], )
             file_num = file_group[block_idx]
             block_len = fileid_to_info[file_num]['block_len']
 
@@ -2487,7 +2488,19 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         stat = np.load(os.path.join(suite2p_dir, 'stat.npy'), allow_pickle=True)
         ops = np.load(os.path.join(suite2p_dir, 'ops.npy'), allow_pickle=True).item()
         frequencies = np.load(os.path.join(tiff_dir, 'frequencies.npy'), allow_pickle=True)
-        fileid_to_freq = dict(zip(file_ids,frequencies))
+        '''if len(frequencies) != len(file_ids):
+            raise ValueError(f"length mismatch")'''
+        fileid_to_freq = {int(fid): float(freq) for fid, freq in zip(file_ids, frequencies)}
+        missing = [fid for fid in file_group if fid not in fileid_to_freq]
+        if missing:
+            raise KeyError(f"missing file {missing}")
+        #fileid_to_freq = dict(zip(file_ids,frequencies))
+        #print(file_ids)
+        n_id = len(file_ids)
+        n_freq = len(frequencies)
+        min_len = min(n_id,n_freq)
+        for i,(fid,freq) in enumerate(zip(file_ids, frequencies)):
+            print(f" {i:04d}: fid = {fid}, fre= {freq}")
 
         Ly, Lx = ops['Ly'], ops['Lx']
         valid_rois = np.where(iscell[:, 0] == 1)[0]
@@ -2541,11 +2554,14 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
             block_y_coords =[]
             # calculation from stimulation variables to frames
             frequency = fileid_to_freq[file_num]
+            print(f'For tiff {file_num}, {frequency} Hz frequency was used.')
             stimualtion_duration_f = int(round(nb_pulses / frequency * frameRate))
+            print(stimualtion_duration_f)
             trial_delay_f = int(round(trial_delay * frameRate))
             single_trial_period = int(round(stimualtion_duration_f + trial_delay_f))
+            print(single_trial_period)
             full_trial_trace = np.empty((num_rois, trialNo, single_trial_period))
-            plot_trial_period = 150 # in frames
+            plot_trial_period = single_trial_period + 31 -5 # in frames
             trial_trace_to_plot = np.empty((num_rois, trialNo, plot_trial_period))
 
             #heatmap normalize block
@@ -2555,8 +2571,8 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
             Tblk = block_movie.shape[2]
 
             # heatmap baseline
-            block_stim_time = fileid_to_info[file_num]['trigger']  # this is relative to the start of the block
-            baseline_f_local = max(block_stim_time - 1, 0)
+            block_stim_time = fileid_to_info[file_num]['trigger']
+            baseline_f_local = max(block_stim_time - 1, 0) # can mod frame length of baseline
             baseline_img = block_movie[:, :, baseline_f_local]
             _save_heatmap(baseline_img,os.path.join(exp_dir, f'baseline_heatmap_block_{file_num}.png'),
                           f'Baseline (block {file_num})')
@@ -2595,13 +2611,15 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                         restResults[block_idx, i, j]['trace'] = rest_segment
                         full_segment = F[i, seg_start:seg_start + single_trial_period]
                         full_trial_trace[i, j, :] = full_segment
-                        full_segment_plot = F[i, seg_start - 31:seg_start + single_trial_period -5] # 31 frames before the trial start, -5 frame from the end in the plot
+                        full_segment_plot = F[i, seg_start -31:seg_start + single_trial_period -5] # 31 frames before the trial start, -5 frame from the end in the plot
+                        print(seg_start, seg_start + single_trial_period, len(full_segment_plot))
                         trial_trace_to_plot[i, j, :] = full_segment_plot
 
-                        #heatmap
-                        trial_stim_start_local = block_stim_time + j * single_trial_period  # local to this block
-                        stim_half = stimualtion_duration_f // 2
-                        delay_half = trial_delay_f // 2
+
+                        '''#heatmap
+                        trial_stim_start_local = seg_start
+                        stim_half = stimualtion_duration_f / 2
+                        delay_half = trial_delay_f / 2
 
                         stim_h1_start = trial_stim_start_local
                         stim_h1_end = trial_stim_start_local + stim_half
@@ -2633,7 +2651,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                         stim_h1_list.append(np.abs(stim_h1_mean - baseline_img))
                         stim_h2_list.append(np.abs(stim_h2_mean - baseline_img))
                         delay_h1_list.append(np.abs(delay_h1_mean - baseline_img))
-                        delay_h2_list.append(np.abs(delay_h2_mean - baseline_img))
+                        delay_h2_list.append(np.abs(delay_h2_mean - baseline_img))'''
 
                     else:
                         seg_start = block_stim_time + (single_trial_period * j) + (block_idx * block_len)
@@ -2650,10 +2668,10 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                         restResults[block_idx, i, j]['trace'] = rest_segment
                         full_segment = F[i, seg_start:seg_start + single_trial_period]
                         full_trial_trace[i, j, :] = full_segment
-                        full_segment_plot = F[i, seg_start - 31:seg_start + single_trial_period - 5]
+                        full_segment_plot = F[i, seg_start -31:seg_start + single_trial_period-5]
                         trial_trace_to_plot[i, j, :] = full_segment_plot
 
-                        # heatmap
+                        '''# heatmap
                         trial_stim_start_local = block_stim_time + j * single_trial_period  # local to this block
                         stim_half = stimualtion_duration_f // 2
                         delay_half = trial_delay_f // 2
@@ -2688,7 +2706,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                         stim_h1_list.append(np.abs(stim_h1_mean - baseline_img))
                         stim_h2_list.append(np.abs(stim_h2_mean - baseline_img))
                         delay_h1_list.append(np.abs(delay_h1_mean - baseline_img))
-                        delay_h2_list.append(np.abs(delay_h2_mean - baseline_img))
+                        delay_h2_list.append(np.abs(delay_h2_mean - baseline_img))'''
 
                     if any(trial_active):
                         active = True
@@ -2713,10 +2731,12 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                     print(roi)'''
             full_trial_traces_all[block_idx] = full_trial_trace
             full_trial_traces_to_plot[block_idx] = trial_trace_to_plot
+            print(f' Activated neurons in {file_num}:{all_count}')
 
             # save numpy arrays
             out_dir = os.path.join(tiff_dir, matched_file)
 
+            '''
             # aggregate across trials -> ONE heatmap per category PER BLOCK
             stim_h1_block = _reduce_across_trials(stim_h1_list, trial_reduce)
             stim_h2_block = _reduce_across_trials(stim_h2_list, trial_reduce)
@@ -2724,7 +2744,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
             delay_h2_block = _reduce_across_trials(delay_h2_list, trial_reduce)
 
 
-            '''_save_heatmap(stim_h1_block, os.path.join(out_dir, f'stim_H1_activation_block_{file_num}.png'),
+            _save_heatmap(stim_h1_block, os.path.join(out_dir, f'stim_H1_activation_block_{file_num}.png'),
                           f'|Stim H1 − Baseline| (block {file_num})')
             _save_heatmap(stim_h2_block, os.path.join(out_dir, f'stim_H2_activation_block_{file_num}.png'),
                           f'|Stim H2 − Baseline| (block {file_num})')
@@ -2734,7 +2754,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                           f'|Delay H2 − Baseline| (block {file_num})')
 
             print(f'Activated ROI in File MUnit_{file_num}: {all_count}')
-
+            '''
             # --plot fig for FOV per block--
             fig, ax = plt.subplots(figsize=(10, 10))
             ax.set_title(f'Activated ROIs - {file_num}')
@@ -2759,7 +2779,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
             out = os.path.join(tiff_dir, matched_file)
             plot_path = os.path.join(out, f'activated_rois_{file_num}.svg')
             plt.tight_layout()
-            plt.savefig(plot_path, format='svg')
+            #plt.savefig(plot_path, format='svg')
             #plt.show()
             plt.close(fig)
             print(f'ROI figure saved at {plot_path}')
@@ -2789,7 +2809,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         csv_path = os.path.join(out_path, f'activated_neurons_{matched_file}.csv')
         activation_df.to_csv(csv_path, index=False)
         med_csv_path = os.path.join(out_path, f'med_of_act_ns_{matched_file}.csv')
-        med_val_df.to_csv(med_csv_path, index=False)'''
+        med_val_df.to_csv(med_csv_path, index=False)
 
         # collect neurons activated during a block
         stimActive = np.zeros((num_block, num_rois), dtype=bool)
@@ -2952,9 +2972,9 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         ]
         avgTracePerBlock = np.zeros((num_block, trialNo, trial_len_f_plot))
         # Compute average trace per block and trial
-        for b in range(num_block):
+        '''for b in range(num_block):
             for t in range(trialNo):
-                avgTracePerBlock[b, t, :] = np.mean(full_trial_traces_to_plot[b][:, t, :], axis=0)
+                avgTracePerBlock[b, t, :] = np.mean(full_trial_traces_to_plot[b][:, t, :], axis=0)'''
 
         frames = np.arange(trial_len_f_plot)
         print(frames)
@@ -2984,6 +3004,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         ymin, ymax = global_min, global_max
 
         #Average trace per block
+        '''
         for b in range(num_block):
             ax = axs[0, b]
             for t in range(trialNo):
@@ -2994,19 +3015,21 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                 ax.set_ylabel("Row 1:\nTrials in block")
             if b == num_block - 1:
                 ax.legend(fontsize=6)
+        '''#frequency exp
+        for b in range(num_block):
+            ax = axs[0, b]
+            traces = full_trial_traces_to_plot[b]
+            avg_block = np.mean(traces, axis = 0)
+            for t in range(trialNo):
+                ax.plot(avg_block[t], label=f"Trial {t + 1}")
+            ax.set_title(f"Block {b + 1}")
+            ax.set_ylabel("Row 1:\nTrials in block")
+            ax.legend(fontsize = 6)
+            ax.set_ylim(global_min, global_max)
+
 
         # Average trace per trial in each block
-        '''for t in range(trialNo):
-                    ax = axs[0, t]
-                    for b in range(num_block):
-                        avg_bt = avgTracePerBlock_list[b][t]  # (frames_b,)
-                        ax.plot(avg_bt, label=str(legend[b]))
-                    ax.set_title(trialLabels[t])
-                    ax.set_ylim(ymin, ymax)
-                    if t == 0:
-                        ax.set_ylabel("Row 1:\nAvg trace per trial")
-                    if t == trialNo - 1:
-                        ax.legend(fontsize=6)'''
+        '''
         for t in range(trialNo):
             ax = axs[1, t]
             for b in range(num_block):
@@ -3017,8 +3040,20 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                 ax.set_ylabel("Row 2:\nBlocks in trial")
             if t == trialNo - 1:
                 ax.legend(fontsize=6)
+        '''#frequency exp
+        for t in range(trialNo):
+            ax = axs[1, t]
+            for b in range(num_block):
+                ax.plot(avgTracePerBlock_list[b][t], label=f"Block {legend[b]}")
+            ax.set_title(f"Trial {t + 1}")
+            if t == 0:
+                ax.set_ylabel("Row 2:\nBlocks in trial")
+            if t == trialNo - 1:
+                ax.legend(fontsize=6)
+            ax.set_ylim(global_min, global_max)
 
         #Trial-averaged traces per block
+        '''
         for t in range(trialNo):
             ax = axs[2, t]
             if t == 0:
@@ -3030,17 +3065,21 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                 ax.legend(fontsize=6)
             else:
                 ax.axis('off')
-        '''ax = axs[2, 0]
-        for b in range(num_block):
-            trial_avg = np.nanmean(block_avg_by_trial[b], axis=0)
-            ax.plot(trial_avg, label=f"Block {b + 1}")
-        ax.set_ylabel("Row 3:\nTrial-avg per block")
-        ax.set_ylim(ymin, ymax)
-        ax.legend(fontsize=6)'''
-
         plt.tight_layout()
         plt.show()
         plt.close()
+
+        '''#frequency exp
+        ax = axs[2,0]
+        for b in range(num_block):
+            mean_over_trials = np.mean(avgTracePerBlock_list[b], axis=0)  # (frames_b,)
+            ax.plot(mean_over_trials, label=str(legend[b]))
+        ax.set_ylabel("Row 3:\nTrial-avg per block")
+        ax.legend(fontsize=6)
+        ax.set_ylim(global_min, global_max)
+        plt.tight_layout()
+        #plt.show()
+
 
         print(f'Processed finished for {matched_file}')
 

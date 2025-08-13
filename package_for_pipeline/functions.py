@@ -2615,11 +2615,10 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                         print(seg_start, seg_start + single_trial_period, len(full_segment_plot))
                         trial_trace_to_plot[i, j, :] = full_segment_plot
 
-
-                        '''#heatmap
-                        trial_stim_start_local = seg_start
-                        stim_half = stimualtion_duration_f / 2
-                        delay_half = trial_delay_f / 2
+                        #heatmap
+                        trial_stim_start_local = block_stim_time + j * single_trial_period  # local to this block
+                        stim_half = stimualtion_duration_f // 2
+                        delay_half = trial_delay_f // 2
 
                         stim_h1_start = trial_stim_start_local
                         stim_h1_end = trial_stim_start_local + stim_half
@@ -2651,7 +2650,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                         stim_h1_list.append(np.abs(stim_h1_mean - baseline_img))
                         stim_h2_list.append(np.abs(stim_h2_mean - baseline_img))
                         delay_h1_list.append(np.abs(delay_h1_mean - baseline_img))
-                        delay_h2_list.append(np.abs(delay_h2_mean - baseline_img))'''
+                        delay_h2_list.append(np.abs(delay_h2_mean - baseline_img))
 
                     else:
                         seg_start = block_stim_time + (single_trial_period * j) + (block_idx * block_len)
@@ -2671,7 +2670,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                         full_segment_plot = F[i, seg_start -31:seg_start + single_trial_period-5]
                         trial_trace_to_plot[i, j, :] = full_segment_plot
 
-                        '''# heatmap
+                        # heatmap
                         trial_stim_start_local = block_stim_time + j * single_trial_period  # local to this block
                         stim_half = stimualtion_duration_f // 2
                         delay_half = trial_delay_f // 2
@@ -2706,7 +2705,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                         stim_h1_list.append(np.abs(stim_h1_mean - baseline_img))
                         stim_h2_list.append(np.abs(stim_h2_mean - baseline_img))
                         delay_h1_list.append(np.abs(delay_h1_mean - baseline_img))
-                        delay_h2_list.append(np.abs(delay_h2_mean - baseline_img))'''
+                        delay_h2_list.append(np.abs(delay_h2_mean - baseline_img))
 
                     if any(trial_active):
                         active = True
@@ -2736,7 +2735,6 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
             # save numpy arrays
             out_dir = os.path.join(tiff_dir, matched_file)
 
-            '''
             # aggregate across trials -> ONE heatmap per category PER BLOCK
             stim_h1_block = _reduce_across_trials(stim_h1_list, trial_reduce)
             stim_h2_block = _reduce_across_trials(stim_h2_list, trial_reduce)
@@ -2744,7 +2742,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
             delay_h2_block = _reduce_across_trials(delay_h2_list, trial_reduce)
 
 
-            _save_heatmap(stim_h1_block, os.path.join(out_dir, f'stim_H1_activation_block_{file_num}.png'),
+            '''_save_heatmap(stim_h1_block, os.path.join(out_dir, f'stim_H1_activation_block_{file_num}.png'),
                           f'|Stim H1 − Baseline| (block {file_num})')
             _save_heatmap(stim_h2_block, os.path.join(out_dir, f'stim_H2_activation_block_{file_num}.png'),
                           f'|Stim H2 − Baseline| (block {file_num})')
@@ -2754,7 +2752,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
                           f'|Delay H2 − Baseline| (block {file_num})')
 
             print(f'Activated ROI in File MUnit_{file_num}: {all_count}')
-            '''
+
             # --plot fig for FOV per block--
             fig, ax = plt.subplots(figsize=(10, 10))
             ax.set_title(f'Activated ROIs - {file_num}')
@@ -2779,7 +2777,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
             out = os.path.join(tiff_dir, matched_file)
             plot_path = os.path.join(out, f'activated_rois_{file_num}.svg')
             plt.tight_layout()
-            #plt.savefig(plot_path, format='svg')
+            plt.savefig(plot_path, format='svg')
             #plt.show()
             plt.close(fig)
             print(f'ROI figure saved at {plot_path}')

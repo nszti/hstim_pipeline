@@ -68,7 +68,7 @@ if RUN_MESC_PREPROCESS:
 
 #-----1.2.step: frequency_to_save, electrode_roi_to_save-->automatization pending-----
 if RUN_PREPROCESS:
-  #frequency_to_save.frequency_electrodeRoi_to_save(root_directory, tiff_directory, mesc_DATA_file)
+  frequency_to_save.frequency_electrodeRoi_to_save(root_directory, tiff_directory, mesc_DATA_file)
   #mesc_data_handling.tiff_merge(mesc_file_name, list_of_file_nums, root_directory, mesc_DATA_file, True)
   mesc_data_handling.extract_stim_frame(root_directory, mesc_DATA_file, list_of_file_nums) #--> saves stimTimes.npy needed for baseline
 if S2P:

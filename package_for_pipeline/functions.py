@@ -3120,6 +3120,7 @@ def analyze_merged_activation_and_save(exp_dir, mesc_file_name, tiff_dir, list_o
         print(f'Processed finished for {matched_file}')
 
 def plot_full_traces_and_roi_overlay(root_directory, tiff_dir, list_of_file_nums, frameRate=30.97, nb_pulses=100, trial_delay=3, trialNo=10):
+    from itertools import zip_longest
     from matplotlib.patches import Polygon
     base_dir = Path(tiff_dir)
     filenames = [file.name for file in base_dir.iterdir() if file.name.startswith('merged')]
@@ -3160,17 +3161,43 @@ def plot_full_traces_and_roi_overlay(root_directory, tiff_dir, list_of_file_nums
         triggers = [int(line.strip()) for line in open(os.path.join(root_directory, 'trigger.txt')) if line.strip().lower() != 'none']
         frame_lens = [int(line.strip()) for line in open(os.path.join(root_directory, 'frameNo.txt')) if line.strip()]
         frequencies = np.load(os.path.join(tiff_dir, 'frequencies.npy'), allow_pickle=True)
+        fileId_path = os.path.join(root_directory, 'fileId.txt')
+        trigger_path = os.path.join(root_directory, 'trigger.txt')
+        frameNo_path = os.path.join(root_directory, 'frameNo.txt')
         #read
+        raw_ids, raw_trigs, raw_frames = [], [], []
+        with open(fileId_path) as f_ids, open(trigger_path) as f_trigs, open(frameNo_path) as f_frames:
+            for id_line, trig_line, frame_line in zip_longest(f_ids, f_trigs, f_frames, fillvalue=''):
+                id_s = (id_line or '').strip()
+                trig_s = (trig_line or '').strip()
+                fr_s = (frame_line or '').strip()
 
+                fid = int(id_s.replace('MUnit_', '')) if id_s else None
+                trig = int(trig_s) if (trig_s and trig_s.lower() != 'none') else None
+                fr = int(fr_s) if (fr_s and fr_s.lower() != 'none') else None
+
+                raw_ids.append(fid)
+                raw_trigs.append(trig)
+                raw_frames.append(fr)
+        # --- align all columns and make a single mask ---
+        rows = list(zip_longest(raw_ids, raw_trigs, raw_frames, frequencies, fillvalue=None))
+        # mask
+        mask = np.array([
+            all((x is not None) and not (isinstance(x, float) and np.isnan(x)) for x in row)
+            for row in rows
+        ], dtype=bool)
+        # --- apply mask to get aligned arrays ---
+        file_ids_al = np.array([r[0] for r in rows], dtype=object)[mask].astype(int)
+        triggers_al = np.array([r[1] for r in rows], dtype=object)[mask].astype(int)
+        frames_al = np.array([r[2] for r in rows], dtype=object)[mask].astype(int)
+        freqs_al = np.array([r[3] for r in rows], dtype=float)[mask]
+
+        #  mapping
         fileid_to_info = {
-            file_id: {
-                'trigger': trig,
-                'block_len': block_len,
-                'frequency': freq
-            }
-            for file_id, trig, block_len, freq in zip(file_ids, triggers, frame_lens, frequencies)
+            fid: {'trigger': trig, 'block_len': fr, 'frequency': freq}
+            for fid, trig, fr, freq in zip(file_ids_al, triggers_al, frames_al, freqs_al)
         }
-        print(fileid_to_info)
+        #print(fileid_to_info)
 
         # Compute start frames for each block
         block_start_frames = [0]

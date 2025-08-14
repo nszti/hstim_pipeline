@@ -95,7 +95,7 @@ if RUN_ANALYSIS_PREP:
   #functions.baseline_val(root_directory, tiff_directory, list_of_file_nums) #--> saves F0.npy : if suite2p files changes make sure to rerun
   # functions.activated_neurons_val(root_directory, tiff_directory, list_of_file_nums, 1)
   #functions.timecourse_vals(tiff_directory, list_of_file_nums, 5)
-  functions.analyze_merged_activation_and_save(root_directory, mesc_file_name, tiff_directory, list_of_file_nums, 30.97, 100, 2, 5,2)
+  functions.analyze_merged_activation_and_save(root_directory, mesc_file_name, tiff_directory, list_of_file_nums, 30.97, 100, 3, 10,3.5)
 
 if PLOTS:
   #functions.plot_activation_summary(stim_type, tiff_directory, list_of_file_nums)
